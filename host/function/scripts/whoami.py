@@ -12,7 +12,7 @@ from common.function.consts import *
 from common.database.redisbbb import RedisDatabase
 
 from devices import  mbtemp, counting_pru, no_tty,\
-    power_supply_pru, thermo_probe, mks9376b, agilent4uhv, spixconv, reset, ser
+    power_supply_pru, thermo_probe, mks9376b, agilent4uhv, spixconv, reset
 
 logging.basicConfig(level=logging.INFO,
                     format='[%(levelname)s] %(asctime)-15s %(message)s',

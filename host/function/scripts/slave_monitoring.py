@@ -47,4 +47,4 @@ if __name__ == '__main__':
 
         logger.info('Master is up and ready, tell server Master will get control!')
         slave_db.setNodeController("MASTER")
-        slave_publisher.publishNodeController("MASTER")
+        slave_db.publishNodeController("MASTER")
