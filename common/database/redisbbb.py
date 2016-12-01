@@ -18,11 +18,12 @@ class RedisDatabase:
         self.db = redis.StrictRedis(host=host, port=port)
 
 
-    def is_available(self, retries = 3, delay = 10):
+    def is_available(self, retries = 3, delay = 10, log = True):
         for _i in range(retries):
             try:
-                sys.stdout.write("({} out of {}). Verify if server is available...\n".format(_i+1, retries))
-                sys.stdout.flush()
+                if log:
+                    sys.stdout.write("({} out of {}). Verify if server is available...\n".format(_i+1, retries))
+                    sys.stdout.flush()
                 self.db.ping()
                 return True
             except:
@@ -99,10 +100,17 @@ class RedisDatabase:
 
     def getConfigFrom(self):
         return self.db.get(REDIS_BBB_CONFIG_FROM_KEY).decode()
-        
+
 
     def setConfigFrom(self, node):
         if node.upper() in NODE_CONTROLLERS:
             return self.db.set(REDIS_BBB_CONFIG_FROM_KEY, node)
+        else:
+            return "Invalid controller"
+
+
+    def publishNodeController(self, node):
+        if node.upper() in NODE_CONTROLLERS:
+            return self.db.publish(REDIS_NODE_CONTROLLER_KEY, node)
         else:
             return "Invalid controller"

@@ -30,8 +30,6 @@ def persist_info(device, baud, details='No details.', time=str(datetime.now())):
     write_info(DEVICE_JSON, json.dumps(device_info))
 
     if not ("RESET" in details):
-        logger.info('Enable external connections for Redis DB!')
-        RedisDatabase('localhost').enable_external_connections()
         RedisDatabase('localhost').setJSON(str(device_info))
 
     exit(0)

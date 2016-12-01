@@ -1,14 +1,12 @@
 #!/usr/bin/python-sirius
 # -*- coding: utf-8 -*-
 import logging
-import time
 import argparse
 import redis
 import netifaces
 import json
 from time import sleep
 
-from common.function.consts import *
 from common.database.redisbbb import RedisDatabase
 from common.function.persist import persist_info
 
@@ -36,6 +34,7 @@ if __name__ == '__main__':
     slave_db.setThisBBB("SLAVE")
     slave_db.setMasterIP(master_ip)
     slave_db.setSlaveIP(slave_ip)
+    slave_db.enable_external_connections()
 
     # Connect to remote Redis DB (MASTER)
     master_db = RedisDatabase(master_ip, 6379)
@@ -46,9 +45,14 @@ if __name__ == '__main__':
         continue
 
 
+
+
+
     # MASTER CONTROLLING
     if (master_db.getNodeController().upper() == "MASTER"):
         slave_db.setNodeController("MASTER")
+        slave_db.publishNodeController("MASTER")
+
 
         logger.info('Master detected and controlling serial network! Get infos...')
         info = json.loads(master_db.getJSON())

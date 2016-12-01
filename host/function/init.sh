@@ -44,6 +44,7 @@ pushd ${DAEMON_BASE}/host/function/scripts
     if [ $BOARD_ADDRESS -eq 21 ]
     then
         echo "BOARD 21"
+        overlay_PRUserial485
         ./master_initialization.py
 
         if [ ! -f ${RES_FILE} ]
@@ -58,6 +59,7 @@ pushd ${DAEMON_BASE}/host/function/scripts
     if [ $BOARD_ADDRESS -eq 17 ]
     then
         echo "BOARD 17"
+        overlay_PRUserial485
         ./slave_initialization.py
     fi
 
@@ -117,4 +119,20 @@ pushd ${DAEMON_BASE}/host/function/scripts
         fi
         exit 1
     fi
+
+    # Address 21: MASTER BOARD
+    if [ $BOARD_ADDRESS -eq 21 ]
+    then
+        echo "BOARD 21"
+        ./master_monitoring.py
+
+    fi
+
+    # Address 25: SLAVE BOARD
+    if [ $BOARD_ADDRESS -eq 17 ]
+    then
+        echo "BOARD 17"
+        ./slave_monitoring.py
+    fi
+
 popd

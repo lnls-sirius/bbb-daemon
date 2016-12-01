@@ -174,25 +174,25 @@ function pru_power_supply {
         ./rsync_beaglebone.sh pru-serial485
         ./rsync_beaglebone.sh ponte-py
         ./rsync_beaglebone.sh eth-bridge-pru-serial485
-        overlay_PRUserial485
+        #overlay_PRUserial485
         # FAC IOC files and constants
-        ./rsync_beaglebone.sh ps-ioc-config-files
-        pushd ${DAEMON_BASE}/host/function/scripts/ps-ioc-config-files
-            ./sync-fac-files.sh
-        popd
+        #./rsync_beaglebone.sh ps-ioc-config-files
+        #pushd ${DAEMON_BASE}/host/function/scripts/ps-ioc-config-files
+        #    ./sync-fac-files.sh
+        #popd
     popd
 
     echo "Running eth-bridge-pru-serial485 on ports 5000 and 6000"
     #systemctl start eth-bridge-pru-serial485.service
 
-    echo "Running FAC PS IOC"
-    pushd ${DAEMON_BASE}/host/function/scripts/ps-ioc-config-files
-        ./run-fac-ps-ioc.sh
-    popd
+    #echo "Running FAC PS IOC"
+    #pushd ${DAEMON_BASE}/host/function/scripts/ps-ioc-config-files
+    #    ./run-fac-ps-ioc.sh
+    #popd
 
     echo "Running Ponte-py at port 4000"
     pushd /root/ponte-py
-        python-sirius Ponte.py
+        python-sirius Ponte.py &
     popd
 
 }
