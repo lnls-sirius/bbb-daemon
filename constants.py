@@ -1,0 +1,4 @@
+SERVER_IP = "10.0.6.57"
+
+PING_PORT = 5050
+PING_PERIOD = 1 # seconds
