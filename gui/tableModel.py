@@ -46,10 +46,6 @@ class MonitorTableModel (QAbstractTableModel):
         return None
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
-        # if role == Qt.TextAlignmentRole:
-        #     if orientation == Qt.Horizontal:
-        #         return QVariant(int(Qt.AlignLeft|Qt.AlignVCenter))
-        #     return QVariant(int(Qt.AlignRight|Qt.AlignVCenter))
 
         if role != Qt.DisplayRole:
             return None
@@ -68,39 +64,36 @@ class TypeTableModel (QAbstractTableModel):
     def __init__ (self, parent = None, data = None):
 
         QAbstractTableModel.__init__(self, parent)
-        self.data = data
+        self.types = data
 
     def setData (self, data):
-        self.data = data
+        self.types = data
         self.dataChanged.emit (self.index (0, 0), self.index (self.rowCount (), self.columnCount ()))
         self.layoutChanged.emit ()
 
     def rowCount (self, *args, **kwargs):
-        return len(self.data)
+        return len(self.types)
 
     def columnCount (self, *args, **kwargs):
         return 2
 
     def data (self, index, role):
 
-        row = index.row()
-        col = index.column()
-        typeNode = self.data [row]
+        row = index.row ()
+        col = index.column ()
+        typeNode = self.types [row]
 
         if role == Qt.BackgroundRole:
-            if "color" in typeNode.keys ():
-                return QBrush (QColor (typeNode ["color"][0], typeNode ["color"][1], typeNode ["color"][2]))
-
-            return QBrush (QColor (255, 255, 0))
+            return QBrush (QColor (typeNode.color [0], typeNode.color [1], typeNode.color [2]))
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter | Qt.AlignVCenter;
 
         if role == Qt.DisplayRole:
             if col == 0:
-                return typeNode ["name"]
+                return typeNode.name
 
-            return typeNode ["description"]
+            return typeNode.description
 
         return None
 
@@ -123,18 +116,18 @@ class NodeTableModel (QAbstractTableModel):
     def __init__ (self, parent = None, data = None):
 
         QAbstractTableModel.__init__(self, parent)
-        self.data = self.sortByAddress (data)
+        self.nodes = self.sortByAddress (data)
 
     def sortByAddress (self, data):
         return sorted(data, key = lambda x: x.ipAddress, reverse = False)
 
     def setData (self, data):
-        self.data = self.sortByAddress (data)
+        self.nodes = self.sortByAddress (data)
         self.dataChanged.emit (self.index (0, 0), self.index (self.rowCount (), self.columnCount ()))
         self.layoutChanged.emit ()
 
     def rowCount (self, *args, **kwargs):
-        return len(self.data)
+        return len (self.nodes)
 
     def columnCount (self, *args, **kwargs):
         return 3
@@ -143,13 +136,10 @@ class NodeTableModel (QAbstractTableModel):
 
         row = index.row()
         col = index.column()
-        node = self.data [row]
+        node = self.nodes [row]
 
         if role == Qt.BackgroundRole:
-            if "color" in node.type.keys ():
-                return QBrush (QColor (node.type ["color"][0], node.type ["color"][1], node.type ["color"][2]))
-
-            return QBrush (QColor (255, 255, 0))
+            return QBrush (QColor (node.type.color [0], node.type.color [1], node.type.color [2]))
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter | Qt.AlignVCenter;
@@ -160,7 +150,7 @@ class NodeTableModel (QAbstractTableModel):
             if col == 1:
                 return node.ipAddress
 
-            return node.type ["name"]
+            return node.type.name
 
         return None
 

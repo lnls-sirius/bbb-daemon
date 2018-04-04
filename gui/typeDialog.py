@@ -1,15 +1,16 @@
+from PyQt4.Qt import QWidget, QColor
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog, QLabel, QPushButton, QTableView, QAbstractItemView,\
                         QLineEdit, QTextEdit, QHBoxLayout, QVBoxLayout, QMessageBox, QColorDialog, QGridLayout
-from PyQt4.QtCore import *
-from PyQt4.Qt import QWidget
 
-import gui.table
+import entity.entities
+import gui.tableModel
 import threading
 import time
 
 class TypeDialog (QDialog):
 
-    DIALOG_WIDTH = 900
+    DIALOG_WIDTH = 1200
     DIALOG_HEIGHT = 600
 
     def __init__ (self, parent = None, controller = None):
@@ -64,7 +65,7 @@ class TypeDialog (QDialog):
         self.typeTable.setSelectionBehavior (QAbstractItemView.SelectRows)
         self.typeTable.setSelectionMode (QAbstractItemView.SingleSelection);
 
-        self.typeTableModel = gui.table.TypeTableModel (self.typeTable, data = self.controller.fetchTypes ())
+        self.typeTableModel = gui.tableModel.TypeTableModel (self.typeTable, data = self.controller.fetchTypes ())
         self.typeTable.setModel (self.typeTableModel)
         self.typeTable.setColumnWidth(0, TypeDialog.DIALOG_WIDTH / 4);
         self.typeTable.setColumnWidth(1, 3 * TypeDialog.DIALOG_WIDTH / 3);
@@ -87,7 +88,7 @@ class TypeDialog (QDialog):
 
         self.setWindowTitle ("Types Management")
 
-        self.cdialog = QColorDialog (self)
+        self.cdialog = QColorDialog (QColor (255, 255, 0), self)
 
         self.scanThread = threading.Thread (target = self.scan)
 
@@ -100,16 +101,30 @@ class TypeDialog (QDialog):
         if evt.key () == 16777223 and len(self.typeTable.selectedIndexes ()) > 0:
 
             selectedRow = self.typeTable.selectedIndexes ()[0].row ()
-            self.controller.removeType (self.controller.typeList ()[selectedRow])
+            typeName = self.typeTableModel.data (self.typeTableModel.index (selectedRow, 0), Qt.DisplayRole)
+
+            self.controller.removeType (typeName)
             self.typeTableModel.setData (self.controller.fetchTypes ())
             self.typeTable.clearSelection ()
+
+        elif evt.key () == 16777216:
+
+            self.text.clear ()
+            self.description.clear ()
+            self.typeTable.clearSelection ()
+            self.cdialog.setCurrentColor (QColor (255, 255, 0))
 
         QTableView.keyPressEvent (self.typeTable, evt)
 
     def selectionChanged (self, selected, deselected):
 
         if len(selected.indexes ()) > 0:
-                selectedRow = selected.indexes ()[0].row ()
+            selectedRow = selected.indexes ()[0].row ()
+            typeObject = self.typeTableModel.types [selectedRow]
+
+            self.text.setText (typeObject.name)
+            self.description.setPlainText (typeObject.description)
+            self.cdialog.setCurrentColor (QColor (typeObject.color [0], typeObject.color [1], typeObject.color [2]))
 
         QTableView.selectionChanged (self.typeTable, selected, deselected)
 
@@ -119,14 +134,12 @@ class TypeDialog (QDialog):
 
     def appendType (self):
 
-        selectedColor = self.cdialog.selectedColor ()
+        selectedColor = self.cdialog.currentColor ()
 
-        success = self.controller.appendType ({"name" : self.text.displayText() , \
-                                               "description" : self.description.toPlainText (), \
-                                               "color" : (selectedColor.red (), selectedColor.green (), selectedColor.blue ())})
+        newType = entity.entities.Type (name = self.text.displayText(), description = self.description.toPlainText (), \
+                                        color = (selectedColor.red (), selectedColor.green (), selectedColor.blue ()))
 
-        if not success:
-            QMessageBox (QMessageBox.Warning, "Failed!", "This type already exists!", QMessageBox.Ok, self).open ()
+        success = self.controller.appendType (newType)
 
         self.typeTableModel.setData (self.controller.fetchTypes ())
         self.typeTable.clearSelection ()

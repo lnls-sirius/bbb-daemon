@@ -2,13 +2,16 @@ from PyQt4.QtGui import QAbstractItemView, QLabel, QTableView, QVBoxLayout
 from PyQt4.QtCore import *
 from PyQt4.Qt import QWidget, QLineEdit, QColor, QBrush
 
-import gui.table
+import gui.tableModel
+import threading
 
 class MonitorTab (QWidget):
 
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, sector = "1"):
 
         QWidget.__init__ (self, parent)
+
+        self.sector = sector
 
         self.widgetbox = QVBoxLayout ()
         self.widgetbox.setContentsMargins (10, 10, 10, 10)
@@ -20,7 +23,7 @@ class MonitorTab (QWidget):
         self.staticTable.setSelectionBehavior (QAbstractItemView.SelectRows)
         self.staticTable.setSelectionMode (QAbstractItemView.SingleSelection);
 
-        self.staticTableModel = gui.table.MonitorTableModel (self.staticTable)
+        self.staticTableModel = gui.tableModel.MonitorTableModel (self.staticTable)
 
         self.staticTable.setModel (self.staticTableModel)
         self.staticTable.verticalHeader ().hide ()
@@ -34,7 +37,7 @@ class MonitorTab (QWidget):
         self.dynamicTable.setSelectionBehavior (QAbstractItemView.SelectRows)
         self.dynamicTable.setSelectionMode (QAbstractItemView.SingleSelection);
 
-        self.dynamicTableModel = gui.table.MonitorTableModel (self.dynamicTable)
+        self.dynamicTableModel = gui.tableModel.MonitorTableModel (self.dynamicTable)
 
         self.dynamicTable.setModel (self.dynamicTableModel)
         self.dynamicTable.verticalHeader ().hide ()
@@ -48,3 +51,11 @@ class MonitorTab (QWidget):
         self.widgetbox.addWidget (self.dynamicTable)
 
         self.setLayout (self.widgetbox)
+
+        self.scan = threading.Thread (target = "")
+
+    def showEvent (self, evt):
+        print ("oi " + self.sector)
+
+    def hideEvent (self, evt):
+        print ("tchau " + self.sector)

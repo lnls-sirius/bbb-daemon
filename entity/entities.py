@@ -1,7 +1,9 @@
+""" This module contains all entity classes of the project. """
+
 import threading
-import redis
 
 class NodeState ():
+    """ Valid states for any host in the Controls Group network. """
 
     DISCONNECTED, CONNECTED, REBOOTING = range (3)
 
@@ -21,8 +23,12 @@ class NodeState ():
         return "Unknown state"
 
 class Node ():
+    """
+        This class represents a Controls group's host.
+        Each host has a symbolic name, a valid IP address, a type and the sector where it is located.
+    """
 
-    def __init__ (self, name = "r0n0", ip = "10.128.0.0", state = NodeState.DISCONNECTED, typeNode = "generic", sector = 1):
+    def __init__ (self, name = "r0n0", ip = "10.128.0.0", state = NodeState.DISCONNECTED, typeNode = None, sector = 1):
 
         self.name = name
         self.ipAddress = ip
@@ -66,4 +72,16 @@ class Node ():
         return r_str
 
     def __dict__ (self):
-        return {"name" : self.name, "ip" : self.ipAddress, "type" : self.type, "sector" : self.sector}
+        return {"name" : self.name, "ip" : self.ipAddress, "type" : self.type.__dict__ (), "sector" : self.sector}
+
+class Type ():
+    """ This class provides a wrapper for host types. """
+
+    def __init__ (self, id = 0, name = "generic", color = (255, 255, 255), description = "A generic host."):
+
+        self.name = name
+        self.color = color
+        self.description = description
+
+    def __dict__ (self):
+        return {"name" : self.name, "color" : self.color, "description" : self.description}

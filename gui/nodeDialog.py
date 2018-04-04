@@ -3,14 +3,14 @@ from PyQt4.QtGui import QDialog, QLabel, QPushButton, QTableView, QAbstractItemV
 from PyQt4.QtCore import *
 from PyQt4.Qt import QWidget
 
-import entity.nodes
-import gui.table
+import entity.entities
+import gui.tableModel
 import threading
 import time
 
 class NodeDialog (QDialog):
 
-    DIALOG_WIDTH = 900
+    DIALOG_WIDTH = 1200
     DIALOG_HEIGHT = 600
 
     def __init__ (self, parent = None, controller = None):
@@ -25,7 +25,7 @@ class NodeDialog (QDialog):
         self.idlabel = QLabel ("Identification:")
         self.idtext = QLineEdit ()
 
-        self.addrlabel = QLabel ("IP address:")
+        self.addrlabel = QLabel ("IP Address:")
         self.addrtext = QLineEdit ()
         # self.addrtext.setInputMask ("000.000.000.000;_")
 
@@ -35,24 +35,23 @@ class NodeDialog (QDialog):
 
         self.sectorlabel = QLabel ("Supersector:")
         self.sectors = QComboBox ()
-        self.sectors.addItems ([str (i) for i in range(1,21)] + ["LINAC", "RF", "Conectividade"])
+        self.sectors.addItems (self.controller.sectors)
 
         self.submit = QPushButton ("+")
         self.submit.pressed.connect (self.appendNode)
 
         self.inputLayout.addWidget (self.idlabel, 0, 0, 1, 1)
-        self.inputLayout.addWidget (self.idtext, 0, 2, 1, 2)
+        self.inputLayout.addWidget (self.idtext, 0, 1, 1, 1)
+        self.inputLayout.addWidget (self.typeslabel, 0, 2, 1, 1)
+        self.inputLayout.addWidget (self.types, 0, 3, 1, 2)
 
         self.inputLayout.addWidget (self.addrlabel, 1, 0, 1, 1)
-        self.inputLayout.addWidget (self.addrtext, 1, 2, 1, 2)
+        self.inputLayout.addWidget (self.addrtext, 1, 1, 1, 1)
 
-        self.inputLayout.addWidget (self.typeslabel, 2, 0, 1, 2)
-        self.inputLayout.addWidget (self.types, 2, 2, 1, 2)
+        self.inputLayout.addWidget (self.sectorlabel, 1, 2, 1, 1)
+        self.inputLayout.addWidget (self.sectors, 1, 3, 1, 1)
 
-        self.inputLayout.addWidget (self.sectorlabel, 3, 0, 1, 2)
-        self.inputLayout.addWidget (self.sectors, 3, 2, 1, 2)
-
-        self.inputLayout.addWidget (self.submit, 4, 3, 1, 1)
+        self.inputLayout.addWidget (self.submit, 1, 4, 1, 1)
 
         self.outerLayout = QVBoxLayout ()
         self.outerLayout.setContentsMargins (10, 10, 10, 10)
@@ -63,8 +62,9 @@ class NodeDialog (QDialog):
         self.nodeTable.setSelectionBehavior (QAbstractItemView.SelectRows)
         self.nodeTable.setSelectionMode (QAbstractItemView.SingleSelection)
         self.nodeTable.keyPressEvent = self.keyPressEvent
+        self.nodeTable.selectionChanged = self.selectionChanged
 
-        self.nodeTableModel = gui.table.NodeTableModel (self.nodeTable, data = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (0)))
+        self.nodeTableModel = gui.tableModel.NodeTableModel (self.nodeTable, data = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (0)))
         self.nodeTable.setModel (self.nodeTableModel)
 
         self.nodeTable.setMinimumHeight (800)
@@ -85,23 +85,40 @@ class NodeDialog (QDialog):
 
         self.setWindowTitle ("BBB Hosts Management")
 
+        self.scanThread = threading.Thread (target = self.scan)
+
         self.scanning = True
+        self.scanThread.start ()
+
+    def scan (self):
+
+        while self.scanning:
+
+            self.nodeTableModel.setData (self.controller.fetchNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ())))
+            self.updateTypes ()
+            time.sleep (1)
 
     def updateTypes (self):
 
         types = self.controller.fetchTypes ()
 
-        items = []
+        items = [self.types.itemText(i) for i in range (self.types.count())]
 
         for t in types:
-            items.append(t ["name"])
+            if t.name not in items:
+                self.types.addItem (t.name, t)
 
-        self.types.clear ()
-        self.types.addItems (items)
+        for index, item in enumerate (items):
+            remove = True
+            for t in types:
+                if t.name == item:
+                    remove = False
+                    break
+            if remove:
+                self.types.removeItem (index)
 
     def sectorChangeEvent (self, index):
-        nodes = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (index))
-        self.nodeTableModel.setData (nodes)
+        self.nodeTableModel.setData (self.controller.fetchNodesFromSector (sector = self.sectors.itemText (index)))
 
     def resizeEvent (self, args):
 
@@ -113,21 +130,17 @@ class NodeDialog (QDialog):
 
     def appendNode (self) :
 
-        types = self.controller.typeList ()
-        t_dict = {}
+        newNode = entity.entities.Node (name = self.idtext.displayText(), ip = self.addrtext.displayText(), \
+                                        typeNode = self.types.itemData (self.types.currentIndex ()), \
+                                        sector = self.sectors.itemText (self.sectors.currentIndex ()))
 
-        for i, t in enumerate (types):
-            if t ["name"] == self.types.itemText (self.types.currentIndex ()):
-                    break
+        appended = self.controller.appendNode (newNode)
 
-        newNode = entity.nodes.Node (name = self.idtext.displayText(), ip = self.addrtext.displayText(), \
-                                     typeNode = self.controller.typeList () [i], \
-                                     sector = self.sectors.itemText (self.sectors.currentIndex ()))
-
-        self.controller.appendNode (newNode)
-
-        nodes = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()))
-        self.nodeTableModel.setData (nodes)
+        if appended:
+            nodes = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()))
+            self.nodeTableModel.setData (nodes)
+        else:
+             QMessageBox (QMessageBox.Warning, "Failed!", "IP address already in use!", QMessageBox.Ok, self).open ()
 
     def keyPressEvent (self, evt):
 
@@ -136,14 +149,42 @@ class NodeDialog (QDialog):
 
             selectedRow = self.nodeTable.selectedIndexes ()[0].row ()
 
-            removeNode = entity.nodes.Node (name = self.nodeTableModel.data [selectedRow].name, \
-                                            ip = self.nodeTableModel.data [selectedRow].ipAddress, \
-                                            typeNode = self.nodeTableModel.data [selectedRow].type, \
-                                            sector = self.nodeTableModel.data [selectedRow].sector)
+            removeNode = entity.entities.Node (name = self.nodeTableModel.nodes [selectedRow].name, \
+                                               ip = self.nodeTableModel.nodes [selectedRow].ipAddress, \
+                                               typeNode = self.nodeTableModel.nodes [selectedRow].type, \
+                                               sector = self.nodeTableModel.nodes [selectedRow].sector)
 
             self.controller.removeNodeFromSector (removeNode)
             nodes = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()))
             self.nodeTableModel.setData (nodes)
             self.nodeTable.clearSelection ()
 
+        elif evt.key () == 16777216:
+
+            self.idtext.clear ()
+            self.addrtext.clear ()
+            self.nodeTable.clearSelection ()
+
         QTableView.keyPressEvent (self.nodeTable, evt)
+
+    def selectionChanged (self, selected, deselected):
+
+        if len(selected.indexes ()) > 0:
+            selectedRow = selected.indexes ()[0].row ()
+            nodeObject = self.nodeTableModel.nodes [selectedRow]
+
+            self.idtext.setText (nodeObject.name)
+            self.addrtext.setText (nodeObject.ipAddress)
+
+            items = [self.types.itemText(i) for i in range (self.types.count())]
+            for index, item in enumerate (items):
+                if nodeObject.type.name == item:
+                    self.types.setCurrentIndex (index)
+
+        QTableView.selectionChanged (self.nodeTable, selected, deselected)
+
+    def closeEvent (self, args):
+
+        self.scanning = False
+
+        QDialog.closeEvent (self, args)
