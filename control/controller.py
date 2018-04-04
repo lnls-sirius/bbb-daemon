@@ -5,6 +5,7 @@ class MonitorController ():
     def __init__ (self):
 
         self.db = comm.persistence.RedisPersistence (host = '10.0.6.65', port = 6379)
+        self.sectors = [str (i) for i in range(1,21)] + ["LINAC", "RF", "Conectividade"]
 
     def fetchTypes (self):
 
@@ -17,10 +18,6 @@ class MonitorController ():
     def appendNode (self, newNode = {}):
 
         return self.db.appendNode (newNode)
-
-    def typeList (self):
-
-        return self.db.getTypes ()
 
     def removeType (self, t):
 
