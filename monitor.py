@@ -1,3 +1,4 @@
+import comm.network
 import control.controller
 import gui.interface
 
@@ -7,9 +8,14 @@ import sys
 if __name__ == '__main__':
 
     c = control.controller.MonitorController ()
+    n = comm.network.NetDaemon (controller = c)
 
     app = QApplication(sys.argv)
     i = gui.interface.MonitorInterface (controller = c)
     i.show ()
 
-    sys.exit(app.exec_())
+    appReturn = app.exec_()
+    print ("oi")
+    n.stopAll ()
+
+    sys.exit(appReturn)

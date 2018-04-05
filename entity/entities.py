@@ -4,7 +4,7 @@ import threading
 
 class Command ():
 
-    PING, REBOOT = range (2)
+    PING, REBOOT, EXIT = range (3)
 
 class NodeState ():
     """ Valid states for any host in the Controls Group network. """

@@ -62,12 +62,10 @@ class MonitorInterface (QMainWindow):
         self.setGeometry (500, 500, MonitorInterface.WIDTH, MonitorInterface.HEIGHT)
 
     def appendType (self):
-
         typeDialog = gui.typeDialog.TypeDialog (controller = self.controller)
         typeDialog.show ()
 
     def appendNode (self):
-
         nodeDialog = gui.nodeDialog.NodeDialog (controller = self.controller)
         nodeDialog.show ()
 
