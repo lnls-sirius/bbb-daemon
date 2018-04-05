@@ -140,7 +140,7 @@ class NodeDialog (QDialog):
             nodes = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()))
             self.nodeTableModel.setData (nodes)
         else:
-             QMessageBox (QMessageBox.Warning, "Failed!", "IP address already in use!", QMessageBox.Ok, self).open ()
+            QMessageBox (QMessageBox.Warning, "Failed!", "IP address already in use!", QMessageBox.Ok, self).open ()
 
     def keyPressEvent (self, evt):
 
