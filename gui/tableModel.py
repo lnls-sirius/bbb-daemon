@@ -2,60 +2,72 @@ from PyQt4.QtGui import QTableView, QAbstractItemView
 from PyQt4.QtCore import *
 from PyQt4.Qt import QWidget, QLineEdit, QColor, QBrush
 
+import entity.entities
+
 class MonitorTableModel (QAbstractTableModel):
 
-    def __init__ (self, parent = None, node_list = ["2", "3"]):
-
-        self._data = node_list
-
+    def __init__ (self, parent = None, data = []):
+        self.nodes = self.sortByAddress(data)
         QAbstractTableModel.__init__(self, parent)
 
+    def sortByAddress (self, data):
+        return sorted(data, key = lambda x: x.ipAddress, reverse = False)
+
+    def setData (self, data):
+        self.nodes = self.sortByAddress(data)
+        self.dataChanged.emit (self.index (0, 0), self.index (self.rowCount (), self.columnCount ()))
+        self.layoutChanged.emit ()
+
     def rowCount(self, *args, **kwargs):
-        return len(self._data)
+        return len (self.nodes)
 
     def columnCount(self, *args, **kwargs):
-        return 2
+        return 4
 
     def data(self, index, role):
 
-        __row = index.row()
-        __col = index.column()
-        __node = self._data[__row]
+        row = index.row ()
+        col = index.column ()
+        node = self.nodes [row]
 
         if role == Qt.BackgroundRole :
 
-            #if __node.state == Control_Node_State.DISCONNECTED:
-            #    return QBrush(QColor(229, 85, 94))
+            if node.state == entity.entities.NodeState.DISCONNECTED:
+                return QBrush (QColor(229, 85, 94))
 
-            #if __node.state == Control_Node_State.CONNECTED:
-            #    return QBrush(QColor(92, 255, 130))
-
-            return QBrush(QColor(255, 255, 0))
-
+            return node.type.color
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter | Qt.AlignVCenter;
 
         if role == Qt.DisplayRole:
 
-            if __col == 0:
-                return "Teste"
+            if col == 0:
+                return node.name
+            if col == 1:
+                return node.ipAddress
+            if col == 2:
+                return node.type.name
 
-            return "Tedte"
+            return entity.entities.NodeState.toString (node.state)
 
         return None
 
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
+    def headerData(self, section, orientation, role = Qt.DisplayRole):
 
         if role != Qt.DisplayRole:
             return None
 
         if orientation == Qt.Horizontal:
-            if section == 0:
-                return "SBC"
 
+            if section == 0:
+                return "Name"
             elif section == 1:
-                return "Status"
+                return "IP Address"
+            elif section == 2:
+                return "Type"
+            else:
+                return "Current status"
 
         return None
 
@@ -72,7 +84,7 @@ class TypeTableModel (QAbstractTableModel):
         self.layoutChanged.emit ()
 
     def rowCount (self, *args, **kwargs):
-        return len(self.types)
+        return len (self.types)
 
     def columnCount (self, *args, **kwargs):
         return 2
