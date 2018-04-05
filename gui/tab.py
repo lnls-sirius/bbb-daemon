@@ -4,14 +4,16 @@ from PyQt4.Qt import QWidget, QLineEdit, QColor, QBrush
 
 import gui.tableModel
 import threading
+import time
 
 class MonitorTab (QWidget):
 
-    def __init__(self, parent = None, sector = "1"):
+    def __init__(self, parent = None, sector = "1", controller = None):
 
         QWidget.__init__ (self, parent)
 
         self.sector = sector
+        self.controller = controller
 
         self.widgetbox = QVBoxLayout ()
         self.widgetbox.setContentsMargins (10, 10, 10, 10)
@@ -22,7 +24,7 @@ class MonitorTab (QWidget):
         self.staticTable = QTableView (parent)
         self.staticTable.setSelectionBehavior (QAbstractItemView.SelectRows)
         self.staticTable.setSelectionMode (QAbstractItemView.SingleSelection);
-
+        self.staticTable.keyPressEvent = self.keyPressEvent
         self.staticTableModel = gui.tableModel.MonitorTableModel (self.staticTable)
 
         self.staticTable.setModel (self.staticTableModel)
@@ -52,10 +54,39 @@ class MonitorTab (QWidget):
 
         self.setLayout (self.widgetbox)
 
-        self.scan = threading.Thread (target = "")
+    def scan (self):
+
+        while self.scanning:
+            self.staticTableModel.setData (self.controller.getNodesFromSector (sector = self.sector))
+            time.sleep (1)
 
     def showEvent (self, evt):
-        print ("oi " + self.sector)
+
+        self.scanThread = threading.Thread (target = self.scan)
+        self.scanning = True
+        self.scanThread.start ()
 
     def hideEvent (self, evt):
-        print ("tchau " + self.sector)
+        self.scanning = False
+
+    def resizeEvent (self, args):
+
+        self.staticTable.setColumnWidth(0, self.staticTable.size ().width () / 4 - 5);
+        self.staticTable.setColumnWidth(1, self.staticTable.size ().width () / 4);
+        self.staticTable.setColumnWidth(2, self.staticTable.size ().width () / 4);
+        self.staticTable.setColumnWidth(3, self.staticTable.size ().width () / 4);
+
+        self.dynamicTable.setColumnWidth(0, self.staticTable.size ().width () / 4 - 5);
+        self.dynamicTable.setColumnWidth(1, self.staticTable.size ().width () / 4);
+        self.dynamicTable.setColumnWidth(2, self.staticTable.size ().width () / 4);
+        self.dynamicTable.setColumnWidth(3, self.staticTable.size ().width () / 4);
+
+        QWidget.resizeEvent (self, args)
+
+    def keyPressEvent (self, evt):
+
+        if evt.key () == 16777216:
+
+            self.staticTable.clearSelection ()
+
+        QTableView.keyPressEvent (self.staticTable, evt)

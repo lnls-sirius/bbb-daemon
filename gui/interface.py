@@ -9,6 +9,8 @@ import gui.typeDialog
 import gui.nodeDialog
 import gui.tab
 
+import threading
+
 class MonitorInterface (QMainWindow):
 
     WIDTH = 1600
@@ -49,7 +51,7 @@ class MonitorInterface (QMainWindow):
         self.tabs.setTabShape (QTabWidget.Rounded)
 
         for i in self.controller.sectors:
-            self.tabs.insertTab (self.tabs.count (), gui.tab.MonitorTab (parent = self.tabs, sector = str(i)), str(i))
+            self.tabs.insertTab (self.tabs.count (), gui.tab.MonitorTab (parent = self.tabs, sector = str(i), controller = self.controller), str(i))
 
         self.widgetbox.addWidget (self.tabs)
         self.centralwidget.setLayout (self.widgetbox)
@@ -62,12 +64,20 @@ class MonitorInterface (QMainWindow):
     def appendType (self):
 
         typeDialog = gui.typeDialog.TypeDialog (controller = self.controller)
-        typeDialog.exec_ ()
+        typeDialog.show ()
 
     def appendNode (self):
 
         nodeDialog = gui.nodeDialog.NodeDialog (controller = self.controller)
-        nodeDialog.exec_ ()
+        nodeDialog.show ()
+
+    def stopAll (self):
+        self.controller.scanNodes = False
+
+    def closeEvent (self, evt):
+        self.stopAll ()
+        QMainWindow.closeEvent (self, evt)
 
     def exit (self):
+        self.stopAll ()
         self.close ()
