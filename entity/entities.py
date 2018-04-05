@@ -2,6 +2,10 @@
 
 import threading
 
+class Command ():
+
+    PING, REBOOT = range (2)
+
 class NodeState ():
     """ Valid states for any host in the Controls Group network. """
 
@@ -35,6 +39,8 @@ class Node ():
         self.state = state
         self.type = typeNode
         self.sector = sector
+
+        self.counter = 0
 
         # Since we are working in a multi-thread environment, a mutex control is required
         self.stateMutex = threading.Lock()
