@@ -1,8 +1,7 @@
+from common.entity.entities import Command, Node, NodeState, Type
 from PyQt4.QtGui import QTableView, QAbstractItemView
 from PyQt4.QtCore import *
 from PyQt4.Qt import QWidget, QLineEdit, QColor, QBrush
-
-import entity.entities
 
 class MonitorTableModel (QAbstractTableModel):
 
@@ -11,7 +10,7 @@ class MonitorTableModel (QAbstractTableModel):
         QAbstractTableModel.__init__(self, parent)
 
     def sortByAddress (self, data):
-        return sorted(data, key = lambda x: x.ipAddress, reverse = False)
+        return sorted(data, key = lambda x: (x.state, x.ipAddress), reverse = False)
 
     def setData (self, data):
         self.nodes = self.sortByAddress(data)
@@ -32,10 +31,17 @@ class MonitorTableModel (QAbstractTableModel):
 
         if role == Qt.BackgroundRole :
 
-            if node.state == entity.entities.NodeState.DISCONNECTED:
-                return QBrush (QColor(229, 85, 94))
+            if node.state == NodeState.DISCONNECTED:
+                return QBrush (QColor (229, 85, 94))
 
-            return node.type.color
+            if node.state == NodeState.MISCONFIGURED:
+                if node.misconfiguredColor != None:
+                    color = node.misconfiguredColor
+                    return QBrush (QColor (color [0], color [1], color [2]))
+
+                return QBrush (QColor (135, 206, 250))
+
+            return QBrush (QColor (92, 255, 130))
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter | Qt.AlignVCenter;
@@ -49,7 +55,7 @@ class MonitorTableModel (QAbstractTableModel):
             if col == 2:
                 return node.type.name
 
-            return entity.entities.NodeState.toString (node.state)
+            return NodeState.toString (node.state)
 
         return None
 

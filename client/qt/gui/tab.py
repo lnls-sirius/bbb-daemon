@@ -24,7 +24,7 @@ class MonitorTab (QWidget):
         self.staticTable = QTableView (parent)
         self.staticTable.setSelectionBehavior (QAbstractItemView.SelectRows)
         self.staticTable.setSelectionMode (QAbstractItemView.SingleSelection);
-        self.staticTable.keyPressEvent = self.keyPressEvent
+        self.staticTable.keyPressEvent = self.keyPressStaticEvent
         self.staticTableModel = gui.tableModel.MonitorTableModel (self.staticTable)
 
         self.staticTable.setModel (self.staticTableModel)
@@ -38,13 +38,13 @@ class MonitorTab (QWidget):
         self.dynamicTable = QTableView (parent)
         self.dynamicTable.setSelectionBehavior (QAbstractItemView.SelectRows)
         self.dynamicTable.setSelectionMode (QAbstractItemView.SingleSelection);
-
+        self.dynamicTable.keyPressEvent = self.keyPressDynamicEvent
         self.dynamicTableModel = gui.tableModel.MonitorTableModel (self.dynamicTable)
 
         self.dynamicTable.setModel (self.dynamicTableModel)
         self.dynamicTable.verticalHeader ().hide ()
 
-        self.dynamicTable.setMaximumHeight (200)
+        self.dynamicTable.setMaximumHeight (400)
         self.dynamicTable.setMinimumWidth (200)
 
         self.widgetbox.addWidget (self.staticTableTitle)
@@ -57,7 +57,8 @@ class MonitorTab (QWidget):
     def scan (self):
 
         while self.scanning:
-            self.staticTableModel.setData (self.controller.getNodesFromSector (sector = self.sector))
+            self.staticTableModel.setData (self.controller.getNodesFromSector (sector = self.sector, registered = True))
+            self.dynamicTableModel.setData (self.controller.getNodesFromSector (sector = self.sector, registered = False))
             time.sleep (1)
 
     def showEvent (self, evt):
@@ -83,10 +84,18 @@ class MonitorTab (QWidget):
 
         QWidget.resizeEvent (self, args)
 
-    def keyPressEvent (self, evt):
+    def keyPressStaticEvent (self, evt):
 
         if evt.key () == 16777216:
 
             self.staticTable.clearSelection ()
 
         QTableView.keyPressEvent (self.staticTable, evt)
+
+    def keyPressDynamicEvent (self, evt):
+
+        if evt.key () == 16777216:
+
+            self.dynamicTable.clearSelection ()
+
+        QTableView.keyPressEvent (self.dynamicTable, evt)

@@ -1,15 +1,30 @@
 """ This module contains all entity classes of the project. """
-
 import threading
+
+class Sector ():
+
+    SECTORS = ["Conectividade"] + [str (i) for i in range(1,21)] + ["LINAC", "RF", "Fontes"]
+
+    @staticmethod
+    def sectors ():
+        return Sector.SECTORS
 
 class Command ():
 
-    PING, REBOOT, EXIT = range (3)
+    PING, REBOOT, EXIT, END, TYPE, GET_TYPES, APPEND_TYPE, REMOVE_TYPE, NODE, GET_REG_NODES_SECTOR, GET_UNREG_NODES_SECTOR, APPEND_NODE, REMOVE_NODE = range (13)
 
 class NodeState ():
     """ Valid states for any host in the Controls Group network. """
 
-    DISCONNECTED, CONNECTED, REBOOTING = range (3)
+    DISCONNECTED, MISCONFIGURED, CONNECTED, REBOOTING = range (4)
+
+    MISCONFIGURED_COLOR_STACK = [(255, 255, 153), (253, 255, 0), (204, 204, 255), (220, 220, 220)]
+    MISCONFIGURED_INDEX = 1
+
+    @staticmethod
+    def useColor ():
+        NodeState.MISCONFIGURED_INDEX = (NodeState.MISCONFIGURED_INDEX + 1) % len (NodeState.MISCONFIGURED_COLOR_STACK)
+        return NodeState.MISCONFIGURED_COLOR_STACK [NodeState.MISCONFIGURED_INDEX]
 
     # String representation of a state
     @staticmethod
@@ -20,6 +35,9 @@ class NodeState ():
 
         elif state == NodeState.CONNECTED:
             return "Connected"
+
+        elif state == NodeState.MISCONFIGURED:
+            return "Misconfigured"
 
         elif state == NodeState.REBOOTING:
             return "Rebooting"
@@ -32,15 +50,16 @@ class Node ():
         Each host has a symbolic name, a valid IP address, a type and the sector where it is located.
     """
 
-    def __init__ (self, name = "r0n0", ip = "10.128.0.0", state = NodeState.DISCONNECTED, typeNode = None, sector = 1):
+    def __init__ (self, name = "r0n0", ip = "10.128.0.0", state = NodeState.DISCONNECTED, typeNode = None, sector = 1, counter = 0):
 
         self.name = name
         self.ipAddress = ip
         self.state = state
+        self.misconfiguredColor = None
         self.type = typeNode
         self.sector = sector
 
-        self.counter = 0
+        self.counter = counter
 
         # Since we are working in a multi-thread environment, a mutex control is required
         self.stateMutex = threading.Lock()
@@ -78,7 +97,7 @@ class Node ():
         return r_str
 
     def __dict__ (self):
-        return {"name" : self.name, "ip" : self.ipAddress, "type" : self.type.__dict__ (), "sector" : self.sector}
+        return {"name" : self.name, "ip" : self.ipAddress, "state": self.state, "type" : self.type.__dict__ (), "sector" : self.sector}
 
 class Type ():
     """ This class provides a wrapper for host types. """
@@ -91,3 +110,6 @@ class Type ():
 
     def __dict__ (self):
         return {"name" : self.name, "color" : self.color, "description" : self.description}
+
+    def __str__ (self):
+        return str (self.__dict__())

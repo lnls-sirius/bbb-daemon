@@ -1,10 +1,11 @@
+from common.entity.entities import Command, Node, NodeState, Type
+from gui.tableModel import TypeTableModel
+
 from PyQt4.Qt import QWidget, QColor
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog, QLabel, QPushButton, QTableView, QAbstractItemView,\
-                        QLineEdit, QTextEdit, QHBoxLayout, QVBoxLayout, QMessageBox, QColorDialog, QGridLayout
+                        QLineEdit, QTextEdit, QHBoxLayout, QVBoxLayout, QColorDialog, QGridLayout
 
-import entity.entities
-import gui.tableModel
 import threading
 import time
 
@@ -65,7 +66,7 @@ class TypeDialog (QDialog):
         self.typeTable.setSelectionBehavior (QAbstractItemView.SelectRows)
         self.typeTable.setSelectionMode (QAbstractItemView.SingleSelection);
 
-        self.typeTableModel = gui.tableModel.TypeTableModel (self.typeTable, data = self.controller.fetchTypes ())
+        self.typeTableModel = TypeTableModel (self.typeTable, data = self.controller.fetchTypes ())
         self.typeTable.setModel (self.typeTableModel)
         self.typeTable.setColumnWidth(0, TypeDialog.DIALOG_WIDTH / 4);
         self.typeTable.setColumnWidth(1, 3 * TypeDialog.DIALOG_WIDTH / 3);
@@ -91,7 +92,6 @@ class TypeDialog (QDialog):
         self.cdialog = QColorDialog (QColor (255, 255, 0), self)
 
         self.scanThread = threading.Thread (target = self.scan)
-
         self.scanning = True
         self.scanThread.start ()
 
@@ -136,8 +136,8 @@ class TypeDialog (QDialog):
 
         selectedColor = self.cdialog.currentColor ()
 
-        newType = entity.entities.Type (name = self.text.displayText(), description = self.description.toPlainText (), \
-                                        color = (selectedColor.red (), selectedColor.green (), selectedColor.blue ()))
+        newType = Type (name = self.text.displayText(), description = self.description.toPlainText (), \
+                        color = (selectedColor.red (), selectedColor.green (), selectedColor.blue ()))
 
         success = self.controller.appendType (newType)
 

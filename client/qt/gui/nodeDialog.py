@@ -1,10 +1,11 @@
+from common.entity.entities import Command, Node, NodeState, Sector, Type
+from gui.tableModel import NodeTableModel
+
 from PyQt4.QtGui import QDialog, QLabel, QPushButton, QTableView, QAbstractItemView,\
                         QLineEdit, QTextEdit, QGridLayout, QVBoxLayout, QMessageBox, QColorDialog, QComboBox
 from PyQt4.QtCore import *
 from PyQt4.Qt import QWidget
 
-import entity.entities
-import gui.tableModel
 import threading
 import time
 
@@ -35,7 +36,7 @@ class NodeDialog (QDialog):
 
         self.sectorlabel = QLabel ("Supersector:")
         self.sectors = QComboBox ()
-        self.sectors.addItems (self.controller.sectors)
+        self.sectors.addItems (Sector.sectors ())
 
         self.submit = QPushButton ("+")
         self.submit.pressed.connect (self.appendNode)
@@ -64,7 +65,7 @@ class NodeDialog (QDialog):
         self.nodeTable.keyPressEvent = self.keyPressEvent
         self.nodeTable.selectionChanged = self.selectionChanged
 
-        self.nodeTableModel = gui.tableModel.NodeTableModel (self.nodeTable, data = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (0)))
+        self.nodeTableModel = NodeTableModel (self.nodeTable, data = self.controller.getNodesFromSector (sector = self.sectors.itemText (0), registered = True))
         self.nodeTable.setModel (self.nodeTableModel)
 
         self.nodeTable.setMinimumHeight (800)
@@ -94,7 +95,7 @@ class NodeDialog (QDialog):
 
         while self.scanning:
 
-            self.nodeTableModel.setData (self.controller.fetchNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ())))
+            self.nodeTableModel.setData (self.controller.getNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()), registered = True))
             self.updateTypes ()
             time.sleep (1)
 
@@ -118,7 +119,7 @@ class NodeDialog (QDialog):
                 self.types.removeItem (index)
 
     def sectorChangeEvent (self, index):
-        self.nodeTableModel.setData (self.controller.fetchNodesFromSector (sector = self.sectors.itemText (index)))
+        self.nodeTableModel.setData (self.controller.getNodesFromSector (sector = self.sectors.itemText (index), registered = True))
 
     def resizeEvent (self, args):
 
@@ -130,14 +131,14 @@ class NodeDialog (QDialog):
 
     def appendNode (self) :
 
-        newNode = entity.entities.Node (name = self.idtext.displayText(), ip = self.addrtext.displayText(), \
-                                        typeNode = self.types.itemData (self.types.currentIndex ()), \
-                                        sector = self.sectors.itemText (self.sectors.currentIndex ()))
+        newNode = Node (name = self.idtext.displayText(), ip = self.addrtext.displayText(), \
+                        typeNode = self.types.itemData (self.types.currentIndex ()), \
+                        sector = self.sectors.itemText (self.sectors.currentIndex ()))
 
         appended = self.controller.appendNode (newNode)
 
         if appended:
-            nodes = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()))
+            nodes = self.controller.getNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()), registered = True)
             self.nodeTableModel.setData (nodes)
         else:
             QMessageBox (QMessageBox.Warning, "Failed!", "IP address already in use!", QMessageBox.Ok, self).open ()
@@ -149,13 +150,13 @@ class NodeDialog (QDialog):
 
             selectedRow = self.nodeTable.selectedIndexes ()[0].row ()
 
-            removeNode = entity.entities.Node (name = self.nodeTableModel.nodes [selectedRow].name, \
-                                               ip = self.nodeTableModel.nodes [selectedRow].ipAddress, \
-                                               typeNode = self.nodeTableModel.nodes [selectedRow].type, \
-                                               sector = self.nodeTableModel.nodes [selectedRow].sector)
+            removeNode = Node (name = self.nodeTableModel.nodes [selectedRow].name, \
+                               ip = self.nodeTableModel.nodes [selectedRow].ipAddress, \
+                               typeNode = self.nodeTableModel.nodes [selectedRow].type, \
+                               sector = self.nodeTableModel.nodes [selectedRow].sector)
 
             self.controller.removeNodeFromSector (removeNode)
-            nodes = self.controller.fetchNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()))
+            nodes = self.controller.getNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()), registered = True)
             self.nodeTableModel.setData (nodes)
             self.nodeTable.clearSelection ()
 
@@ -186,5 +187,4 @@ class NodeDialog (QDialog):
     def closeEvent (self, args):
 
         self.scanning = False
-
         QDialog.closeEvent (self, args)

@@ -1,13 +1,15 @@
+from common.entity.entities import Sector
+from gui.controller import GUIController
+from gui.typeDialog import TypeDialog
+from gui.nodeDialog import NodeDialog
+from gui.tab import MonitorTab
+
 from PyQt4.QtGui import QMainWindow,\
     QGridLayout, QLabel, QPushButton, QTableView, QAbstractItemView, QInputDialog,\
     QTabWidget, QTextEdit, QVBoxLayout
 
 from PyQt4.QtCore import *
 from PyQt4.Qt import QWidget, QLineEdit, QColor, QBrush
-
-import gui.typeDialog
-import gui.nodeDialog
-import gui.tab
 
 import threading
 
@@ -16,11 +18,11 @@ class MonitorInterface (QMainWindow):
     WIDTH = 1600
     HEIGHT = 1200
 
-    def __init__(self, parent = None, controller = None):
+    def __init__(self, parent = None):
 
         QMainWindow.__init__(self, parent)
 
-        self.controller = controller
+        self.controller = GUIController ()
 
         self.menubar = self.menuBar()
         self.editMenu = self.menubar.addMenu('&Edit')
@@ -50,8 +52,9 @@ class MonitorInterface (QMainWindow):
         self.tabs.setTabPosition (QTabWidget.North)
         self.tabs.setTabShape (QTabWidget.Rounded)
 
-        for i in self.controller.sectors:
-            self.tabs.insertTab (self.tabs.count (), gui.tab.MonitorTab (parent = self.tabs, sector = str(i), controller = self.controller), str(i))
+        for i in Sector.sectors ():
+            self.tabs.insertTab (self.tabs.count (), MonitorTab (parent = self.tabs, sector = str(i), \
+                                                                 controller = self.controller), str(i))
 
         self.widgetbox.addWidget (self.tabs)
         self.centralwidget.setLayout (self.widgetbox)
@@ -62,15 +65,15 @@ class MonitorInterface (QMainWindow):
         self.setGeometry (500, 500, MonitorInterface.WIDTH, MonitorInterface.HEIGHT)
 
     def appendType (self):
-        typeDialog = gui.typeDialog.TypeDialog (controller = self.controller)
+        typeDialog = TypeDialog (controller = self.controller)
         typeDialog.show ()
 
     def appendNode (self):
-        nodeDialog = gui.nodeDialog.NodeDialog (controller = self.controller)
+        nodeDialog = NodeDialog (controller = self.controller)
         nodeDialog.show ()
 
     def stopAll (self):
-        self.controller.scanNodes = False
+        self.controller.stop ()
 
     def closeEvent (self, evt):
         self.stopAll ()

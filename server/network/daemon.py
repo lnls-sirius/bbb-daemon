@@ -1,9 +1,10 @@
-import entity.entities
+from common.entity.entities import Command, Node, NodeState, Type
+
 import socket
 import struct
 import threading
 
-class NetDaemon ():
+class DaemonHostListener ():
 
     def __init__ (self, serverBindPort = 9876, controller = None):
 
@@ -20,15 +21,28 @@ class NetDaemon ():
 
     def process (self, connection, addr):
 
-        # First 4 bytes are the command id
-        command = struct.unpack ("!i", connection.recv(4)) [0]
-        print (command)
+        connectionAlive = True
 
-        if command == entity.entities.Command.PING:
-            self.controller.updateHostCounterByAddress (address = addr)
-        if command == entity.entities.Command.EXIT:
-            print ("Exiting")
-            return
+        while connectionAlive and self.listening:
+
+            try:
+                # First 4 bytes are the command id
+                command = struct.unpack ("!i", connection.recv(4)) [0]
+
+                if command == Command.PING:
+                    name = struct.unpack ("=32s", connection.recv(32)) [0].decode("utf-8").strip ()
+                    hostType = struct.unpack ("=32s", connection.recv(32)) [0].decode("utf-8").strip ()
+                    self.controller.updateHostCounterByAddress (address = addr [0], name = name, hostType = hostType)
+                if command == Command.EXIT:
+                    print ("Exiting")
+                    return
+
+            except Exception as e:
+                print ("Lost connection with host " + addr [0])
+                print (e)
+                connectionAlive = False
+
+        connection.close ()
 
     def listen (self):
 
@@ -50,5 +64,5 @@ class NetDaemon ():
         # In order to close the socket and exit from the accept () function, emulate a new connection
         self.shutdownSocket = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
         self.shutdownSocket.connect (("0.0.0.0",  self.port))
-        self.shutdownSocket.send (struct.pack ("!i", entity.entities.Command.EXIT))
+        self.shutdownSocket.send (struct.pack ("!i", Command.EXIT))
         self.shutdownSocket.close ()
