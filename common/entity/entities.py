@@ -51,7 +51,7 @@ class Node ():
     """
 
     def __init__ (self, name = "r0n0", ip = "10.128.0.0", state = NodeState.DISCONNECTED, typeNode = None, sector = 1, counter = 0):
-
+    
         self.name = name
         self.ipAddress = ip
         self.state = state
@@ -61,43 +61,20 @@ class Node ():
 
         self.counter = counter
 
-        # Since we are working in a multi-thread environment, a mutex control is required
-        self.stateMutex = threading.Lock()
-
     # Change the current state of the object. Refer to the Control_Node_State class
     def changeState (self, state):
-
-        self.stateMutex.acquire()
-
         self.state = state
-
-        self.stateMutex.release()
 
     # Returns True if the state is Control_Node_State.CONNECTED
     def isConnected (self):
+        return (self.state != NodeState.DISCONNECTED)
 
-        self.info_mutex.acquire()
-
-        conn = (self.state != NodeState.DISCONNECTED)
-
-        self.info_mutex.release()
-
-        return conn
+    def __eq__(self, other): 
+        return self.name == other.name or self.ipAddress == other.ipAddress
 
     # Returns the string representation of the object
     def __str__ (self):
-
-        self.stateMutex.acquire()
-
-        r_str = "Name: %s, IP Address: %s, Current state: %s" \
-                % (self.name, self.ipAddress, NodeState.toString (self.state))
-
-        self.stateMutex.release()
-
-        return r_str
-
-    def __dict__ (self):
-        return {"name" : self.name, "ip" : self.ipAddress, "state": self.state, "type" : self.type.__dict__ (), "sector" : self.sector}
+        return "Name: %s, IP Address: %s, Current state: %s" % (self.name, self.ipAddress, NodeState.toString (self.state))
 
 class Type ():
     """ This class provides a wrapper for host types. """
@@ -108,8 +85,8 @@ class Type ():
         self.color = color
         self.description = description
 
-    def __dict__ (self):
-        return {"name" : self.name, "color" : self.color, "description" : self.description}
+    def __eq__(self, other): 
+        return self.name == other.name
 
     def __str__ (self):
-        return str (self.__dict__())
+        return str (self.__dict__)
