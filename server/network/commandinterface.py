@@ -1,6 +1,6 @@
 from common.entity.entities import Command, Node, NodeState, Type
 
-import json
+import pickle
 import socket
 import struct
 import threading
@@ -25,36 +25,26 @@ class CommandInterface ():
         return struct.unpack ("!i", connection.recv(4)) [0]
 
     @staticmethod
-    def recvData (connection, delimiter = "\n"):
-
-        data = ""
-        byte = connection.recv (1).decode("utf-8")
-        while byte != "\n":
-            data = data + byte
-            byte = connection.recv (1).decode("utf-8")
-
-        return data
+    def recvData (connection):
+        dataSize = struct.unpack ("!i", connection.recv(4)) [0]
+        return connection.recv (dataSize)
 
     @staticmethod
     def recvNode (connection):
-
-        nodeDict = json.loads (CommandInterface.recvData (connection))
-        typeDict = nodeDict ["type"]
-        return Node (name = nodeDict ["name"], ip = nodeDict ["ip"], state = nodeDict ["state"], sector = nodeDict ["sector"], \
-                     typeNode = Type (name = typeDict ["name"], color = typeDict ["color"], description = typeDict ["description"]))
+        return pickle.loads (CommandInterface.recvData (connection))
 
     @staticmethod
     def recvType (connection):
-        typeDict = json.loads (CommandInterface.recvData (connection))
-        return Type (name = typeDict ["name"], color = typeDict ["color"], description = typeDict ["description"])
+        return pickle.loads (CommandInterface.recvData (connection))
 
     @staticmethod
     def sendCommand (connection, command = Command.EXIT):
         return connection.send (struct.pack ("!i", command))
 
     @staticmethod
-    def sendData (connection, data, delimiter = "\n"):
-        return connection.send (bytearray (data + delimiter, encoding = "utf-8"))
+    def sendData (connection, data):
+        connection.send (struct.pack ("!i", len(data)))
+        connection.send (data)
 
     def process (self, connection, addr):
 
@@ -67,12 +57,12 @@ class CommandInterface ():
                 command = CommandInterface.recvCommand (connection)
 
                 if command == Command.GET_TYPES:
+
                     types = self.controller.fetchTypes ()
 
                     for t in types:
-                        serializedType = json.dumps (t.__dict__ ())
                         CommandInterface.sendCommand (connection, Command.TYPE)
-                        CommandInterface.sendData (connection, serializedType)
+                        CommandInterface.sendData (connection, pickle.dumps (t))
 
                     CommandInterface.sendCommand (connection, Command.END)
 
@@ -81,11 +71,12 @@ class CommandInterface ():
                     self.controller.appendType (newType)
 
                 if command == Command.REMOVE_TYPE:
-                    typeName = CommandInterface.recvData (connection)
+                    typeName = pickle.loads (CommandInterface.recvData (connection))
+                    print (typeName)
                     self.controller.removeType (typeName)
 
                 if command == Command.GET_REG_NODES_SECTOR or command == Command.GET_UNREG_NODES_SECTOR:
-                    sector = CommandInterface.recvData (connection)
+                    sector = pickle.loads (CommandInterface.recvData (connection))
 
                     if command == Command.GET_REG_NODES_SECTOR:
                         nodes = self.controller.getRegisteredNodesFromSector (sector)
@@ -93,9 +84,8 @@ class CommandInterface ():
                         nodes = self.controller.getUnregisteredNodesFromSector (sector)
 
                     for node in nodes:
-                        serializedNode = json.dumps (node.__dict__ ())
                         CommandInterface.sendCommand (connection, Command.NODE)
-                        CommandInterface.sendData (connection, serializedNode)
+                        CommandInterface.sendData (connection, pickle.dumps (node))
 
                     CommandInterface.sendCommand (connection, Command.END)
 
@@ -111,9 +101,8 @@ class CommandInterface ():
                     print ("Exiting")
                     return
 
-            except Exception as e:
+            except socket.error:
                 print ("Lost connection with host " + addr [0])
-                print (e)
                 connectionAlive = False
 
         connection.close ()
