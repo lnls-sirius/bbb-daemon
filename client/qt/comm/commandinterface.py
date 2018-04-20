@@ -1,8 +1,7 @@
 from common.entity.entities import Command, Node, NodeState, Type
+from common.network.utils import NetUtils
 
-import pickle
 import socket
-import struct
 import time
 import threading
 import traceback
@@ -42,26 +41,6 @@ class CommandInterface ():
 
         return True
 
-    def sendCommand (self, command = Command.EXIT):
-        self.interfaceSocket.send (struct.pack ("!i", command))
-
-    def recvCommand (self):
-        return struct.unpack ("!i", self.interfaceSocket.recv(4)) [0]
-
-    def sendData (self, data):
-        self.interfaceSocket.send (struct.pack ("!i", len(data)))
-        self.interfaceSocket.send (data)
-
-    def recvData (self):
-        dataSize = struct.unpack ("!i", self.interfaceSocket.recv(4)) [0]
-        return self.interfaceSocket.recv (dataSize)
-
-    def recvNode (self):
-        return pickle.loads (self.recvData ())
-
-    def recvType (self):
-        return pickle.loads (self.recvData ())
-
     def appendType (self, newType):
 
         self.connection = self.connect ()
@@ -72,14 +51,13 @@ class CommandInterface ():
         self.connectionLock.acquire ()
 
         try:
-            self.sendCommand (Command.APPEND_TYPE)
-            self.sendData (pickle.dumps (newType))
+            NetUtils.sendCommand (self.interfaceSocket, Command.APPEND_TYPE)
+            NetUtils.sendCommand (self.interfaceSocket, Command.TYPE)
+            NetUtils.sendObject (self.interfaceSocket, newType)
             success = True
         except socket.error:
             self.connection = None
             success = False
-        finally:
-            self.interfaceSocket.close ()
 
         self.connectionLock.release ()
 
@@ -95,8 +73,8 @@ class CommandInterface ():
         self.connectionLock.acquire ()
 
         try:
-            self.sendCommand (Command.REMOVE_TYPE)
-            self.sendData (pickle.dumps(typeName))
+            NetUtils.sendCommand (self.interfaceSocket,Command.REMOVE_TYPE)
+            NetUtils.sendObject (self.interfaceSocket, typeName)
         except socket.error:
             self.connection = None
 
@@ -113,13 +91,13 @@ class CommandInterface ():
 
         try:
             types = []
-            self.sendCommand (Command.GET_TYPES)
-            command = self.recvCommand ()
+            NetUtils.sendCommand (self.interfaceSocket, Command.GET_TYPES)
+            command = NetUtils.recvCommand (self.interfaceSocket)
             while command != Command.END:
                 if command == Command.TYPE:
-                    types.append (self.recvType())
+                    types.append (NetUtils.recvObject (self.interfaceSocket))
 
-                command = self.recvCommand ()
+                command = NetUtils.recvCommand (self.interfaceSocket)
         except socket.error:
             types = []
             self.connection = None
@@ -138,18 +116,19 @@ class CommandInterface ():
 
         try:
             if registered:
-                self.sendCommand (Command.GET_REG_NODES_SECTOR)
+                NetUtils.sendCommand (self.interfaceSocket, Command.GET_REG_NODES_SECTOR)
             else:
-                self.sendCommand (Command.GET_UNREG_NODES_SECTOR)
+                NetUtils.sendCommand (self.interfaceSocket, Command.GET_UNREG_NODES_SECTOR)
 
-            self.sendData (pickle.dumps(sector))
+            NetUtils.sendObject (self.interfaceSocket,  sector)
 
             nodes = []
-            command = self.recvCommand ()
+            command = NetUtils.recvCommand (self.interfaceSocket)
             while command != Command.END:
                 if command == Command.NODE:
-                    nodes.append (self.recvNode())
-                command = self.recvCommand ()
+                    nodes.append (NetUtils.recvObject (self.interfaceSocket))
+
+                command = NetUtils.recvCommand (self.interfaceSocket)
         except socket.error:
             nodes = []
             self.connection = None
@@ -167,8 +146,8 @@ class CommandInterface ():
         self.connectionLock.acquire ()
 
         try:
-            self.sendCommand (Command.APPEND_NODE)
-            self.sendData (pickle.dumps (node))
+            NetUtils.sendCommand (self.interfaceSocket, Command.APPEND_NODE)
+            NetUtils.sendObject (self.interfaceSocket, node)
             success = True
         except socket.error:
             success = False
@@ -188,9 +167,9 @@ class CommandInterface ():
         self.connectionLock.acquire ()
 
         try:
-            self.sendCommand (Command.REMOVE_NODE)
-            self.sendCommand (Command.NODE)
-            self.sendData (pickle.dumps (node))
+            NetUtils.sendCommand (self.interfaceSocket, Command.REMOVE_NODE)
+            NetUtils.sendCommand (self.interfaceSocket, Command.NODE)
+            NetUtils.sendObject (self.interfaceSocket, node)
             success = True
         except socket.error:
             success = False
