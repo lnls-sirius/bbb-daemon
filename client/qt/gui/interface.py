@@ -27,12 +27,12 @@ class MonitorInterface (QMainWindow):
         self.menubar = self.menuBar()
         self.editMenu = self.menubar.addMenu('&Edit')
 
-        self.addType = self.editMenu.addAction('Append &type')
+        self.addType = self.editMenu.addAction('&Types Management')
         self.addType.setShortcut("Ctrl+T")
         self.addType.triggered.connect (self.appendType)
         self.addType.setShortcutContext(Qt.ApplicationShortcut)
 
-        self.addNode = self.editMenu.addAction('Append &node')
+        self.addNode = self.editMenu.addAction('&Nodes Management')
         self.addNode.setShortcut("Ctrl+N")
         self.addNode.triggered.connect (self.appendNode)
         self.addNode.setShortcutContext(Qt.ApplicationShortcut)
