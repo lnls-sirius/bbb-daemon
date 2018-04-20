@@ -12,39 +12,53 @@ class RedisPersistence ():
         self.typesListMutex = threading.Lock ()
         self.nodesListMutex = threading.Lock ()
 
-    def appendType (self, newType = None):
-
-        typesList = self.fetchTypes ()
+    def appendType (self, nType = None):
 
         self.typesListMutex.acquire ()
 
-        for index, t in enumerate (typesList):
-            if t.name == newType.name:
-                self.typesListMutex.release ()
-                return self.db.lset ("types", index, str (newType.__dict__ ()))
+        if not self.db.exists (nType.name):
+            self.db.lpush ("types", nType.name)
 
-        success = self.db.lpush ("types", str (newType.__dict__ ()))
+        success = self.db.set (nType.name, str ({k: vars (nType)[k] for k in ("description", "color")}))
 
         self.typesListMutex.release ()
 
         return success
 
-    def appendNode (self, newNode) :
-
-        nodes = self.fetchNodesFromSector (newNode.sector)
+    def appendNode (self, nNode = None) :
 
         self.nodesListMutex.acquire ()
 
-        for index, node in enumerate(nodes):
-            if node.name == newNode.name or node.ipAddress == newNode.ipAddress:
+        # Trying to add a node that exists in other sector
+        if self.db.exists (nNode.name):
+            node = eval (self.db.get (nNode.name))
+            if nNode.sector != node ["sector"]:
                 self.nodesListMutex.release ()
-                return (index, self.db.lset (newNode.sector, index, str (newNode.__dict__ ())))
+                return False
 
-        success = self.db.lpush (newNode.sector, str (newNode.__dict__ ()))
+        if self.db.exists (nNode.ipAddress):
+            nodeName = self.db.get (nNode.ipAddress).decode ("utf-8")
+            node = eval (self.db.get (nodeName))
+
+            # Trying to add a node that exists in other sector
+            if nNode.sector != node ["sector"]:
+                self.nodesListMutex.release ()
+                return False
+
+            self.db.delete (nodeName)
+            self.db.lrem (name = nNode.sector, value = nodeName, count = 0)
+
+        if not self.db.exists (nNode.name):
+            self.db.lpush (nNode.sector, nNode.name)
+
+        nodeInfo = {"ipAddress" : nNode.ipAddress, "type" : nNode.type.name, "sector" : nNode.sector}
+
+        success = self.db.set (nNode.name, str (nodeInfo))
+        success = self.db.set (nNode.ipAddress, nNode.name)
 
         self.nodesListMutex.release ()
 
-        return (-1, success)
+        return success
 
     def fetchTypes (self):
 
@@ -52,52 +66,15 @@ class RedisPersistence ():
 
         typesList = []
 
-        for t in self.db.lrange ("types", 0, -1):
-            tDict = eval (t)
-            typesList.append (Type (name = tDict["name"], \
-                                    color = tDict ["color"], \
-                                    description = tDict ["description"]))
+        for tName in self.db.lrange ("types", 0, -1):
+            tName = tName.decode ("utf-8")
+            typeInfo = eval (self.db.get(tName))
+            typesList.append (Type (name = tName, color = typeInfo ["color"], description = typeInfo ["description"]))
 
         self.typesListMutex.release ()
 
         return typesList
 
-    def removeType (self, typeName):
-
-        typesList = self.fetchTypes ()
-
-        self.typesListMutex.acquire ()
-
-        success = False
-
-        for index, t in enumerate (typesList):
-            if t.name == typeName:
-                success = self.db.lset ("types", index, "_DELETE_")
-                break
-
-        print (self.db.lrem (name = "types", value = "_DELETE_", count = 0))
-
-        self.typesListMutex.release ()
-
-        return False
-
-    def removeNodeFromSector (self, node):
-
-        nodes = self.fetchNodesFromSector (node.sector)
-
-        self.nodesListMutex.acquire ()
-        indexes = []
-
-        for index, n in enumerate (nodes):
-            if node.name == n.name:
-                self.db.lset (node.sector, index, "_DELETE_")
-                indexes.append (index)
-
-        count = self.db.lrem (name = node.sector, value = "_DELETE_", count = 0)
-
-        self.nodesListMutex.release ()
-
-        return count, indexes
 
     def fetchNodesFromSector (self, sector = "1"):
 
@@ -107,16 +84,39 @@ class RedisPersistence ():
         nodes = []
 
         for nodeDb in nodesDb:
+            nName = nodeDb.decode ("utf-8")
+            nodeInfo = eval (self.db.get(nName))
+            typeInfo = eval(self.db.get(nodeInfo ["type"]))
+            nodeType = Type (name = nodeInfo ["type"], color = typeInfo ["color"], description = typeInfo ["description"])
 
-            nodeDict = eval (nodeDb)
-            nodeType = Type (name = nodeDict ["type"]["name"], \
-                             color = nodeDict ["type"]["color"], \
-                             description = nodeDict ["type"]["description"])
+            nodes.append (Node (name = nName, ip = nodeInfo ["ipAddress"], typeNode = nodeType, sector = sector))
 
-            node = Node (name = nodeDict ["name"], ip = nodeDict ["ip"], \
-                         typeNode = nodeType, sector = nodeDict ["sector"])
-            nodes.append (node)
+        self.nodesListMutex.release ()
+        return nodes
+
+    def removeType (self, typeName):
+
+        self.typesListMutex.acquire ()
+
+        if self.db.exists (typeName):
+            self.db.delete (typeName)
+            self.db.lrem (name = "types", value = typeName, count = 0)
+
+        self.typesListMutex.release ()
+
+    def removeNodeFromSector (self, node):
+
+        self.nodesListMutex.acquire ()
+
+        print (node)
+
+        count = 0
+
+        if self.db.exists (node.name):
+            self.db.delete (node.name)
+            self.db.delete (node.ipAddress)
+            count = self.db.lrem (name = node.sector, value = node.name, count = 0)
 
         self.nodesListMutex.release ()
 
-        return nodes
+        return count
