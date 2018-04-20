@@ -1,8 +1,9 @@
 from common.entity.entities import Command, Node, NodeState, Type
 
-import json
+import pickle
 import socket
 import struct
+import time
 import threading
 import traceback
 
@@ -14,6 +15,7 @@ class CommandInterface ():
         self.port = serverPort
 
         self.interfaceSocket = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
+        self.interfaceSocket.settimeout(10)
 
         self.connectionLock = threading.Lock ()
         self.connection = False
@@ -23,7 +25,7 @@ class CommandInterface ():
 
         if not self.connection:
             self.connectionLock.acquire ()
-            attempts = 5
+            attempts = 1
             while attempts > 0:
                 try:
                     print (self.serverAddress + " " + str(self.port))
@@ -46,30 +48,19 @@ class CommandInterface ():
     def recvCommand (self):
         return struct.unpack ("!i", self.interfaceSocket.recv(4)) [0]
 
-    def sendData (self, data, delimiter = "\n"):
-        return self.interfaceSocket.send (bytearray (data + delimiter, encoding = "utf-8"))
+    def sendData (self, data):
+        self.interfaceSocket.send (struct.pack ("!i", len(data)))
+        self.interfaceSocket.send (data)
 
-    def recvData (self, delimiter = "\n"):
-
-        data = ""
-        byte = self.interfaceSocket.recv (1).decode("utf-8")
-        while byte != "\n":
-            data = data + byte
-            byte = self.interfaceSocket.recv (1).decode("utf-8")
-
-        return data
+    def recvData (self):
+        dataSize = struct.unpack ("!i", self.interfaceSocket.recv(4)) [0]
+        return self.interfaceSocket.recv (dataSize)
 
     def recvNode (self):
-
-        nodeDict = json.loads (self.recvData ())
-        typeDict = nodeDict ["type"]
-        return Node (name = nodeDict ["name"], ip = nodeDict ["ip"], state = nodeDict ["state"], sector = nodeDict ["sector"], \
-                     typeNode = Type (name = typeDict ["name"], color = typeDict ["color"], description = typeDict ["description"]))
+        return pickle.loads (self.recvData ())
 
     def recvType (self):
-
-        typeDict = json.loads (self.recvData ())
-        return Type (name = typeDict ["name"], color = typeDict ["color"], description = typeDict ["description"])
+        return pickle.loads (self.recvData ())
 
     def appendType (self, newType):
 
@@ -80,12 +71,19 @@ class CommandInterface ():
 
         self.connectionLock.acquire ()
 
-        self.sendCommand (Command.APPEND_TYPE)
-        self.sendData (json.dumps (newType.__dict__()))
+        try:
+            self.sendCommand (Command.APPEND_TYPE)
+            self.sendData (pickle.dumps (newType))
+            success = True
+        except socket.error:
+            self.connection = None
+            success = False
+        finally:
+            self.interfaceSocket.close ()
 
         self.connectionLock.release ()
 
-        return True
+        return success
 
     def removeType (self, typeName):
 
@@ -96,8 +94,11 @@ class CommandInterface ():
 
         self.connectionLock.acquire ()
 
-        self.sendCommand (Command.REMOVE_TYPE)
-        self.sendData (typeName)
+        try:
+            self.sendCommand (Command.REMOVE_TYPE)
+            self.sendData (pickle.dumps(typeName))
+        except socket.error:
+            self.connection = None
 
         self.connectionLock.release ()
 
@@ -110,15 +111,18 @@ class CommandInterface ():
 
         self.connectionLock.acquire ()
 
-        self.sendCommand (Command.GET_TYPES)
-
-        types = []
-        command = self.recvCommand ()
-        while command != Command.END:
-            if command == Command.TYPE:
-                types.append (self.recvType())
-
+        try:
+            types = []
+            self.sendCommand (Command.GET_TYPES)
             command = self.recvCommand ()
+            while command != Command.END:
+                if command == Command.TYPE:
+                    types.append (self.recvType())
+
+                command = self.recvCommand ()
+        except socket.error:
+            types = []
+            self.connection = None
 
         self.connectionLock.release ()
         return types
@@ -132,19 +136,23 @@ class CommandInterface ():
 
         self.connectionLock.acquire ()
 
-        if registered:
-            self.sendCommand (Command.GET_REG_NODES_SECTOR)
-        else:
-            self.sendCommand (Command.GET_UNREG_NODES_SECTOR)
+        try:
+            if registered:
+                self.sendCommand (Command.GET_REG_NODES_SECTOR)
+            else:
+                self.sendCommand (Command.GET_UNREG_NODES_SECTOR)
 
-        self.sendData (sector)
+            self.sendData (pickle.dumps(sector))
 
-        nodes = []
-        command = self.recvCommand ()
-        while command != Command.END:
-            if command == Command.NODE:
-                nodes.append (self.recvNode())
+            nodes = []
             command = self.recvCommand ()
+            while command != Command.END:
+                if command == Command.NODE:
+                    nodes.append (self.recvNode())
+                command = self.recvCommand ()
+        except socket.error:
+            nodes = []
+            self.connection = None
 
         self.connectionLock.release ()
         return nodes
@@ -158,13 +166,17 @@ class CommandInterface ():
 
         self.connectionLock.acquire ()
 
-        self.sendCommand (Command.APPEND_NODE)
-        self.sendData (json.dumps (node.__dict__()))
+        try:
+            self.sendCommand (Command.APPEND_NODE)
+            self.sendData (pickle.dumps (node))
+            success = True
+        except socket.error:
+            success = False
+            self.connection = None
 
         self.connectionLock.release ()
 
-        return True
-
+        return success
 
     def removeNodeFromSector (self, node):
 
@@ -175,9 +187,14 @@ class CommandInterface ():
 
         self.connectionLock.acquire ()
 
-        self.sendCommand (Command.REMOVE_NODE)
-        self.sendCommand (Command.NODE)
-        self.sendData (json.dumps (node.__dict__()))
+        try:
+            self.sendCommand (Command.REMOVE_NODE)
+            self.sendCommand (Command.NODE)
+            self.sendData (pickle.dumps (node))
+            success = True
+        except socket.error:
+            success = False
+            self.connection = None
 
         self.connectionLock.release ()
-        return True
+        return success
