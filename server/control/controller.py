@@ -67,8 +67,8 @@ class MonitorController ():
 
             time.sleep (1)
 
-    def appendNode (self, newNode = {}):
-        index, success = self.db.appendNode (newNode)
+    def appendNode (self, newNode = None):
+        success = self.db.appendNode (newNode)
 
         if success:
             sector = newNode.sector
@@ -76,15 +76,15 @@ class MonitorController ():
 
             newNode.counter = MonitorController.MAX_LOST_PING
 
-            if index > 0:
+            if newNode in self.nodes [sector]["configured"]:
+                index = self.nodes [sector]["configured"].index(newNode)
                 self.nodes [sector]["configured"][index] = newNode
             else:
                 self.nodes [sector]["configured"].append (newNode)
 
             # Verify unregistered nodes and remove from the list if they are disconnected
-            for unconfiguredNode in self.nodes [sector]["unconfigured"]:
-                if unconfiguredNode.name == newNode.name or unconfiguredNode.ipAddress == newNode.ipAddress:
-                    self.nodes [sector]["unconfigured"].remove (unconfiguredNode)
+            if newNode in self.nodes [sector]["unconfigured"]:
+                self.nodes [sector]["unconfigured"].remove (newNode)
 
             self.updateNodesLockList [sector].release ()
 
@@ -99,13 +99,13 @@ class MonitorController ():
                 return t
 
     def removeNodeFromSector (self, node):
-        count, indexes = self.db.removeNodeFromSector (node)
+        count = self.db.removeNodeFromSector (node)
 
         if count > 0:
             sector = node.sector
             self.updateNodesLockList [sector].acquire ()
 
-            self.nodes [sector]["configured"] = [i for j, i in enumerate(self.nodes [sector]["configured"]) if j not in indexes]
+            self.nodes [sector]["configured"] = [i for i in self.nodes [sector]["configured"] if i.name != node.name]
 
             self.updateNodesLockList [sector].release ()
 
@@ -132,7 +132,7 @@ class MonitorController ():
         sectorId = int (subnet / 10)
         sector = self.sectors [sectorId]
 
-        print (address)
+        print (name)
 
         self.updateNodesLockList [sector].acquire ()
 
@@ -151,7 +151,6 @@ class MonitorController ():
                 else:
                     node.state = NodeState.MISCONFIGURED
                     misconfiguredHost = True
-
                 break
 
         if not isHostConnected:
