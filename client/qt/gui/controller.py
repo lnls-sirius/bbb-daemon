@@ -22,46 +22,11 @@ class GUIController ():
         self.types = []
         self.typeLock = threading.Lock ()
 
-        self.scanThread = threading.Thread (target = self.scan)
-        self.scanning = True
-        self.scanThread.start ()
-
-    def scan (self):
-
-        while self.scanning:
-
-            self.typeLock.acquire ()
-            self.types = self.commandInterface.fetchTypes ()
-            self.typeLock.release ()
-
-            for sector in self.sectors:
-                self.updateNodesLockList [sector].acquire ()
-                self.nodes [sector]["configured"] = self.commandInterface.getNodesFromSector (sector, registered = True)
-                self.nodes [sector]["unconfigured"] = self.commandInterface.getNodesFromSector (sector, registered = False)
-                self.updateNodesLockList [sector].release ()
-
-            time.sleep (1)
-
     def getNodesFromSector (self, sector, registered = True):
-
-        self.typeLock.acquire ()
-
-        if registered:
-            nodeList = self.nodes [sector]["configured"]
-        else:
-            nodeList = self.nodes [sector]["unconfigured"]
-
-        self.typeLock.release ()
-
-        return nodeList
+        return self.commandInterface.getNodesFromSector (sector, registered)
 
     def fetchTypes (self):
-
-        self.typeLock.acquire ()
-        types = self.types
-        self.typeLock.release ()
-
-        return types
+        return self.commandInterface.fetchTypes ()
 
     def appendType (self, newType):
         return self.commandInterface.appendType (newType)
@@ -75,5 +40,4 @@ class GUIController ():
     def removeNodeFromSector (self, node):
         return self.commandInterface.removeNodeFromSector (node)
 
-    def stop (self):
-        self.scanning = False
+    def stop (self): pass
