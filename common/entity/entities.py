@@ -11,7 +11,7 @@ class Sector ():
 
 class Command ():
 
-    PING, REBOOT, EXIT, END, TYPE, GET_TYPES, APPEND_TYPE, REMOVE_TYPE, NODE, GET_REG_NODES_SECTOR, GET_UNREG_NODES_SECTOR, APPEND_NODE, REMOVE_NODE = range (13)
+    PING, REBOOT, EXIT, END, TYPE, GET_TYPES, APPEND_TYPE, REMOVE_TYPE, NODE, GET_REG_NODES_SECTOR, GET_UNREG_NODES_SECTOR, APPEND_NODE, REMOVE_NODE, SWITCH = range (14)
 
 class NodeState ():
     """ Valid states for any host in the Controls Group network. """
@@ -69,7 +69,10 @@ class Node ():
     def isConnected (self):
         return (self.state != NodeState.DISCONNECTED)
 
-    def __eq__(self, other): 
+    def __eq__(self, other):
+        if other == None:
+            return False
+
         return self.name == other.name or self.ipAddress == other.ipAddress
 
     # Returns the string representation of the object
@@ -86,6 +89,12 @@ class Type ():
         self.description = description
 
     def __eq__(self, other): 
+        if other == None:
+            return False
+
+        if type (other) == str:
+            return self.name == other
+
         return self.name == other.name
 
     def __str__ (self):
