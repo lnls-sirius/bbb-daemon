@@ -1,7 +1,7 @@
 from common.entity.entities import Command
 from common.network.utils import NetUtils
 
-import mutex
+import os
 import socket
 import struct
 import threading
@@ -16,9 +16,17 @@ class BBB ():
         self.configPath = path
         self.readParameters ()
 
+    def reboot (self):
+        os.system('reboot')
+
     def update (self, newName, newType):
         self.name = newName
-        self.name = newType
+        self.type = newType
+
+        f = open (self.configPath, "w")
+        f.write (self.name + "\n")
+        f.write (self.type + "\n")
+        f.close ()
 
     def readParameters (self):
 
@@ -94,11 +102,17 @@ class Daemon ():
             command = NetUtils.recvCommand (connection)
 
             if command == Command.SWITCH:
+                print ("Commando SWITCH")
                 typeName = NetUtils.recvObject (connection)
                 nodeName = NetUtils.recvObject (connection)
+
+                print (typeName + " " + nodeName)
+
                 self.bbb.update (nodeName, typeName)
 
-            if command == Command.REBOOT: pass
+            if command == Command.REBOOT:
+                self.pinging = False
+                self.bbb.reboot ()
 
         self.commandSocket.close ()
 
