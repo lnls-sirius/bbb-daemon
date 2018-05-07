@@ -8,7 +8,7 @@ import traceback
 
 class CommandInterface ():
 
-    def __init__ (self, serverAddress = "10.128.0.5", serverPort = 6789):
+    def __init__ (self, serverAddress = "10.0.6.65", serverPort = 6789):
 
         self.serverAddress = serverAddress
         self.port = serverPort
@@ -40,6 +40,41 @@ class CommandInterface ():
             return False
 
         return True
+
+    def switch (self, registeredNode, unregisteredNode):
+
+        self.connection = self.connect ()
+
+        if self.connection == False:
+            return False
+
+        self.connectionLock.acquire ()
+
+        try:
+            NetUtils.sendCommand (self.interfaceSocket, Command.SWITCH)
+            NetUtils.sendObject (self.interfaceSocket, registeredNode)
+            NetUtils.sendObject (self.interfaceSocket, unregisteredNode)
+        except socket.error:
+            self.connection = None
+
+        self.connectionLock.release ()
+
+    def reboot (self, registeredNode):
+
+        self.connection = self.connect ()
+
+        if self.connection == False:
+            return False
+
+        self.connectionLock.acquire ()
+
+        try:
+            NetUtils.sendCommand (self.interfaceSocket, Command.REBOOT)
+            NetUtils.sendObject (self.interfaceSocket, registeredNode)
+        except socket.error:
+            self.connection = None
+
+        self.connectionLock.release ()
 
     def appendType (self, newType):
 

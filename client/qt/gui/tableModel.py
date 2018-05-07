@@ -41,6 +41,9 @@ class MonitorTableModel (QAbstractTableModel):
 
                 return QBrush (QColor (135, 206, 250))
 
+            if node.state == NodeState.REBOOTING:
+                return QBrush (QColor (255, 255, 130))
+
             return QBrush (QColor (92, 255, 130))
 
         if role == Qt.TextAlignmentRole:
@@ -53,7 +56,9 @@ class MonitorTableModel (QAbstractTableModel):
             if col == 1:
                 return node.ipAddress
             if col == 2:
-                return node.type.name
+                if node.type != None:
+                    return node.type.name
+                return ""
 
             return NodeState.toString (node.state)
 
@@ -167,8 +172,10 @@ class NodeTableModel (QAbstractTableModel):
                 return node.name
             if col == 1:
                 return node.ipAddress
+            if node.type != None:
+                return node.type.name
 
-            return node.type.name
+            return ""
 
         return None
 

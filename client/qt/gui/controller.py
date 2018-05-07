@@ -22,6 +22,12 @@ class GUIController ():
         self.types = []
         self.typeLock = threading.Lock ()
 
+    def switch (self, registeredNode, unregisteredNode):
+        return self.commandInterface.switch (registeredNode, unregisteredNode)
+
+    def reboot (self, registeredNode):
+        return self.commandInterface.reboot (registeredNode)
+
     def getNodesFromSector (self, sector, registered = True):
         return self.commandInterface.getNodesFromSector (sector, registered)
 
