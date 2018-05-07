@@ -1,0 +1,18 @@
+[Unit]
+Description=BeagleBone Black Daemon Monitoring Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Restart=on-failure
+RestartSec=3
+Type=simple
+Environment=PYTHONPATH=/root/bbb-daemon/
+ExecStart=/usr/bin/python3 /root/bbb-daemon/daemon/daemon.py
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
+
+
