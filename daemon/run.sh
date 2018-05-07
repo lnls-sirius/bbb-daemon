@@ -2,4 +2,4 @@
 
 export PYTHONPATH="$(dirname $PWD)"
 # echo $PYTHONPATH
-python daemon.py
+python3 daemon.py

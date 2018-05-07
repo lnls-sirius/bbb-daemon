@@ -20,23 +20,33 @@ class BBB ():
         os.system('reboot')
 
     def update (self, newName, newType):
+
         self.name = newName
+
+        hostnameFile = open ("/etc/hostname", "w")
+        hostnameFile.write (self.name.replace (":", "-"))
+        hostnameFile.close ()
+
         self.type = newType
 
-        f = open (self.configPath, "w")
-        f.write (self.name + "\n")
-        f.write (self.type + "\n")
-        f.close ()
+        typeFile = open (self.configPath, "w")
+        typeFile.write (self.type + "\n")
+        typeFile.close ()
 
     def readParameters (self):
 
+        name = os.popen ("hostname", "r").readline () [:-1]
+
+        indexes = [i for i, letter in enumerate (name) if letter == "-"]
+
+        name = list (name)
+        if len(indexes) > 2:
+            name [indexes[1]] = ":"
+
+        self.name = "".join (name)
+
         f = open (self.configPath, "r")
-
-        self.name = f.readline ()[:-1]
-        print (self.name)
         self.type = f.readline ()[:-1]
-        print (self.type)
-
         f.close ()
         
 class Daemon ():
