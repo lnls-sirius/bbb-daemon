@@ -73,6 +73,16 @@ class CommandInterface ():
                     NetUtils.recvCommand (connection)
                     self.controller.removeNodeFromSector (NetUtils.recvObject (connection))
 
+                if command == Command.SWITCH:
+                    registeredNode = NetUtils.recvObject (connection)
+                    unRegisteredNode = NetUtils.recvObject (connection)
+                    self.controller.updateNode (unRegisteredNode, registeredNode)
+                    print ("Trocar " + str (registeredNode) + " por " + str (unRegisteredNode))
+
+                if command == Command.REBOOT:
+                    registeredNode = NetUtils.recvObject (connection)
+                    self.controller.rebootNode (registeredNode)
+
                 if command == Command.EXIT:
                     print ("Exiting")
                     return
@@ -103,5 +113,5 @@ class CommandInterface ():
         # In order to close the socket and exit from the accept () function, emulate a new connection
         self.shutdownSocket = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
         self.shutdownSocket.connect (("0.0.0.0", self.port))
-        self.shutdownSocket.send (struct.pack ("!i", Command.EXIT))
+        NetUtils.sendCommand (self.shutdownSocket, Command.EXIT)
         self.shutdownSocket.close ()

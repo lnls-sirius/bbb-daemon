@@ -45,13 +45,13 @@ class MonitorController ():
                 for fetchedNode in fetchedNodes:
                     for configuredNode in self.nodes [sector]["configured"]:
                         if fetchedNode.name == configuredNode.name:
-                            fetchedNode.counter = max (0, configuredNode.counter - 1)
-                            # A host is considered disconnected if its internal counter reaches 0
-                            if fetchedNode.counter == 0:
+                            fetchedNode.counter = max (-30, configuredNode.counter - 1)
+                            # A host is considered disconnected if its internal counter reaches 0 (connected) or -30 (rebooting)
+                            if (configuredNode.state != NodeState.REBOOTING and fetchedNode.counter <= 0) or \
+                               (configuredNode.state == NodeState.REBOOTING and fetchedNode.counter <= -30):
                                 fetchedNode.state = NodeState.DISCONNECTED
                             else:
                                 fetchedNode.state = configuredNode.state
-                                fetchedNode.misconfiguredColor = configuredNode.misconfiguredColor
 
                 # Updates configured nodes
                 self.nodes [sector]["configured"] = fetchedNodes
@@ -60,7 +60,6 @@ class MonitorController ():
                 for unconfiguredNode in self.nodes [sector]["unconfigured"]:
                     unconfiguredNode.counter = max (0, unconfiguredNode.counter - 1)
                     if unconfiguredNode.counter == 0:
-                        print ("node removed")
                         self.nodes [sector]["unconfigured"].remove (unconfiguredNode)
 
                 self.updateNodesLockList [sector].release ()
@@ -78,13 +77,17 @@ class MonitorController ():
 
             if newNode in self.nodes [sector]["configured"]:
                 index = self.nodes [sector]["configured"].index(newNode)
-                self.nodes [sector]["configured"][index] = newNode
+                self.nodes [sector]["configured"][index].name = newNode.name
+                self.nodes [sector]["configured"][index].ipAddress = newNode.ipAddress
             else:
                 self.nodes [sector]["configured"].append (newNode)
 
             # Verify unregistered nodes and remove from the list if they are disconnected
             if newNode in self.nodes [sector]["unconfigured"]:
-                self.nodes [sector]["unconfigured"].remove (newNode)
+                index = self.nodes [sector]["unconfigured"].index (newNode)
+                if newNode.name == self.nodes [sector]["unconfigured"][index].name and \
+                    newNode.ipAddress == self.nodes [sector]["unconfigured"][index].ipAddress:
+                    self.nodes [sector]["unconfigured"].remove (newNode)
 
             self.updateNodesLockList [sector].release ()
 
@@ -97,6 +100,7 @@ class MonitorController ():
         for t in self.fetchTypes ():
             if t.name == typeName:
                 return t
+        return None
 
     def removeNodeFromSector (self, node):
         count = self.db.removeNodeFromSector (node)
@@ -104,9 +108,7 @@ class MonitorController ():
         if count > 0:
             sector = node.sector
             self.updateNodesLockList [sector].acquire ()
-
             self.nodes [sector]["configured"] = [i for i in self.nodes [sector]["configured"] if i.name != node.name]
-
             self.updateNodesLockList [sector].release ()
 
         return count
@@ -126,13 +128,32 @@ class MonitorController ():
         self.updateNodesLockList [sector].release ()
         return nodes
 
+    def rebootNode (self, registeredNode):
+        self.daemon.sendCommand (command = Command.REBOOT, address = registeredNode.ipAddress)
+
+        sector = registeredNode.sector
+
+        self.updateNodesLockList [sector].acquire ()
+
+        try:
+            index = self.nodes [sector]["configured"].index (registeredNode)
+            self.nodes [sector]["configured"][index].state = NodeState.REBOOTING
+        except:
+            pass
+
+        self.updateNodesLockList [sector].release ()
+
+    def updateNode (self, oldNode, newNode):
+        self.daemon.sendCommand (command = Command.SWITCH, address = oldNode.ipAddress, node = newNode)
+        self.rebootNode (oldNode)
+
     def updateHostCounterByAddress (self, address, name, hostType) :
 
         subnet = int (address.split (".") [2])
         sectorId = int (subnet / 10)
         sector = self.sectors [sectorId]
 
-        print (name)
+        print (name + " " + hostType)
 
         self.updateNodesLockList [sector].acquire ()
 
@@ -155,7 +176,9 @@ class MonitorController ():
 
         if not isHostConnected:
 
-            hostType = self.findTypeByName (hostType)
+            availableType = self.findTypeByName (hostType)
+            if availableType == None:
+                availableType = Type (name = hostType, description = "Unknown type.")
 
             acknowlegedNode = False
 
@@ -165,7 +188,7 @@ class MonitorController ():
 
                     unconfigNode.counter = MonitorController.MAX_LOST_PING
                     unconfigNode.name = name
-                    unconfigNode.type = hostType
+                    unconfigNode.type = availableType
 
                     if misconfiguredHost:
                         unconfigNode.state = NodeState.MISCONFIGURED
@@ -178,7 +201,7 @@ class MonitorController ():
             if not acknowlegedNode:
 
                 newUnconfigNode = Node (name = name, ip = address, state = NodeState.CONNECTED, \
-                                        typeNode = hostType, sector = sector, counter = MonitorController.MAX_LOST_PING)
+                                        typeNode = availableType, sector = sector, counter = MonitorController.MAX_LOST_PING)
                 if misconfiguredHost:
                     newUnconfigNode.state = NodeState.MISCONFIGURED
 
