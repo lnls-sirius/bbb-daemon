@@ -50,14 +50,15 @@ class Node ():
         Each host has a symbolic name, a valid IP address, a type and the sector where it is located.
     """
 
-    def __init__ (self, name = "r0n0", ip = "10.128.0.0", state = NodeState.DISCONNECTED, typeNode = None, sector = 1, counter = 0):
-    
+    def __init__ (self, name = "r0n0", ip = "10.128.0.0", state = NodeState.DISCONNECTED, typeNode = None, sector = 1, counter = 0, pvPrefix = ""):
+
         self.name = name
         self.ipAddress = ip
         self.state = state
         self.misconfiguredColor = None
         self.type = typeNode
         self.sector = sector
+        self.pvPrefix = pvPrefix
 
         self.counter = counter
 
@@ -88,7 +89,7 @@ class Type ():
         self.color = color
         self.description = description
 
-    def __eq__(self, other): 
+    def __eq__(self, other):
         if other == None:
             return False
 
