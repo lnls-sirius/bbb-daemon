@@ -45,10 +45,10 @@ class MonitorController ():
                 for fetchedNode in fetchedNodes:
                     for configuredNode in self.nodes [sector]["configured"]:
                         if fetchedNode.name == configuredNode.name:
-                            fetchedNode.counter = max (-30, configuredNode.counter - 1)
-                            # A host is considered disconnected if its internal counter reaches 0 (connected) or -30 (rebooting)
+                            fetchedNode.counter = max (-90, configuredNode.counter - 1)
+                            # A host is considered disconnected if its internal counter reaches 0 (connected) or -90 (rebooting)
                             if (configuredNode.state != NodeState.REBOOTING and fetchedNode.counter <= 0) or \
-                               (configuredNode.state == NodeState.REBOOTING and fetchedNode.counter <= -30):
+                               (configuredNode.state == NodeState.REBOOTING and fetchedNode.counter <= -90):
                                 fetchedNode.state = NodeState.DISCONNECTED
                             else:
                                 fetchedNode.state = configuredNode.state

@@ -51,7 +51,7 @@ class RedisPersistence ():
         if not self.db.exists (nNode.name):
             self.db.lpush (nNode.sector, nNode.name)
 
-        nodeInfo = {"ipAddress" : nNode.ipAddress, "type" : nNode.type.name, "sector" : nNode.sector}
+        nodeInfo = {"ipAddress" : nNode.ipAddress, "type" : nNode.type.name, "sector" : nNode.sector, "prefix": nNode.pvPrefix}
 
         success = self.db.set (nNode.name, str (nodeInfo))
         success = self.db.set (nNode.ipAddress, nNode.name)
@@ -89,7 +89,12 @@ class RedisPersistence ():
             typeInfo = eval(self.db.get(nodeInfo ["type"]))
             nodeType = Type (name = nodeInfo ["type"], color = typeInfo ["color"], description = typeInfo ["description"])
 
-            nodes.append (Node (name = nName, ip = nodeInfo ["ipAddress"], typeNode = nodeType, sector = sector))
+            try:
+                prefix = nodeInfo ["prefix"]
+            except:
+                prefix = ""
+
+            nodes.append (Node (name = nName, ip = nodeInfo ["ipAddress"], typeNode = nodeType, sector = sector, pvPrefix = prefix))
 
         self.nodesListMutex.release ()
         return nodes
