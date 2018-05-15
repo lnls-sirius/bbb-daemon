@@ -153,7 +153,7 @@ class NodeTableModel (QAbstractTableModel):
         return len (self.nodes)
 
     def columnCount (self, *args, **kwargs):
-        return 3
+        return 4
 
     def data (self, index, role):
 
@@ -172,8 +172,10 @@ class NodeTableModel (QAbstractTableModel):
                 return node.name
             if col == 1:
                 return node.ipAddress
-            if node.type != None:
+            if col == 2 and node.type != None:
                 return node.type.name
+            if col == 3:
+                return node.pvPrefix
 
             return ""
 
@@ -192,5 +194,7 @@ class NodeTableModel (QAbstractTableModel):
                 return "IP"
             if section == 2:
                 return "Type"
+            if section == 3:
+                return "Prefix"
 
         return None

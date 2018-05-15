@@ -152,11 +152,9 @@ class MonitorTab (QWidget):
         while self.scanning:
             self.staticTableModel.setData (self.controller.getNodesFromSector (sector = self.sector, registered = True))
             self.dynamicTableModel.setData (self.controller.getNodesFromSector (sector = self.sector, registered = False))
-
             self.updateSignal.emit (self.tabIndex)
-
             self.updateButtons ()
-            time.sleep (1)
+            time.sleep (5)
 
     def hideEvent (self, evt):
         # self.scanning = False
@@ -167,15 +165,9 @@ class MonitorTab (QWidget):
 
     def resizeEvent (self, args):
 
-        self.staticTable.setColumnWidth(0, self.staticTable.size ().width () / 4 - 5);
-        self.staticTable.setColumnWidth(1, self.staticTable.size ().width () / 4);
-        self.staticTable.setColumnWidth(2, self.staticTable.size ().width () / 4);
-        self.staticTable.setColumnWidth(3, self.staticTable.size ().width () / 4);
-
-        self.dynamicTable.setColumnWidth(0, self.staticTable.size ().width () / 4 - 5);
-        self.dynamicTable.setColumnWidth(1, self.staticTable.size ().width () / 4);
-        self.dynamicTable.setColumnWidth(2, self.staticTable.size ().width () / 4);
-        self.dynamicTable.setColumnWidth(3, self.staticTable.size ().width () / 4);
+        for i in range (self.staticTableModel.columnCount ()):
+            self.staticTable.setColumnWidth(i, self.staticTable.size ().width () / self.staticTableModel.columnCount () - 1);
+            self.dynamicTable.setColumnWidth(i, self.dynamicTable.size ().width () / self.dynamicTableModel.columnCount () - 1);
 
         QWidget.resizeEvent (self, args)
 

@@ -14,6 +14,8 @@ class TypeDialog (QDialog):
     DIALOG_WIDTH = 1200
     DIALOG_HEIGHT = 600
 
+    UPDATE_TIME = 5
+
     def __init__ (self, parent = None, controller = None):
 
         super (TypeDialog, self).__init__ (parent)
@@ -149,7 +151,7 @@ class TypeDialog (QDialog):
         while self.scanning:
 
             self.typeTableModel.setData (self.controller.fetchTypes ())
-            time.sleep (1)
+            time.sleep (TypeDialog.UPDATE_TIME)
 
     def resizeEvent (self, args):
 

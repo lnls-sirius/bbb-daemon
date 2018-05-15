@@ -14,6 +14,8 @@ class NodeDialog (QDialog):
     DIALOG_WIDTH = 1200
     DIALOG_HEIGHT = 600
 
+    UPDATE_TIME = 5
+
     def __init__ (self, parent = None, controller = None):
 
         super (NodeDialog, self).__init__ (parent)
@@ -41,10 +43,13 @@ class NodeDialog (QDialog):
         self.submit = QPushButton ("+")
         self.submit.pressed.connect (self.appendNode)
 
+        self.prefixLabel = QLabel ("PV Prefix:")
+        self.prefix = QLineEdit ()
+
         self.inputLayout.addWidget (self.idlabel, 0, 0, 1, 1)
         self.inputLayout.addWidget (self.idtext, 0, 1, 1, 1)
         self.inputLayout.addWidget (self.typeslabel, 0, 2, 1, 1)
-        self.inputLayout.addWidget (self.types, 0, 3, 1, 2)
+        self.inputLayout.addWidget (self.types, 0, 3, 1, 1)
 
         self.inputLayout.addWidget (self.addrlabel, 1, 0, 1, 1)
         self.inputLayout.addWidget (self.addrtext, 1, 1, 1, 1)
@@ -52,7 +57,9 @@ class NodeDialog (QDialog):
         self.inputLayout.addWidget (self.sectorlabel, 1, 2, 1, 1)
         self.inputLayout.addWidget (self.sectors, 1, 3, 1, 1)
 
-        self.inputLayout.addWidget (self.submit, 1, 4, 1, 1)
+        self.inputLayout.addWidget (self.prefixLabel, 2, 0, 1, 1)
+        self.inputLayout.addWidget (self.prefix, 2, 1, 1, 1)
+        self.inputLayout.addWidget (self.submit, 2, 3, 1, 1)
 
         self.outerLayout = QVBoxLayout ()
         self.outerLayout.setContentsMargins (10, 10, 10, 10)
@@ -97,7 +104,7 @@ class NodeDialog (QDialog):
 
             self.nodeTableModel.setData (self.controller.getNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()), registered = True))
             self.updateTypes ()
-            time.sleep (1)
+            time.sleep (NodeDialog.UPDATE_TIME)
 
     def updateTypes (self):
 
@@ -123,9 +130,8 @@ class NodeDialog (QDialog):
 
     def resizeEvent (self, args):
 
-        self.nodeTable.setColumnWidth(0, self.nodeTable.size ().width () / 3 - 5);
-        self.nodeTable.setColumnWidth(1, self.nodeTable.size ().width () / 3);
-        self.nodeTable.setColumnWidth(2, self.nodeTable.size ().width () / 3);
+        for i in range (self.nodeTableModel.columnCount ()):
+            self.nodeTable.setColumnWidth(i, self.nodeTable.size ().width () / self.nodeTableModel.columnCount () - 1);
 
         QDialog.resizeEvent (self, args)
 
@@ -133,7 +139,8 @@ class NodeDialog (QDialog):
 
         newNode = Node (name = self.idtext.displayText(), ip = self.addrtext.displayText(), \
                         typeNode = self.types.itemData (self.types.currentIndex ()), \
-                        sector = self.sectors.itemText (self.sectors.currentIndex ()))
+                        sector = self.sectors.itemText (self.sectors.currentIndex ()), \
+                        pvPrefix = self.prefix.displayText())
 
         appended = self.controller.appendNode (newNode)
 
@@ -153,7 +160,8 @@ class NodeDialog (QDialog):
             removeNode = Node (name = self.nodeTableModel.nodes [selectedRow].name, \
                                ip = self.nodeTableModel.nodes [selectedRow].ipAddress, \
                                typeNode = self.nodeTableModel.nodes [selectedRow].type, \
-                               sector = self.nodeTableModel.nodes [selectedRow].sector)
+                               sector = self.nodeTableModel.nodes [selectedRow].sector, \
+                               pvPrefix = self.nodeTableModel.nodes [selectedRow].pvPrefix)
 
             self.controller.removeNodeFromSector (removeNode)
             nodes = self.controller.getNodesFromSector (sector = self.sectors.itemText (self.sectors.currentIndex ()), registered = True)
@@ -176,6 +184,7 @@ class NodeDialog (QDialog):
 
             self.idtext.setText (nodeObject.name)
             self.addrtext.setText (nodeObject.ipAddress)
+            self.prefix.setText (nodeObject.pvPrefix)
 
             items = [self.types.itemText(i) for i in range (self.types.count())]
             for index, item in enumerate (items):
