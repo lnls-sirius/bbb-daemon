@@ -1,49 +1,46 @@
+import threading
+
 from comm.commandinterface import CommandInterface
 from common.entity.entities import Sector
 
-import threading
-import time
 
-class GUIController ():
+class GUIController():
 
-    def __init__ (self):
+    def __init__(self, server = "localhost"):
+        self.commandInterface = CommandInterface(serverAddress = server)
 
-        self.commandInterface = CommandInterface ()
-
-        self.sectors = Sector.sectors ()
+        self.sectors = Sector.sectors()
 
         self.nodes = {}
         self.updateNodesLockList = {}
 
         for sector in self.sectors:
-            self.nodes [sector] = { "configured" : [], "unconfigured": [] }
-            self.updateNodesLockList [sector] = threading.Lock ()
+            self.nodes[sector] = {"configured": [], "unconfigured": []}
+            self.updateNodesLockList[sector] = threading.Lock()
 
         self.types = []
-        self.typeLock = threading.Lock ()
+        self.typeLock = threading.Lock()
 
-    def switch (self, registeredNode, unregisteredNode):
-        return self.commandInterface.switch (registeredNode, unregisteredNode)
+    def switch(self, registeredNode, unregisteredNode):
+        return self.commandInterface.switch(registeredNode, unregisteredNode)
 
-    def reboot (self, registeredNode):
-        return self.commandInterface.reboot (registeredNode)
+    def reboot(self, registeredNode):
+        return self.commandInterface.reboot(registeredNode)
 
-    def getNodesFromSector (self, sector, registered = True):
-        return self.commandInterface.getNodesFromSector (sector, registered)
+    def getNodesFromSector(self, sector, registered=True):
+        return self.commandInterface.getNodesFromSector(sector, registered)
 
-    def fetchTypes (self):
-        return self.commandInterface.fetchTypes ()
+    def fetchTypes(self):
+        return self.commandInterface.fetchTypes()
 
-    def appendType (self, newType):
-        return self.commandInterface.appendType (newType)
+    def appendType(self, newType):
+        return self.commandInterface.appendType(newType)
 
-    def removeType (self, typeName):
-        self.commandInterface.removeType (typeName)
+    def removeType(self, typeName):
+        self.commandInterface.removeType(typeName)
 
-    def appendNode (self, node):
-        return self.commandInterface.appendNode (node)
+    def appendNode(self, node):
+        return self.commandInterface.appendNode(node)
 
-    def removeNodeFromSector (self, node):
-        return self.commandInterface.removeNodeFromSector (node)
-
-    def stop (self): pass
+    def removeNodeFromSector(self, node):
+        return self.commandInterface.removeNodeFromSector(node)

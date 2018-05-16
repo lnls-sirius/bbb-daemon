@@ -1,50 +1,57 @@
-from common.entity.entities import Command, Node, NodeState, Type
-from PyQt4.QtGui import QTableView, QAbstractItemView
-from PyQt4.QtCore import *
-from PyQt4.Qt import QWidget, QLineEdit, QColor, QBrush
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 
-class MonitorTableModel (QAbstractTableModel):
+from common.entity.entities import NodeState
 
-    def __init__ (self, parent = None, data = []):
-        self.nodes = self.sortByAddress(data)
+
+class MonitorTableModel(QAbstractTableModel):
+
+    updateModel = pyqtSignal()
+
+    def updateData (self):
+        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), self.columnCount()), [Qt.EditRole])
+        self.layoutChanged.emit()
+
+    def __init__(self, parent=None, data=[]):
         QAbstractTableModel.__init__(self, parent)
-
-    def sortByAddress (self, data):
-        return sorted(data, key = lambda x: (x.state, x.ipAddress), reverse = False)
-
-    def setData (self, data):
         self.nodes = self.sortByAddress(data)
-        self.dataChanged.emit (self.index (0, 0), self.index (self.rowCount (), self.columnCount ()))
-        self.layoutChanged.emit ()
+        self.updateModel.connect(self.updateData)
+
+    def sortByAddress(self, data):
+        return sorted(data, key=lambda x: (x.state, x.ipAddress), reverse=False)
+
+    def setData(self, data):
+        self.nodes = self.sortByAddress(data)
+        self.updateModel.emit ()
 
     def rowCount(self, *args, **kwargs):
-        return len (self.nodes)
+        return len(self.nodes)
 
     def columnCount(self, *args, **kwargs):
         return 4
 
     def data(self, index, role):
 
-        row = index.row ()
-        col = index.column ()
-        node = self.nodes [row]
+        row = index.row()
+        col = index.column()
+        node = self.nodes[row]
 
-        if role == Qt.BackgroundRole :
+        if role == Qt.BackgroundRole:
 
             if node.state == NodeState.DISCONNECTED:
-                return QBrush (QColor (229, 85, 94))
+                return QBrush(QColor(229, 85, 94))
 
             if node.state == NodeState.MISCONFIGURED:
                 if node.misconfiguredColor != None:
                     color = node.misconfiguredColor
-                    return QBrush (QColor (color [0], color [1], color [2]))
+                    return QBrush(QColor(color[0], color[1], color[2]))
 
-                return QBrush (QColor (135, 206, 250))
+                return QBrush(QColor(135, 206, 250))
 
             if node.state == NodeState.REBOOTING:
-                return QBrush (QColor (255, 255, 130))
+                return QBrush(QColor(255, 255, 130))
 
-            return QBrush (QColor (92, 255, 130))
+            return QBrush(QColor(92, 255, 130))
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter | Qt.AlignVCenter;
@@ -60,11 +67,11 @@ class MonitorTableModel (QAbstractTableModel):
                     return node.type.name
                 return ""
 
-            return NodeState.toString (node.state)
+            return NodeState.toString(node.state)
 
         return None
 
-    def headerData(self, section, orientation, role = Qt.DisplayRole):
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
 
         if role != Qt.DisplayRole:
             return None
@@ -82,32 +89,38 @@ class MonitorTableModel (QAbstractTableModel):
 
         return None
 
-class TypeTableModel (QAbstractTableModel):
 
-    def __init__ (self, parent = None, data = None):
+class TypeTableModel(QAbstractTableModel):
 
-        QAbstractTableModel.__init__(self, parent)
-        self.types = data
+    updateModel = pyqtSignal()
 
-    def setData (self, data):
-        self.types = data
-        self.dataChanged.emit (self.index (0, 0), self.index (self.rowCount (), self.columnCount ()))
+    def updateData (self):
+        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), self.columnCount()))
         self.layoutChanged.emit ()
 
-    def rowCount (self, *args, **kwargs):
-        return len (self.types)
+    def __init__(self, parent=None, data=None):
+        QAbstractTableModel.__init__(self, parent)
+        self.types = data
+        self.updateModel.connect(self.updateData)
 
-    def columnCount (self, *args, **kwargs):
+    def setData(self, data):
+        self.types = data
+        self.updateModel.emit()
+
+    def rowCount(self, *args, **kwargs):
+        return len(self.types)
+
+    def columnCount(self, *args, **kwargs):
         return 2
 
-    def data (self, index, role):
+    def data(self, index, role):
 
-        row = index.row ()
-        col = index.column ()
-        typeNode = self.types [row]
+        row = index.row()
+        col = index.column()
+        typeNode = self.types[row]
 
         if role == Qt.BackgroundRole:
-            return QBrush (QColor (typeNode.color [0], typeNode.color [1], typeNode.color [2]))
+            return QBrush(QColor(typeNode.color[0], typeNode.color[1], typeNode.color[2]))
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter | Qt.AlignVCenter;
@@ -120,7 +133,7 @@ class TypeTableModel (QAbstractTableModel):
 
         return None
 
-    def headerData (self, section, orientation, role = Qt.DisplayRole):
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
 
         if role != Qt.DisplayRole:
             return None
@@ -134,35 +147,41 @@ class TypeTableModel (QAbstractTableModel):
 
         return None
 
-class NodeTableModel (QAbstractTableModel):
 
-    def __init__ (self, parent = None, data = None):
+class NodeTableModel(QAbstractTableModel):
+
+    updateModel = pyqtSignal()
+
+    def updateData (self):
+        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), self.columnCount()))
+        self.layoutChanged.emit()
+
+    def __init__(self, parent=None, data=None):
 
         QAbstractTableModel.__init__(self, parent)
-        self.nodes = self.sortByAddress (data)
+        self.nodes = self.sortByAddress(data)
+        self.updateModel.connect(self.updateData)
 
-    def sortByAddress (self, data):
-        return sorted(data, key = lambda x: x.ipAddress, reverse = False)
+    def sortByAddress(self, data):
+        return sorted(data, key=lambda x: x.ipAddress, reverse=False)
 
-    def setData (self, data):
-        self.nodes = self.sortByAddress (data)
-        self.dataChanged.emit (self.index (0, 0), self.index (self.rowCount (), self.columnCount ()))
-        self.layoutChanged.emit ()
+    def setData(self, data):
+        self.nodes = self.sortByAddress(data)
 
-    def rowCount (self, *args, **kwargs):
-        return len (self.nodes)
+    def rowCount(self, *args, **kwargs):
+        return len(self.nodes)
 
-    def columnCount (self, *args, **kwargs):
+    def columnCount(self, *args, **kwargs):
         return 4
 
-    def data (self, index, role):
+    def data(self, index, role):
 
         row = index.row()
         col = index.column()
-        node = self.nodes [row]
+        node = self.nodes[row]
 
         if role == Qt.BackgroundRole:
-            return QBrush (QColor (node.type.color [0], node.type.color [1], node.type.color [2]))
+            return QBrush(QColor(node.type.color[0], node.type.color[1], node.type.color[2]))
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter | Qt.AlignVCenter;
@@ -181,7 +200,7 @@ class NodeTableModel (QAbstractTableModel):
 
         return None
 
-    def headerData (self, section, orientation, role = Qt.DisplayRole):
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
 
         if role != Qt.DisplayRole:
             return None
