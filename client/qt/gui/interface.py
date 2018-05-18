@@ -15,11 +15,11 @@ class MonitorInterface(QMainWindow):
 
     updateIcon = pyqtSignal(int)
 
-    def __init__(self, server = "localhost"):
+    def __init__(self, server="localhost"):
 
         super().__init__()
 
-        self.controller = GUIController(server = server)
+        self.controller = GUIController(server=server)
 
         self.menubar = self.menuBar()
         self.editMenu = self.menubar.addMenu('&Edit')
@@ -83,10 +83,12 @@ class MonitorInterface(QMainWindow):
 
     def appendType(self):
         typeDialog = TypeDialog(controller=self.controller)
+        self.centerWindow(typeDialog)
         typeDialog.show()
 
     def appendNode(self):
         nodeDialog = NodeDialog(controller=self.controller)
+        self.centerWindow(nodeDialog)
         nodeDialog.show()
 
     def stopAll(self):
@@ -101,3 +103,9 @@ class MonitorInterface(QMainWindow):
     def exit(self):
         self.stopAll()
         self.close()
+
+    def centerWindow(self, windows_to_center):
+        qtRectangle = windows_to_center.frameGeometry()
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        windows_to_center.move(qtRectangle.topLeft())

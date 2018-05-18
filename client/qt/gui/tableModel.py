@@ -5,10 +5,9 @@ from common.entity.entities import NodeState
 
 
 class MonitorTableModel(QAbstractTableModel):
-
     updateModel = pyqtSignal()
 
-    def updateData (self):
+    def updateData(self):
         self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), self.columnCount()), [Qt.EditRole])
         self.layoutChanged.emit()
 
@@ -22,7 +21,7 @@ class MonitorTableModel(QAbstractTableModel):
 
     def setData(self, data):
         self.nodes = self.sortByAddress(data)
-        self.updateModel.emit ()
+        self.updateModel.emit()
 
     def rowCount(self, *args, **kwargs):
         return len(self.nodes)
@@ -91,12 +90,11 @@ class MonitorTableModel(QAbstractTableModel):
 
 
 class TypeTableModel(QAbstractTableModel):
-
     updateModel = pyqtSignal()
 
-    def updateData (self):
+    def updateData(self):
         self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), self.columnCount()))
-        self.layoutChanged.emit ()
+        self.layoutChanged.emit()
 
     def __init__(self, parent=None, data=None):
         QAbstractTableModel.__init__(self, parent)
@@ -111,7 +109,7 @@ class TypeTableModel(QAbstractTableModel):
         return len(self.types)
 
     def columnCount(self, *args, **kwargs):
-        return 2
+        return 4
 
     def data(self, index, role):
 
@@ -123,13 +121,17 @@ class TypeTableModel(QAbstractTableModel):
             return QBrush(QColor(typeNode.color[0], typeNode.color[1], typeNode.color[2]))
 
         if role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter | Qt.AlignVCenter;
+            return Qt.AlignCenter | Qt.AlignVCenter
 
         if role == Qt.DisplayRole:
             if col == 0:
                 return typeNode.name
-
-            return typeNode.description
+            elif col == 1:
+                return typeNode.repoUrl
+            elif col == 2:
+                return typeNode.rcLocalPath
+            else:
+                return typeNode.description
 
         return None
 
@@ -143,16 +145,19 @@ class TypeTableModel(QAbstractTableModel):
             if section == 0:
                 return "Name"
             elif section == 1:
+                return "Repository Url"
+            elif section == 2:
+                return "rc.local Path"
+            elif section == 3:
                 return "Description"
 
         return None
 
 
 class NodeTableModel(QAbstractTableModel):
-
     updateModel = pyqtSignal()
 
-    def updateData (self):
+    def updateData(self):
         self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), self.columnCount()))
         self.layoutChanged.emit()
 
@@ -184,14 +189,14 @@ class NodeTableModel(QAbstractTableModel):
             return QBrush(QColor(node.type.color[0], node.type.color[1], node.type.color[2]))
 
         if role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter | Qt.AlignVCenter;
+            return Qt.AlignCenter | Qt.AlignVCenter
 
         if role == Qt.DisplayRole:
             if col == 0:
                 return node.name
             if col == 1:
                 return node.ipAddress
-            if col == 2 and node.type != None:
+            if col == 2 and node.type is not None:
                 return node.type.name
             if col == 3:
                 return node.pvPrefix

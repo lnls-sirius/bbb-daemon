@@ -1,15 +1,13 @@
 import threading
 import time
 
-from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from common.entity.entities import NodeState, Node, Type
+from common.entity.entities import NodeState
 from gui.tableModel import MonitorTableModel
 
 
 class MonitorTab(QWidget):
-
     UPDATE_TIME = 5
 
     def __init__(self, parent=None, sector="1", controller=None, tabIndex=0, updateIcon=None):
@@ -59,10 +57,10 @@ class MonitorTab(QWidget):
         self.dynamicTable.setModel(self.dynamicTableModel)
         self.dynamicTable.verticalHeader().hide()
 
-        self.staticTable.horizontalHeader().setStretchLastSection (True)
+        self.staticTable.horizontalHeader().setStretchLastSection(True)
         self.staticTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-        self.dynamicTable.horizontalHeader().setStretchLastSection (True)
+        self.dynamicTable.horizontalHeader().setStretchLastSection(True)
         self.dynamicTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         self.staticTable.selectionChanged = self.staticSelectionChanged

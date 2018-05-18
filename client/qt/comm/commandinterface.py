@@ -5,9 +5,10 @@ import traceback
 from common.entity.entities import Command
 from common.network.utils import NetUtils
 
+
 class CommandInterface():
 
-    def __init__(self, serverAddress="localhost", serverPort=6789):
+    def __init__(self, serverAddress='10.0.6.70', serverPort=6789):
 
         self.serverAddress = serverAddress
         self.port = serverPort

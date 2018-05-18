@@ -1,15 +1,19 @@
+import os
+import shutil
 import threading
 import time
 
-from PyQt5.QtGui import *
+import git
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+
 from common.entity.entities import Type
 from gui.tableModel import TypeTableModel
 
 
 class TypeDialog(QDialog):
-    DIALOG_WIDTH = 1200
+    DIALOG_WIDTH = 800
     DIALOG_HEIGHT = 600
 
     UPDATE_TIME = 5
@@ -34,8 +38,11 @@ class TypeDialog(QDialog):
         self.description = QTextEdit()
         self.description.setMinimumHeight(85)
 
-        self.urlRcLocalLabel = QLabel("Rc Local URL:")
-        self.urlRcLocal = QLineEdit()
+        self.repoUrlLabel = QLabel("Repository URL:")
+        self.repoUrl = QLineEdit()
+
+        self.rcLocalPathLabel = QLabel("rc.local Relative Path:")
+        self.rcLocalPath = QLineEdit()
 
         self.buttons = QWidget()
         self.buttonsLayout = QGridLayout()
@@ -49,9 +56,13 @@ class TypeDialog(QDialog):
         self.submit = QPushButton("+")
         self.submit.pressed.connect(self.appendType)
 
+        self.checkUrl = QPushButton("Check Git URL")
+        self.checkUrl.pressed.connect(self.checkUrlAction)
+
         self.buttonsLayout.addWidget(QWidget(), 0, 0, 1, 5)
         self.buttonsLayout.addWidget(self.colorButton, 0, 5, 1, 1)
         self.buttonsLayout.addWidget(self.submit, 0, 6, 1, 1)
+        self.buttonsLayout.addWidget(self.checkUrl, 0, 7, 1, 1)
 
         self.buttons.setLayout(self.buttonsLayout)
 
@@ -69,18 +80,20 @@ class TypeDialog(QDialog):
         self.typeTableModel = TypeTableModel(self.typeTable, data=self.controller.fetchTypes())
         self.typeTable.setModel(self.typeTableModel)
 
-        self.typeTable.horizontalHeader().setStretchLastSection (True)
+        self.typeTable.horizontalHeader().setStretchLastSection(True)
         self.typeTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-        self.typeTable.setMinimumHeight(800)
-        self.typeTable.setMinimumWidth(500)
+        # self.typeTable.setMinimumHeight(800)
+        # self.typeTable.setMinimumWidth(500)
 
         self.labelTable = QLabel("Available types: (press [DEL] to remove)")
 
         self.inputLayout.addWidget(self.namelabel)
         self.inputLayout.addWidget(self.name)
-        self.inputLayout.addWidget(self.urlRcLocalLabel)
-        self.inputLayout.addWidget(self.urlRcLocal)
+        self.inputLayout.addWidget(self.repoUrlLabel)
+        self.inputLayout.addWidget(self.repoUrl)
+        self.inputLayout.addWidget(self.rcLocalPathLabel)
+        self.inputLayout.addWidget(self.rcLocalPath)
         self.inputLayout.addWidget(self.descriptionLabel)
         self.inputLayout.addWidget(self.description)
 
@@ -117,6 +130,8 @@ class TypeDialog(QDialog):
 
             self.name.clear()
             self.description.clear()
+            self.repoUrl.clear()
+            self.rcLocalPath.clear()
             self.typeTable.clearSelection()
             self.cdialog.setCurrentColor(QColor(255, 255, 0))
 
@@ -129,10 +144,40 @@ class TypeDialog(QDialog):
             typeObject = self.typeTableModel.types[selectedRow]
 
             self.name.setText(typeObject.name)
+            self.repoUrl.setText(typeObject.repoUrl)
+            self.rcLocalPath.setText(typeObject.rcLocalPath)
             self.description.setPlainText(typeObject.description)
             self.cdialog.setCurrentColor(QColor(typeObject.color[0], typeObject.color[1], typeObject.color[2]))
 
         QTableView.selectionChanged(self.typeTable, selected, deselected)
+
+    def checkUrlAction(self):
+        success, message = self.checkUrlFunc()
+        if success:
+            QMessageBox.about(self, "Success!", message)
+        else:
+            QMessageBox.about(self, "Failure!", message)
+
+    def checkUrlFunc(self):
+        url = self.repoUrl.displayText()
+        rc = self.rcLocalPath.displayText()
+        if rc is None or rc.strip() is None or url == "":
+            return False, "rc.local is not defined."
+        if url is None or url.strip() is None or url == "":
+            return False, "URL is not defined."
+        if not url.endswith(".git") or (not url.startswith("http://") and not url.startswith("https://")):
+            return False, "{} is not a valid git URL.".format(url)
+        try:
+            git.Git().clone(url.strip())
+            repo_name = url.strip().split('/')[-1].split('.')[0]
+            shutil.rmtree("/" + repo_name)
+            if not os.path.isfile(repo_name + "/" + rc):
+                return False, "rc.local not found on the directory {}".format(repo_name + "/" + rc)
+            return True, "Successfully cloned the repository."
+            pass
+        except Exception as e:
+            return False, "Error when cloning the repository. {}.".format(e)
+            pass
 
     def selectColor(self):
 
@@ -142,7 +187,8 @@ class TypeDialog(QDialog):
 
         selectedColor = self.cdialog.currentColor()
 
-        newType = Type(name=self.name.displayText(), description=self.description.toPlainText(),
+        newType = Type(name=self.name.displayText().strip(), description=self.description.toPlainText().strip(),
+                       repoUrl=self.repoUrl.displayText().strip(), rcLocalPath=self.rcLocalPath.displayText().strip(),
                        color=(selectedColor.red(), selectedColor.green(), selectedColor.blue()))
 
         success = self.controller.appendType(newType)

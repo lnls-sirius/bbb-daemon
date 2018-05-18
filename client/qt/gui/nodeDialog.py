@@ -62,7 +62,7 @@ class NodeDialog(QDialog):
         self.outerLayout.setSpacing(10)
 
         self.nodeTable = QTableView(parent)
-        self.nodeTable.resizeRowsToContents();
+        self.nodeTable.resizeRowsToContents()
         self.nodeTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.nodeTable.setSelectionMode(QAbstractItemView.SingleSelection)
         self.nodeTable.keyPressEvent = self.keyPressEvent
@@ -73,11 +73,11 @@ class NodeDialog(QDialog):
                                                                                      registered=True))
         self.nodeTable.setModel(self.nodeTableModel)
 
-        self.nodeTable.horizontalHeader().setStretchLastSection (True)
+        self.nodeTable.horizontalHeader().setStretchLastSection(True)
         self.nodeTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-        self.nodeTable.setMinimumHeight(800)
-        self.nodeTable.setMinimumWidth(500)
+        # self.nodeTable.setMinimumHeight(800)
+        # self.nodeTable.setMinimumWidth(500)
 
         self.labelTable = QLabel("Available nodes in sector: (press [DEL] to remove)")
 
@@ -133,9 +133,9 @@ class NodeDialog(QDialog):
 
     def appendNode(self):
 
-        newNode = Node(name=self.idtext.displayText(), ip=self.addrtext.displayText(), \
-                       typeNode=self.types.itemData(self.types.currentIndex()), \
-                       sector=self.sectors.itemText(self.sectors.currentIndex()), \
+        newNode = Node(name=self.idtext.displayText(), ip=self.addrtext.displayText(),
+                       typeNode=self.types.itemData(self.types.currentIndex()),
+                       sector=self.sectors.itemText(self.sectors.currentIndex()),
                        pvPrefix=self.prefix.displayText())
 
         appended = self.controller.appendNode(newNode)
@@ -154,10 +154,10 @@ class NodeDialog(QDialog):
 
             selectedRow = self.nodeTable.selectedIndexes()[0].row()
 
-            removeNode = Node(name=self.nodeTableModel.nodes[selectedRow].name, \
-                              ip=self.nodeTableModel.nodes[selectedRow].ipAddress, \
-                              typeNode=self.nodeTableModel.nodes[selectedRow].type, \
-                              sector=self.nodeTableModel.nodes[selectedRow].sector, \
+            removeNode = Node(name=self.nodeTableModel.nodes[selectedRow].name,
+                              ip=self.nodeTableModel.nodes[selectedRow].ipAddress,
+                              typeNode=self.nodeTableModel.nodes[selectedRow].type,
+                              sector=self.nodeTableModel.nodes[selectedRow].sector,
                               pvPrefix=self.nodeTableModel.nodes[selectedRow].pvPrefix)
 
             self.controller.removeNodeFromSector(removeNode)
