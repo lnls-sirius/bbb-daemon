@@ -1,7 +1,6 @@
 import pickle
 import struct
 
-
 class NetUtils():
 
     @staticmethod

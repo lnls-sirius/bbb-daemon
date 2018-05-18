@@ -73,7 +73,7 @@ class Node():
         return (self.state != NodeState.DISCONNECTED)
 
     def __eq__(self, other):
-        if other == None:
+        if other is None:
             return False
 
         return self.name == other.name or self.ipAddress == other.ipAddress
@@ -84,16 +84,18 @@ class Node():
             self.name, self.ipAddress, NodeState.toString(self.state))
 
 
+
 class Type():
     """ This class provides a wrapper for host types. """
 
-    def __init__(self, name="generic", repoUrl="A generic URL.", color=(255, 255, 255),
+    def __init__(self, name="generic", repoUrl="A generic URL.", rcLocalPath="init/rc.local", color=(255, 255, 255),
                  description="A generic host."):
 
         self.name = name
         self.color = color
         self.repoUrl = repoUrl
         self.description = description
+        self.rcLocalPath = rcLocalPath
 
     def __eq__(self, other):
         if other is None:
