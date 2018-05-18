@@ -1,13 +1,13 @@
-from common.entity.entities import Command, Node, NodeState, Type
-from common.network.utils import NetUtils
-
 import socket
-import struct
 import threading
 
-class DaemonHostListener ():
+from common.entity.entities import Command
+from common.network.utils import NetUtils
 
-    def __init__ (self, serverBindPort = 9876, hostConnectionPort = 9877, controller = None):
+
+class DaemonHostListener():
+
+    def __init__(self, serverBindPort=9876, hostConnectionPort=9877, controller=None):
 
         self.port = serverBindPort
         self.hostPort = hostConnectionPort
@@ -15,33 +15,34 @@ class DaemonHostListener ():
         self.controller = controller
         self.controller.daemon = self
 
-        self.listenThread = threading.Thread (target = self.listen)
+        self.listenThread = threading.Thread(target=self.listen)
         self.listening = True
-        self.listenThread.start ()
+        self.listenThread.start()
 
-    def sendCommand (self, command, address, **kargs):
+    def sendCommand(self, command, address, **kargs):
 
-        commandSocket = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
+        commandSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         commandSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         commandSocket.settimeout(10)
 
         try:
-            commandSocket.connect ((address, self.hostPort))
+            commandSocket.connect((address, self.hostPort))
 
-            NetUtils.sendCommand (commandSocket, command)
+            NetUtils.sendCommand(commandSocket, command)
 
             if command == Command.SWITCH:
-                node = kargs ["node"]
-                NetUtils.sendObject (commandSocket, node.type.name)
-                NetUtils.sendObject (commandSocket, node.name)
-                NetUtils.sendObject (commandSocket, node.ipAddress)
+                node = kargs["node"]
+                NetUtils.sendObject(commandSocket, node.type.name)
+                NetUtils.sendObject(commandSocket, node.type.repoUrl)
+                NetUtils.sendObject(commandSocket, node.name)
+                NetUtils.sendObject(commandSocket, node.ipAddress)
 
-            commandSocket.close ()
+            commandSocket.close()
             return True
         except socket.error:
             return False
 
-    def process (self, connection, addr):
+    def process(self, connection, addr):
 
         connectionAlive = True
 
@@ -49,45 +50,44 @@ class DaemonHostListener ():
 
             try:
                 # First 4 bytes are the command id
-                command = NetUtils.recvCommand (connection)
+                command = NetUtils.recvCommand(connection)
 
                 if command == Command.PING:
-                    name = NetUtils.recvObject (connection)
-                    hostType = NetUtils.recvObject (connection)
-                    self.controller.updateHostCounterByAddress (address = addr [0], name = name, hostType = hostType)
+                    name = NetUtils.recvObject(connection)
+                    hostType = NetUtils.recvObject(connection)
+                    self.controller.updateHostCounterByAddress(address=addr[0], name=name, hostType=hostType)
                 if command == Command.EXIT:
-                    print ("Exiting")
+                    print("Exiting")
                     return
 
             except Exception as e:
-                print ("Lost connection with host " + addr [0])
-                print (e)
+                print("Lost connection with host " + addr[0])
+                print(e)
                 connectionAlive = False
 
-        connection.close ()
+        connection.close()
 
-    def listen (self):
+    def listen(self):
 
-        pingSocket = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
+        pingSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         pingSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        pingSocket.bind (("0.0.0.0", self.port))
-        pingSocket.listen (255)
+        pingSocket.bind(("0.0.0.0", self.port))
+        pingSocket.listen(255)
 
         while self.listening:
+            connection, addr = pingSocket.accept()
+            requestThread = threading.Thread(target=self.process, args=[connection, addr])
+            requestThread.start()
 
-            connection, addr = pingSocket.accept ()
-            requestThread = threading.Thread (target = self.process, args = [connection, addr])
-            requestThread.start ()
+        pingSocket.close()
 
-        pingSocket.close ()
-
-    def stopAll (self):
+    def stopAll(self):
 
         self.listening = False
 
         # In order to close the socket and exit from the accept () function, emulate a new connection
-        shutdownSocket = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
-        shutdownSocket.connect (("0.0.0.0",  self.port))
-        NetUtils.sendCommand (shutdownSocket, Command.EXIT)
-        shutdownSocket.close ()
+        shutdownSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        shutdownSocket.connect(("0.0.0.0", self.port))
+        NetUtils.sendCommand(shutdownSocket, Command.EXIT)
+        shutdownSocket.close()

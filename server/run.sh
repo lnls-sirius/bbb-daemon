@@ -2,4 +2,4 @@
 
 export PYTHONPATH="$(dirname $PWD)"
 # echo $PYTHONPATH
-python server.py
+python3 server.py
