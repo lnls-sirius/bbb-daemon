@@ -24,6 +24,7 @@ class BBB():
         self.configPath = path
         self.typeRepoUrl = ""
         self.typeRcLocalPath = ""
+        self.type = ""
         self.readParameters()
 
     def reboot(self):
