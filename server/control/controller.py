@@ -66,7 +66,7 @@ class MonitorController():
 
             time.sleep(1)
 
-    def appendNode(self, newNode=None):
+    def appendNode(self, newNode: Node = None):
         success = self.db.appendNode(newNode)
 
         if success:

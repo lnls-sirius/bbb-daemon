@@ -3,12 +3,14 @@ import shutil
 import threading
 import time
 
-import git
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+from git import RemoteProgress, Repo
+
 from common.entity.entities import Type
+from gui.controller import GUIController
 from gui.tableModel import TypeTableModel
 
 
@@ -18,7 +20,7 @@ class TypeDialog(QDialog):
 
     UPDATE_TIME = 5
 
-    def __init__(self, parent=None, controller=None):
+    def __init__(self, parent=None, controller: GUIController = None):
 
         super(TypeDialog, self).__init__(parent)
 
@@ -143,6 +145,9 @@ class TypeDialog(QDialog):
             selectedRow = selected.indexes()[0].row()
             typeObject = self.typeTableModel.types[selectedRow]
 
+            print('ob={}'.format(typeObject))
+            print('name={}'.format(typeObject.name))
+
             self.name.setText(typeObject.name)
             self.repoUrl.setText(typeObject.repoUrl)
             self.rcLocalPath.setText(typeObject.rcLocalPath)
@@ -158,46 +163,77 @@ class TypeDialog(QDialog):
         else:
             QMessageBox.about(self, "Failure!", message)
 
+    class CloneProgress(RemoteProgress):
+        def update(self, op_code, cur_count, max_count=None, message=''):
+            print('op_code={} cur_count={} max_count={} ratio={}'.format(op_code, cur_count, max_count,
+                                                                         cur_count / (max_count or 100.0),
+                                                                         message or "NO MESSAGE"))
+
     def checkUrlFunc(self):
-        url = self.repoUrl.displayText()
+
+        repo_name = None
+        repo_dir = None
+
+        url = self.repoUrl.displayText().strip()
         rc = self.rcLocalPath.displayText()
         if rc is None or rc.strip() is None or url == "":
             return False, "rc.local is not defined."
         if url is None or url.strip() is None or url == "":
             return False, "URL is not defined."
         if not url.endswith(".git") or (not url.startswith("http://") and not url.startswith("https://")):
-            return False, "{} is not a valid git URL.".format(url)
+            return False, "\'{}\' is not a valid git URL.".format(url)
+
         try:
-            git.Git().clone(url.strip())
+
             repo_name = url.strip().split('/')[-1].split('.')[0]
-            shutil.rmtree("/" + repo_name)
-            if not os.path.isfile(repo_name + "/" + rc):
-                return False, "rc.local not found on the directory {}".format(repo_name + "/" + rc)
+
+            if repo_name is not None:
+                repo_dir = os.getcwd() + '/' + repo_name + '/'
+                if os.path.exists(repo_dir) and os.path.isdir(repo_dir):
+                    shutil.rmtree(repo_dir)
+
+            time.sleep(1)
+            if repo_name is None or repo_dir is None or os.path.exists(repo_dir):
+                return False, "Error with the cloned directory {}.".format(repo_dir)
+
+            Repo.clone_from(url=url.strip(), to_path=repo_dir, progress=self.CloneProgress())
+            if repo_dir.endswith('/') and rc.startswith('/'):
+                rc = rc[1:]
+            elif not repo_dir.endswith('/') and not rc.startswith('/'):
+                repo_dir = repo_dir + '/'
+
+            if not os.path.isfile(repo_dir + rc):
+                shutil.rmtree(repo_dir)
+                return False, "rc.local not found on path. Type the full path including the filename. {}".format(
+                    repo_dir + rc)
+            pass
+
+            shutil.rmtree(repo_dir)
             return True, "Successfully cloned the repository."
-            pass
         except Exception as e:
+            if repo_name is not None and os.path.exists(repo_dir) and os.path.isdir(repo_dir):
+                shutil.rmtree(repo_dir)
             return False, "Error when cloning the repository. {}.".format(e)
-            pass
 
     def selectColor(self):
-
         self.cdialog.open()
 
     def appendType(self):
-
         selectedColor = self.cdialog.currentColor()
 
-        newType = Type(name=self.name.displayText().strip(), description=self.description.toPlainText().strip(),
-                       repoUrl=self.repoUrl.displayText().strip(), rcLocalPath=self.rcLocalPath.displayText().strip(),
+        newType = Type(name=self.name.displayText().strip(),
+                       description=self.description.toPlainText().strip(),
+                       repoUrl=self.repoUrl.displayText().strip(),
+                       rcLocalPath=self.rcLocalPath.displayText().strip(),
                        color=(selectedColor.red(), selectedColor.green(), selectedColor.blue()))
 
-        success = self.controller.appendType(newType)
+        print("-----------------------------------\n{}\n-----------------------------------".format(newType))
+        self.controller.appendType(newType)
 
         self.typeTableModel.setData(self.controller.fetchTypes())
         self.typeTable.clearSelection()
 
     def scan(self):
-
         while self.scanning:
             self.typeTableModel.setData(self.controller.fetchTypes())
             time.sleep(TypeDialog.UPDATE_TIME)

@@ -3,11 +3,12 @@ import threading
 
 from common.entity.entities import Command
 from common.network.utils import NetUtils
+from control.controller import MonitorController
 
 
 class CommandInterface():
 
-    def __init__(self, serverBindPort=6789, controller=None):
+    def __init__(self, serverBindPort=6789, controller: MonitorController = None):
 
         self.controller = controller
         self.port = serverBindPort
@@ -88,8 +89,9 @@ class CommandInterface():
                     print("Exiting")
                     return
 
-            except socket.error:
+            except socket.error as e:
                 print("Lost connection with host " + addr[0])
+                print("{}".format(e))
                 connectionAlive = False
 
         connection.close()
@@ -107,7 +109,6 @@ class CommandInterface():
         self.interfaceSocket.close()
 
     def stopAll(self):
-
         self.listening = False
 
         # In order to close the socket and exit from the accept () function, emulate a new connection

@@ -4,6 +4,7 @@ import traceback
 
 from common.entity.entities import Command
 from common.network.utils import NetUtils
+from common.entity.entities import Type, Node
 
 
 class CommandInterface():
@@ -72,7 +73,7 @@ class CommandInterface():
 
         self.connectionLock.release()
 
-    def appendType(self, newType):
+    def appendType(self, newType: Type):
 
         if not self.connection:
             return False
@@ -159,7 +160,7 @@ class CommandInterface():
         self.connectionLock.release()
         return nodes
 
-    def appendNode(self, node):
+    def appendNode(self, node: Node):
 
         if not self.connection:
             return False
@@ -178,7 +179,7 @@ class CommandInterface():
 
         return success
 
-    def removeNodeFromSector(self, node):
+    def removeNodeFromSector(self, node: Node):
 
         if not self.connection:
             return False

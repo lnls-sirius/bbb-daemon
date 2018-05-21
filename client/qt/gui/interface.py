@@ -5,8 +5,8 @@ from PyQt5.QtGui import *
 from common.entity.entities import Sector
 from gui.controller import GUIController
 from gui.nodeDialog import NodeDialog
-from gui.tab import MonitorTab
 from gui.typeDialog import TypeDialog
+from gui.tab import MonitorTab
 
 
 class MonitorInterface(QMainWindow):
@@ -92,7 +92,6 @@ class MonitorInterface(QMainWindow):
         nodeDialog.show()
 
     def stopAll(self):
-
         for tabIndex in range(self.tabs.count()):
             self.tabs.widget(tabIndex).stop()
 

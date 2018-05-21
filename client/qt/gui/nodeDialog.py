@@ -3,6 +3,7 @@ import time
 
 from PyQt5.QtWidgets import *
 from common.entity.entities import Node, Sector
+from gui.controller import GUIController
 from gui.tableModel import NodeTableModel
 
 
@@ -12,7 +13,7 @@ class NodeDialog(QDialog):
 
     UPDATE_TIME = 5
 
-    def __init__(self, parent=None, controller=None):
+    def __init__(self, parent=None, controller: GUIController = None):
 
         super(NodeDialog, self).__init__(parent)
 

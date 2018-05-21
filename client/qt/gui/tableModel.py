@@ -157,15 +157,15 @@ class TypeTableModel(QAbstractTableModel):
 class NodeTableModel(QAbstractTableModel):
     updateModel = pyqtSignal()
 
-    def updateData(self):
-        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), self.columnCount()))
-        self.layoutChanged.emit()
-
     def __init__(self, parent=None, data=None):
 
         QAbstractTableModel.__init__(self, parent)
         self.nodes = self.sortByAddress(data)
         self.updateModel.connect(self.updateData)
+
+    def updateData(self):
+        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), self.columnCount()))
+        self.layoutChanged.emit()
 
     def sortByAddress(self, data):
         return sorted(data, key=lambda x: x.ipAddress, reverse=False)
@@ -185,8 +185,12 @@ class NodeTableModel(QAbstractTableModel):
         col = index.column()
         node = self.nodes[row]
 
+
         if role == Qt.BackgroundRole:
-            return QBrush(QColor(node.type.color[0], node.type.color[1], node.type.color[2]))
+            if node.type is not None:
+                return QBrush(QColor(node.type.color[0], node.type.color[1], node.type.color[2]))
+            else:
+                return QBrush(QColor(255, 255, 255))
 
         if role == Qt.TextAlignmentRole:
             return Qt.AlignCenter | Qt.AlignVCenter

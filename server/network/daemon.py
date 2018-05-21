@@ -3,11 +3,12 @@ import threading
 
 from common.entity.entities import Command
 from common.network.utils import NetUtils
+from control.controller import MonitorController
 
 
 class DaemonHostListener():
 
-    def __init__(self, serverBindPort=9876, hostConnectionPort=9877, controller=None):
+    def __init__(self, serverBindPort=9876, hostConnectionPort=9877, controller: MonitorController = None):
 
         self.port = serverBindPort
         self.hostPort = hostConnectionPort
@@ -34,6 +35,7 @@ class DaemonHostListener():
                 node = kargs["node"]
                 NetUtils.sendObject(commandSocket, node.type.name)
                 NetUtils.sendObject(commandSocket, node.type.repoUrl)
+                NetUtils.sendObject(commandSocket, node.type.rcLocalPath)
                 NetUtils.sendObject(commandSocket, node.name)
                 NetUtils.sendObject(commandSocket, node.ipAddress)
 
