@@ -1,13 +1,14 @@
-import os
+import shutil
 import socket
 import threading
 import time
 import os
 
+from git import Repo
+
 from common.entity.entities import Command
 from common.network.utils import NetUtils
 
-import git
 from shutil import copy
 
 
@@ -15,44 +16,72 @@ class BBB():
     CONFIG_PATH = "/root/bbb-daemon/bbb.cfg"
     typeRcLocalPath = "init/rc.local"
     RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
-    CLONE_PATH = "../"  # remember to place the forward slash !
+
+    # CLONE_PATH = "../"  # remember to place the forward slash !
 
     def __init__(self, path=CONFIG_PATH):
+        self.name = ""
         self.configPath = path
+        self.typeRepoUrl = ""
+        self.typeRcLocalPath = ""
         self.readParameters()
 
     def reboot(self):
         os.system('reboot')
 
     def update_rclocal(self):
-        if type is not None:
-            git.Git(self.CLONE_PATH).clone(self.typeRepoUrl)
-            repo_name = self.typeRepoUrl.split('/')[-1].split('.')[0]
-            print("Cloned repository {} at {}/{}".format(self.typeRepoUrl, os.getcwd(), repo_name))
-            copy(self.CLONE_PATH + repo_name + '/' + self.RC_LOCAL_ORIGIN_PATH, self.RC_LOCAL_DESTINATION_PATH)
-            print("Copied file {} to {}".format(repo_name + '/' + self.RC_LOCAL_ORIGIN_PATH,
-                                                self.RC_LOCAL_DESTINATION_PATH))
-        else:
-            print("Not repo URL defined.")
+        try:
+            if type is not None:
+                repo_name = self.typeRepoUrl.strip().split('/')[-1].split('.')[0]
+
+                if not self.typeRepoUrl.endswith(".git") or (
+                        not self.typeRepoUrl.startswith("http://") and not self.typeRepoUrl.startswith("https://")):
+                    raise Exception("\'{}\' is not a valid git URL.".format(self.typeRepoUrl))
+
+                repo_dir = "/root/bbb-daemon-repos/" + repo_name + "/"
+                if os.path.exists(repo_dir) and os.path.isdir(repo_dir):
+                    shutil.rmtree(repo_dir)
+                    time.sleep(1)
+
+                Repo.clone_from(url=self.typeRepoUrl.strip(), to_path=repo_dir)
+
+                if repo_dir.endswith('/') and self.typeRcLocalPath.startswith('/'):
+                    self.typeRcLocalPath = self.typeRcLocalPath[1:]
+                elif not repo_dir.endswith('/') and not self.typeRcLocalPath.startswith('/'):
+                    repo_dir = repo_dir + '/'
+
+                if not os.path.isfile(repo_dir + self.typeRcLocalPath):
+                    shutil.rmtree(repo_dir)
+                    raise Exception("rc.local not found on path.")
+                pass
+
+                print("Cloned repository {} at {}/{}".format(self.typeRepoUrl, os.getcwd(), repo_name))
+                copy(repo_dir + self.typeRcLocalPath, self.RC_LOCAL_DESTINATION_PATH)
+                print("Copied file {} to {}".format(repo_dir + self.typeRcLocalPath, self.RC_LOCAL_DESTINATION_PATH))
+                shutil.rmtree(repo_dir)
+            else:
+                print("Not repo URL defined.")
+        except Exception as e:
+            print("{}".format(e))
 
     def update(self, newName, newType, typeRepoUrl, typeRcLocalPath):
         try:
             if newName is not None:
                 self.name = newName
-
                 hostnameFile = open("/etc/hostname", "w")
                 hostnameFile.write(self.name.replace(":", "-"))
                 hostnameFile.close()
+
             if newType is not None:
                 self.type = newType
                 typeFile = open(self.configPath, "w+")
                 typeFile.write(self.type + "\n")
                 typeFile.close()
 
-            if typeRcLocalPath is not None:
-                self.typeRcLocalPath = typeRepoUrl
+            if typeRcLocalPath is not None and typeRepoUrl is not None:
+                self.typeRcLocalPath = typeRcLocalPath
+                self.typeRepoUrl = typeRepoUrl
                 self.update_rclocal()
-                pass
 
         except FileNotFoundError:
             print("Configuration files not found.")
@@ -75,16 +104,18 @@ class BBB():
             self.type = f.readline()[:-1]
             f.close()
         except FileNotFoundError:
-            self.type = "error-configPath-not-found"
+            print("Cfg file not found.")
 
 
 class Daemon():
 
     def __init__(self, path="", serverAddress="10.0.6.70", pingPort=9876, bindPort=9877):
 
+        if not os.path.exists('/root/bbb-daemon-repos/'):
+            os.makedirs('/root/bbb-daemon-repos/')
         self.serverAddress = serverAddress
         self.pingPort = pingPort
-
+        self.bindPort = bindPort
         self.bbb = BBB()
 
         self.pingThread = threading.Thread(target=self.ping)
@@ -149,7 +180,7 @@ class Daemon():
                 # Node
                 nodeName = NetUtils.recvObject(connection)
 
-                print(typeName + " " + nodeName + typeRepoUrl)
+                print(typeName + " " + nodeName + " " + typeRepoUrl + " " + typeRcLocalPath)
 
                 self.bbb.update(nodeName, typeName, typeRepoUrl, typeRcLocalPath)
 
