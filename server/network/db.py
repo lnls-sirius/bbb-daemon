@@ -100,7 +100,7 @@ class RedisPersistence():
                 else:
                     aType = Type()
 
-            typesList.append(aType)
+                typesList.append(aType)
 
             self.typesListMutex.release()
         return typesList

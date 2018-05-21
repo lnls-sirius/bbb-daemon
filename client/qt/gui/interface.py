@@ -10,6 +10,9 @@ from gui.tab import MonitorTab
 
 
 class MonitorInterface(QMainWindow):
+    """
+        Main Interface.
+    """
     WIDTH = 1600
     HEIGHT = 1200
 
@@ -75,7 +78,6 @@ class MonitorInterface(QMainWindow):
         self.show()
 
     def test(self, tabIndex):
-
         if self.tabs.widget(tabIndex).isInWarningStateState():
             self.tabs.setTabIcon(tabIndex, QIcon.fromTheme("dialog-warning"))
         else:

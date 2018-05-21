@@ -153,7 +153,7 @@ class MonitorController():
         sectorId = int(subnet / 10)
         sector = self.sectors[sectorId]
 
-        print(name + " " + hostType)
+        #print(name + " " + hostType)
 
         self.updateNodesLockList[sector].acquire()
 

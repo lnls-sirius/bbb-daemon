@@ -86,7 +86,6 @@ class BBB():
 
         except FileNotFoundError:
             print("Configuration files not found.")
-            pass
 
     def readParameters(self):
         try:

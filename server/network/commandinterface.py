@@ -29,7 +29,7 @@ class CommandInterface():
             try:
                 # First 4 bytes are the command id
                 command = NetUtils.recvCommand(connection)
-                print(command)
+                #print(command)
 
                 if command == Command.GET_TYPES:
 

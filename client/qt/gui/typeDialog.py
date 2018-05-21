@@ -58,6 +58,9 @@ class TypeDialog(QDialog):
         self.submit = QPushButton("+")
         self.submit.pressed.connect(self.appendType)
 
+        self.progressBar = QProgressBar(self)
+        self.progressBar.setGeometry(200, 80, 250, 20)
+
         self.checkUrl = QPushButton("Check Git URL")
         self.checkUrl.pressed.connect(self.checkUrlAction)
 
@@ -65,6 +68,7 @@ class TypeDialog(QDialog):
         self.buttonsLayout.addWidget(self.colorButton, 0, 5, 1, 1)
         self.buttonsLayout.addWidget(self.submit, 0, 6, 1, 1)
         self.buttonsLayout.addWidget(self.checkUrl, 0, 7, 1, 1)
+        self.buttonsLayout.addWidget(self.progressBar, 0, 8, 1, 1)
 
         self.buttons.setLayout(self.buttonsLayout)
 
@@ -145,8 +149,8 @@ class TypeDialog(QDialog):
             selectedRow = selected.indexes()[0].row()
             typeObject = self.typeTableModel.types[selectedRow]
 
-            print('ob={}'.format(typeObject))
-            print('name={}'.format(typeObject.name))
+            #print('ob={}'.format(typeObject))
+            #print('name={}'.format(typeObject.name))
 
             self.name.setText(typeObject.name)
             self.repoUrl.setText(typeObject.repoUrl)
@@ -164,10 +168,15 @@ class TypeDialog(QDialog):
             QMessageBox.about(self, "Failure!", message)
 
     class CloneProgress(RemoteProgress):
+        def __init__(self, uiParent):
+            super().__init__()
+            self.uiParent = uiParent
+
         def update(self, op_code, cur_count, max_count=None, message=''):
-            print('op_code={} cur_count={} max_count={} ratio={}'.format(op_code, cur_count, max_count,
-                                                                         cur_count / (max_count or 100.0),
-                                                                         message or "NO MESSAGE"))
+            ratio = cur_count / (max_count or 100.0)
+            #print('op_code={} cur_count={} max_count={} ratio={}'.format(op_code, cur_count, max_count,
+            #                                                             ratio, message or "NO MESSAGE"))
+            self.uiParent.progressBar.setValue(ratio * 100)
 
     def checkUrlFunc(self):
 
@@ -175,8 +184,8 @@ class TypeDialog(QDialog):
         repo_dir = None
 
         url = self.repoUrl.displayText().strip()
-        rc = self.rcLocalPath.displayText()
-        if rc is None or rc.strip() is None or url == "":
+        typeRcLocalPath = self.rcLocalPath.displayText()
+        if typeRcLocalPath is None or typeRcLocalPath.strip() is None or url == "":
             return False, "rc.local is not defined."
         if url is None or url.strip() is None or url == "":
             return False, "URL is not defined."
@@ -191,21 +200,21 @@ class TypeDialog(QDialog):
                 repo_dir = os.getcwd() + '/' + repo_name + '/'
                 if os.path.exists(repo_dir) and os.path.isdir(repo_dir):
                     shutil.rmtree(repo_dir)
+                    time.sleep(1)
 
-            time.sleep(1)
             if repo_name is None or repo_dir is None or os.path.exists(repo_dir):
                 return False, "Error with the cloned directory {}.".format(repo_dir)
 
-            Repo.clone_from(url=url.strip(), to_path=repo_dir, progress=self.CloneProgress())
-            if repo_dir.endswith('/') and rc.startswith('/'):
-                rc = rc[1:]
-            elif not repo_dir.endswith('/') and not rc.startswith('/'):
+            Repo.clone_from(url=url.strip(), to_path=repo_dir, progress=self.CloneProgress(self))
+            if repo_dir.endswith('/') and typeRcLocalPath.startswith('/'):
+                typeRcLocalPath = typeRcLocalPath[1:]
+            elif not repo_dir.endswith('/') and not typeRcLocalPath.startswith('/'):
                 repo_dir = repo_dir + '/'
 
-            if not os.path.isfile(repo_dir + rc):
+            if not os.path.isfile(repo_dir + typeRcLocalPath):
                 shutil.rmtree(repo_dir)
                 return False, "rc.local not found on path. Type the full path including the filename. {}".format(
-                    repo_dir + rc)
+                    repo_dir + typeRcLocalPath)
             pass
 
             shutil.rmtree(repo_dir)
@@ -227,7 +236,7 @@ class TypeDialog(QDialog):
                        rcLocalPath=self.rcLocalPath.displayText().strip(),
                        color=(selectedColor.red(), selectedColor.green(), selectedColor.blue()))
 
-        print("-----------------------------------\n{}\n-----------------------------------".format(newType))
+        #print("-----------------------------------\n{}\n-----------------------------------".format(newType))
         self.controller.appendType(newType)
 
         self.typeTableModel.setData(self.controller.fetchTypes())
