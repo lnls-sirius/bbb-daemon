@@ -2,21 +2,21 @@ FROM python:3-stretch
 
 MAINTAINER Claudio Carneiro <claudio.carneiro@lnls.br>
 
-ENV SERVER_IP_ADDR 10.0.6.70
+ENV REDIS_SERVER_IP 10.0.6.70
+ENV REDIS_SERVER_PORT 6379
 
-EXPOSE 6379
+ENV DNS_SERVER_1 8.8.8.8
+ENV DNS_SERVER_2 8.8.4.4
+
+EXPOSE $REDIS_SERVER_PORT
 
 WORKDIR /root/
 
-RUN ping www.google.com
-
 COPY requirements.txt ./
+COPY dns-config.sh ./
+
+RUN sh -c /root/dns-config.sh
 RUN pip install --no-cache-dir -r requirements.txt
-
-
-#RUN pip install redis
-#RUN pip install gitdb
-#RUN pip install gitpython
 
 RUN cd /root/
 RUN git pull https://github.com/vishnubob/wait-for-it.git
