@@ -1,0 +1,6 @@
+gitdb2==2.0.3
+GitPython==2.1.9
+PyQt5==5.10.1
+redis==2.10.6
+reportlab==3.3.0
+sip==4.19.8
