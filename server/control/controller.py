@@ -8,9 +8,9 @@ from network.db import RedisPersistence
 class MonitorController():
     MAX_LOST_PING = 5
 
-    def __init__(self):
+    def __init__(self, redis_server_ip: str = 'localhost', redis_server_port: int = 6379):
 
-        self.db = RedisPersistence(host='localhost', port=6379)
+        self.db = RedisPersistence(host=redis_server_ip, port=redis_server_port)
 
         self.sectors = Sector.sectors()
 
@@ -153,7 +153,7 @@ class MonitorController():
         sectorId = int(subnet / 10)
         sector = self.sectors[sectorId]
 
-        #print(name + " " + hostType)
+        # print(name + " " + hostType)
 
         self.updateNodesLockList[sector].acquire()
 

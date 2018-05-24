@@ -7,7 +7,7 @@ from common.entity.entities import Node, Type
 
 class RedisPersistence():
 
-    def __init__(self, host='10.0.6.70', port=6379):
+    def __init__(self, host: str = '10.0.6.70', port: int = 6379):
 
         self.db = redis.StrictRedis(host=host, port=port, db=0)
 
