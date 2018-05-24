@@ -1,0 +1,16 @@
+version: '3.3'
+
+services:
+  ca-gateway:
+    image: python:3-stretch
+    env_file:
+      -  /root/bbb-daemon/docker/bbb-server.env
+    deploy:
+      replicas: 2
+    networks: 
+      - outside
+
+networks:
+  outside:
+    external:
+name: "host"

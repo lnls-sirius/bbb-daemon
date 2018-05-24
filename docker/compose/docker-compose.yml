@@ -1,0 +1,9 @@
+version: '3.3'
+
+services:
+  gateway:
+    container_name: bbb-daemon-container
+    image: python:3-stretch
+    env_file:
+      -  /root/bbb-daemon/docker/bbb-server.env
+network_mode: "host"
