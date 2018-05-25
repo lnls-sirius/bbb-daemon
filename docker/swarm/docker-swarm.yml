@@ -6,11 +6,11 @@ services:
     env_file:
       -  /root/bbb-daemon/docker/bbb-server.env
     deploy:
-      replicas: 2
+      replicas: 1
     networks: 
       - outside
 
 networks:
-  outside:
+#  outside:
     external:
 name: "host"

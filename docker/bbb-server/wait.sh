@@ -5,5 +5,5 @@ cd /root/wait-for-it/
 echo "Redis is UP!"
 cd /root/bbb-daemon/
 git pull
-cd server/
+cd /root/bbb-daemon/server/
 ./run.sh
