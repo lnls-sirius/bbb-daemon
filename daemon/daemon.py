@@ -3,6 +3,7 @@ import socket
 import threading
 import time
 import os
+import sys
 
 from git import Repo
 
@@ -195,4 +196,17 @@ class Daemon():
         self.listening = False
 
 
-Daemon()
+if __name__ == '__main__':
+
+    servAddr = "10.0.0.70"
+    pingPort = 9876
+    bindPort = 9877
+
+    print("arg[1]=servAddress arg[2]=pingPort arg[3]=bindPort")
+    if len(sys.argv) == 4:
+        servAddr = sys.argv[1]
+        pingPort = int(sys.argv[2])
+        bindPort = int(sys.argv[3])
+
+    print("arg[1]={}\targ[2]={}\targ[3]={}\t".format(servAddr, pingPort, bindPort))
+    Daemon(serverAddress=servAddr, pingPort=pingPort, bindPort=bindPort)

@@ -1,7 +1,7 @@
 version: '3.3'
 
 services:
-  ca-gateway:
+  bbb-server-service:
     image: python:3-stretch
     env_file:
       -  /root/bbb-daemon/docker/bbb-server.env
@@ -10,7 +10,24 @@ services:
     networks: 
       - outside
 
-networks:
-#  outside:
-    external:
-name: "host"
+version: '3.3'
+services:
+  redis:
+    container_name: redis_bbb
+    ports:
+      -  "6379:6379"
+    volumes:
+      - bbb-redis-data:/data
+
+  bbb-server-service:
+    container_name: bbb-serv-cont
+    image: lnlscon/bbb-daemon-container:bbb-server
+    ports:
+      -  "6789:6789"
+      -  "9876:9876"
+    env_file:
+      -  /root/bbb-daemon/docker/bbb-server/bbb-server.env
+    depends_on:
+      -  redis
+    deploy:
+      replicas: 1
