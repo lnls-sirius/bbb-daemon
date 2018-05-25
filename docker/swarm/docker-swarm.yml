@@ -1,23 +1,15 @@
 version: '3.3'
 
-services:
-  bbb-server-service:
-    image: python:3-stretch
-    env_file:
-      -  /root/bbb-daemon/docker/bbb-server.env
-    deploy:
-      replicas: 1
-    networks: 
-      - outside
-
 version: '3.3'
 services:
   redis:
+    image: redis:latest 
     container_name: redis_bbb
     ports:
       -  "6379:6379"
     volumes:
       - bbb-redis-data:/data
+    restart: always
 
   bbb-server-service:
     container_name: bbb-serv-cont
@@ -25,9 +17,17 @@ services:
     ports:
       -  "6789:6789"
       -  "9876:9876"
+    dns:
+      - 10.0.0.71
+      - 10.0.0.72
     env_file:
       -  /root/bbb-daemon/docker/bbb-server/bbb-server.env
     depends_on:
       -  redis
     deploy:
       replicas: 1
+    restart: always
+
+volumes:
+  bbb-redis-data:
+

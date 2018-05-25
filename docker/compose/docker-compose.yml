@@ -7,6 +7,7 @@ services:
       -  "6379:6379"
     volumes:
       - bbb-redis-data:/data
+    restart: always
 
   bbb-server-service:
     container_name: bbb-serv-cont
@@ -21,6 +22,7 @@ services:
       -  /root/bbb-daemon/docker/bbb-server/bbb-server.env
     depends_on:
       -  redis
+    restart: always
 
 volumes:
   bbb-redis-data:
