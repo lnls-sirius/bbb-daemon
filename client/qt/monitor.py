@@ -10,8 +10,9 @@ servPort = 6789
 if __name__ == '__main__':
 
     print("arg[1]=servAddress\targ[2]=servPort")
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3:
         serverAddress = sys.argv[1]
+        servPort = sys.argv[2]
     else:
         print("Using default")
     try:
