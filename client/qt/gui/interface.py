@@ -18,11 +18,11 @@ class MonitorInterface(QMainWindow):
 
     updateIcon = pyqtSignal(int)
 
-    def __init__(self, server="localhost"):
+    def __init__(self, server="localhost", servPort: int = 6789):
 
         super().__init__()
 
-        self.controller = GUIController(server=server)
+        self.controller = GUIController(server=server, servPort=servPort)
 
         self.menubar = self.menuBar()
         self.editMenu = self.menubar.addMenu('&Edit')

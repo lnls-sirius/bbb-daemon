@@ -6,8 +6,8 @@ from common.entity.entities import Sector
 
 class GUIController():
 
-    def __init__(self, server="localhost"):
-        self.commandInterface = CommandInterface(serverAddress=server)
+    def __init__(self, server="localhost", servPort=6789):
+        self.commandInterface = CommandInterface(serverAddress=server, serverPort=servPort)
 
         self.sectors = Sector.sectors()
 

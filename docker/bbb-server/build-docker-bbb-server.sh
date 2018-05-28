@@ -1,6 +1,4 @@
 #!/bin/sh
-
-
 DOCKER_MANTAINER_NAME=lnlscon
 DOCKER_NAME=bbb-daemon-container
 DOCKER_TAG=latest
