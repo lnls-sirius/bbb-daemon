@@ -1,4 +1,4 @@
-import hashlib
+
 import shutil
 import socket
 import threading
@@ -120,7 +120,7 @@ class Daemon():
         self.bindPort = bindPort
         self.bbb = BBB()
 
-        #self.pingThread = threading.Thread(target=self.ping)
+        # self.pingThread = threading.Thread(target=self.ping)
         self.pingThread = threading.Thread(target=self.ping_udp)
         self.pinging = True
         self.pingThread.start()
@@ -147,19 +147,16 @@ class Daemon():
                 Command.PING,
                 self.bbb.name,
                 self.bbb.type,
-                pingSocket.getsockname()[0])
+                self.get_ip_address('eth0'))
             cksum = checksum(info)
             message = "{}|{}".format(cksum, info)
             ## {chk} | {cmd} | {name} | {type} | {ipAddr}
-
-            # NetUtils.sendCommand(pingSocket, Command.PING)
-            # NetUtils.sendObject(pingSocket, self.bbb.name)
-            # NetUtils.sendObject(pingSocket, self.bbb.type)
-            # NetUtils.sendObject(pingSocket, pingSocket.getsockname()[0])
-
-            pingSocket.sendto(message, (self.serverAddress, self.pingPort))
-
+            pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
             time.sleep(1)
+
+
+
+
 
     def ping(self):
 

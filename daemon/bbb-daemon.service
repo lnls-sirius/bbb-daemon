@@ -8,7 +8,7 @@ Restart=on-failure
 RestartSec=3
 Type=simple
 Environment=PYTHONPATH=/root/bbb-daemon/
-ExecStart=/usr/bin/python3 /root/bbb-daemon/daemon/daemon.py
+ExecStart=/bin/bash /root/bbb-daemon/daemon/run.sh
 StandardOutput=syslog
 StandardError=syslog
 

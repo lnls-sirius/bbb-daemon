@@ -25,7 +25,7 @@ class DaemonHostListener():
         for i in range(10):
             self.executor.submit(self.process_worker_udp)
 
-        #self.listenThread = threading.Thread(target=self.listen)
+        # self.listenThread = threading.Thread(target=self.listen)
         self.listenThread = threading.Thread(target=self.listen_udp)
         self.listening = True
         self.listenThread.start()
@@ -57,14 +57,16 @@ class DaemonHostListener():
     def process_worker_udp(self):
         while self.listening:
             #  {chk} | {cmd} | {name} | {type} | {ipAddr}
-            info = self.queueUdp.get()
-
+            info = self.queueUdp.get(timeout=30)
             command = info[1]
             if command == Command.PING:
                 name = info[2]
                 hostType = info[3]
                 bbbIpAddr = info[4]
                 self.controller.updateHostCounterByAddress(address=bbbIpAddr, name=name, hostType=hostType)
+            elif command == Command.EXIT:
+                print("Exiting ...")
+                return
 
     def process(self, connection, addr):
 
@@ -110,24 +112,23 @@ class DaemonHostListener():
         pingSocket.close()
 
     def listen_udp(self):
-
+        print("Listening ....")
         pingSocket = socket.socket(socket.AF_INET,  # Internet
                                    socket.SOCK_DGRAM)  # UDP
         pingSocket.bind(("0.0.0.0", self.port))
-
         while self.listening:
-            data, addr = pingSocket.recvfrom(1024)  # buffer size is 1024 bytes
-            info = verify_msg(data=data)
-            if info:
-                self.queueUdp.put(info)
-
+            data, ipAddr = pingSocket.recvfrom(1024)  # buffer size is 1024 bytes
+            print('{} {}'.format(data.decode('utf-8'), ipAddr))
+            # info = verify_msg(data=data.decode('utf-8'))
+            # if info:
+            #    self.queueUdp.put(info)
         pingSocket.close()
 
     def stopAll(self):
 
         self.listening = False
-
         # In order to close the socket and exit from the accept () function, emulate a new connection
+        self.executor.shutdown()
         shutdownSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         shutdownSocket.connect(("0.0.0.0", self.port))
         NetUtils.sendCommand(shutdownSocket, Command.EXIT)

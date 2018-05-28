@@ -1,5 +1,7 @@
+import fcntl
 import pickle
 import struct
+import socket
 
 
 def carry_around_add(a, b):
@@ -15,6 +17,15 @@ def checksum(msg):
         w = ord(msg[i]) + (ord(msg[i + 1]) << 8)
         s = carry_around_add(s, w)
     return ~s & 0xffff
+
+
+def get_ip_address(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+        s.fileno(),
+        0x8915,  # SIOCGIFADDR
+        struct.pack('256s', ifname[:15])
+    )[20:24])
 
 
 def verify_msg(data: str):
