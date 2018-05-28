@@ -9,7 +9,7 @@ import sys
 from git import Repo
 
 from common.entity.entities import Command
-from common.network.utils import NetUtils, checksum
+from common.network.utils import NetUtils, checksum, get_ip_address
 
 from shutil import copy
 
@@ -115,6 +115,7 @@ class Daemon():
 
         if not os.path.exists('/root/bbb-daemon-repos/'):
             os.makedirs('/root/bbb-daemon-repos/')
+        self.myIp = get_ip_address('eth0')
         self.serverAddress = serverAddress
         self.pingPort = pingPort
         self.bindPort = bindPort
@@ -134,7 +135,7 @@ class Daemon():
                 Command.PING,
                 self.bbb.name,
                 self.bbb.type,
-                pingSocket.getsockname()[0]
+                self.myIp
 
             Under development ...
         :return:
@@ -147,16 +148,12 @@ class Daemon():
                 Command.PING,
                 self.bbb.name,
                 self.bbb.type,
-                self.get_ip_address('eth0'))
+                self.myIp)
             cksum = checksum(info)
             message = "{}|{}".format(cksum, info)
             ## {chk} | {cmd} | {name} | {type} | {ipAddr}
             pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
             time.sleep(1)
-
-
-
-
 
     def ping(self):
 

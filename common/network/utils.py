@@ -19,7 +19,8 @@ def checksum(msg):
     return ~s & 0xffff
 
 
-def get_ip_address(ifname):
+def get_ip_address(ifname:str):
+    ifname = ifname.encode('utf-8')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
         s.fileno(),
