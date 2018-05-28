@@ -1,6 +1,37 @@
 import pickle
 import struct
 
+
+def carry_around_add(a, b):
+    c = a + b
+    return (c & 0xffff) + (c >> 16)
+
+
+def checksum(msg):
+    if len(msg) % 2 != 0:
+        msg += "\x00"
+    s = 0
+    for i in range(0, len(msg), 2):
+        w = ord(msg[i]) + (ord(msg[i + 1]) << 8)
+        s = carry_around_add(s, w)
+    return ~s & 0xffff
+
+
+def verify_msg(data: str):
+    """
+        BBB sends this: {chk} | {cmd} | {name} | {type} | {ipAddr}
+    :param data:
+    :return: Array containing the data, [] if error.
+    """
+    splt = data.split("|")
+    if len(splt) != 5:
+        # Error !
+        return []
+    if checksum(splt[0]) != data[len(splt[0]):]:
+        return []
+    return splt
+
+
 class NetUtils():
 
     @staticmethod

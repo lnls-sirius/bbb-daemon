@@ -1,5 +1,6 @@
 .idea
 server/test.py
+daemon/testee.py
 
 # Created by https://www.gitignore.io/api/python,pycharm
 

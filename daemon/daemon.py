@@ -1,3 +1,4 @@
+import hashlib
 import shutil
 import socket
 import threading
@@ -8,7 +9,7 @@ import sys
 from git import Repo
 
 from common.entity.entities import Command
-from common.network.utils import NetUtils
+from common.network.utils import NetUtils, checksum
 
 from shutil import copy
 
@@ -110,7 +111,7 @@ class BBB():
 
 class Daemon():
 
-    def __init__(self, path="", serverAddress="10.0.6.70", pingPort=9876, bindPort=9877):
+    def __init__(self, path="", serverAddress="10.0.6.44", pingPort=9876, bindPort=9877):
 
         if not os.path.exists('/root/bbb-daemon-repos/'):
             os.makedirs('/root/bbb-daemon-repos/')
@@ -119,13 +120,46 @@ class Daemon():
         self.bindPort = bindPort
         self.bbb = BBB()
 
-        self.pingThread = threading.Thread(target=self.ping)
+        #self.pingThread = threading.Thread(target=self.ping)
+        self.pingThread = threading.Thread(target=self.ping_udp)
         self.pinging = True
         self.pingThread.start()
 
         self.commandThread = threading.Thread(target=self.listen)
         self.listening = True
         self.commandThread.start()
+
+    def ping_udp(self):
+        """
+                Command.PING,
+                self.bbb.name,
+                self.bbb.type,
+                pingSocket.getsockname()[0]
+
+            Under development ...
+        :return:
+        """
+        pingSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        while self.pinging:
+            info = "{}|{}|{}{}" \
+                .format(
+                Command.PING,
+                self.bbb.name,
+                self.bbb.type,
+                pingSocket.getsockname()[0])
+            cksum = checksum(info)
+            message = "{}|{}".format(cksum, info)
+            ## {chk} | {cmd} | {name} | {type} | {ipAddr}
+
+            # NetUtils.sendCommand(pingSocket, Command.PING)
+            # NetUtils.sendObject(pingSocket, self.bbb.name)
+            # NetUtils.sendObject(pingSocket, self.bbb.type)
+            # NetUtils.sendObject(pingSocket, pingSocket.getsockname()[0])
+
+            pingSocket.sendto(message, (self.serverAddress, self.pingPort))
+
+            time.sleep(1)
 
     def ping(self):
 
@@ -142,10 +176,10 @@ class Daemon():
                     pingSocket.connect((self.serverAddress, self.pingPort))
                     print("connection established")
                     connected = True
-
                 NetUtils.sendCommand(pingSocket, Command.PING)
                 NetUtils.sendObject(pingSocket, self.bbb.name)
                 NetUtils.sendObject(pingSocket, self.bbb.type)
+                NetUtils.sendObject(pingSocket, pingSocket.getsockname()[0])
 
             except socket.error:
                 print("error")
