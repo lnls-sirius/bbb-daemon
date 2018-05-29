@@ -60,5 +60,3 @@ if __name__ == '__main__':
     i.stopAll()
 
     print("Quiting server")
-# labimas
-# lab_imas@18

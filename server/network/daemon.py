@@ -23,8 +23,8 @@ class DaemonHostListener():
 
         self.queueUdp = Queue()
 
-        self.listenThread = threading.Thread(target=self.listen_udp)
         self.listening = True
+        self.listenThread = threading.Thread(target=self.listen_udp)
         self.listenThread.start()
 
         self.executor = ThreadPoolExecutor(max_workers=workers)
@@ -87,6 +87,10 @@ class DaemonHostListener():
         pingSocket.close()
 
     def stopAll(self):
+        """
+           Stop !
+        """
+
         self.listening = False
         # In order to close the socket and exit from the accept () function, emulate a new connection
         self.executor.shutdown()

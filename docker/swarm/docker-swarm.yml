@@ -4,7 +4,7 @@ services:
     image: redis:latest
     hostname: redis-db
     ports:
-      -  "6379:6379"
+      -  "6379:6379/tcp"
     dns:
       - 10.0.0.71
       - 10.0.0.72
@@ -17,6 +17,10 @@ services:
   bbb-server:
     hostname: bbb-server
     image: lnlscon/bbb-daemon-container:latest
+    ports:
+      -  "6789:6789/tcp"
+      -  "9877:9877/tcp"
+      -  "9876:9876/udp"
     dns:
       - 10.0.0.71
       - 10.0.0.72

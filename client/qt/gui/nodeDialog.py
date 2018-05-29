@@ -11,7 +11,7 @@ class NodeDialog(QDialog):
     DIALOG_WIDTH = 1200
     DIALOG_HEIGHT = 600
 
-    UPDATE_TIME = 2
+    UPDATE_TIME = 5
 
     def __init__(self, parent=None, controller: GUIController = None):
 
