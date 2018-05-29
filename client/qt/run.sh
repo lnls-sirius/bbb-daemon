@@ -4,7 +4,8 @@ PARENT_PATH=$(dirname $PWD)
 export PYTHONPATH="$(dirname $PARENT_PATH)"
 
 # Server App Ip Addr
-export SERVER_APP_IP=10.0.6.70
+export SERVER_APP_IP=10.0.6.44
+
 # Port to communicate with the server app
 export SERVER_APP_COM_PORT=6789
 
