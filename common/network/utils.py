@@ -4,22 +4,25 @@ import struct
 import socket
 
 
-def carry_around_add(a, b):
-    c = a + b
-    return (c & 0xffff) + (c >> 16)
+def checksum(data_str: str):
+    packet = data_str.strip().encode('utf-8')
+    total = 0
+    # Add up 16-bit words
+    num_words = len(packet) // 2
+    for chunk in struct.unpack("!%sH" % num_words, packet[0:num_words * 2]):
+        total += chunk
+
+    # Add any left over byte
+    if len(packet) % 2:
+        total += ord(chr(packet[-1])) << 8
+
+    # Fold 32-bits into 16-bits
+    total = (total >> 16) + (total & 0xffff)
+    total += total >> 16
+    return (~total + 0x10000 & 0xffff)
 
 
-def checksum(msg):
-    if len(msg) % 2 != 0:
-        msg += "\x00"
-    s = 0
-    for i in range(0, len(msg), 2):
-        w = ord(msg[i]) + (ord(msg[i + 1]) << 8)
-        s = carry_around_add(s, w)
-    return ~s & 0xffff
-
-
-def get_ip_address(ifname:str):
+def get_ip_address(ifname: str):
     ifname = ifname.encode('utf-8')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
@@ -39,9 +42,12 @@ def verify_msg(data: str):
     if len(splt) != 5:
         # Error !
         return []
-    if checksum(splt[0]) != data[len(splt[0]):]:
+    message = data[(len(splt[0]) + 1):]
+    res = checksum(message)
+    if int(res) == int(splt[0]):
+        return splt
+    else:
         return []
-    return splt
 
 
 class NetUtils():

@@ -14,6 +14,7 @@ class Command():
         14)
 
 
+
 class NodeState():
     """ Valid states for any host in the Controls Group network. """
 
@@ -47,11 +48,11 @@ class NodeState():
 
 
 class Node():
-
     """
         This class represents a Controls group's host.
         Each host has a symbolic name, a valid IP address, a type and the sector where it is located.
     """
+
     def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, typeNode=None, sector=1, counter=0,
                  pvPrefix=""):
         self.name = name
@@ -82,7 +83,6 @@ class Node():
     def __str__(self):
         return "Name: %s, IP Address: %s, Current state: %s" % (
             self.name, self.ipAddress, NodeState.toString(self.state))
-
 
 
 class Type():
