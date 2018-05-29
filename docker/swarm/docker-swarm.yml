@@ -12,7 +12,6 @@ services:
       - /storage/network-services/redis/:/data
     networks:
       - bbb_daemon_network
-    restart: always
 
   bbb-server:
     hostname: bbb-server
@@ -32,7 +31,6 @@ services:
       - redis
     deploy:
       replicas: 1
-    restart: always
 
 networks:
   bbb_daemon_network:
