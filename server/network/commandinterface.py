@@ -8,10 +8,10 @@ from control.controller import MonitorController
 
 class CommandInterface():
 
-    def __init__(self, serverBindPort=6789, controller: MonitorController = None):
+    def __init__(self, comInterfacePort=6789, controller: MonitorController = None):
 
         self.controller = controller
-        self.port = serverBindPort
+        self.port = comInterfacePort
 
         self.interfaceSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.interfaceSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -89,9 +89,9 @@ class CommandInterface():
                     print("Exiting")
                     return
 
-            except socket.error as e:
+            except Exception as e:
                 print("Lost connection with host " + addr[0])
-                print("{}".format(e))
+                #print("{}".format(e))
                 connectionAlive = False
 
         connection.close()

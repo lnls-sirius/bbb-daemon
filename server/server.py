@@ -10,14 +10,30 @@ from control.controller import MonitorController
 REDIS_SERVER_IP = "localhost"
 REDIS_SERVER_PORT = 6379
 
-if __name__ == '__main__':
+BBB_UDP = 9876
+BBB_TCP = 9877
 
-    if len(sys.argv) is not 3:
-        print("arg[1]=REDIS_SERVER_IP arg[2]=REDIS_SERVER_PORT")
-        print("using: {}:{}".format(REDIS_SERVER_IP, REDIS_SERVER_PORT))
+COM_INTERFACE_TCP = 6789
+
+WORKERS_NUM = 10
+
+if __name__ == '__main__':
+    print(
+        "arg[1]=REDIS_SERVER_IP\targ[2]=REDIS_SERVER_PORT\targ[3]=BBB_UDP\targ[4]=BBB_TCP\targ[5]=COM_INTERFACE_TCP\targ[6]=WORKERS_NUM")
+    if len(sys.argv) is not 6 or len(sys.argv) is not 7 :
+        print("using: {}:{}:{}:{} ".format(REDIS_SERVER_IP, REDIS_SERVER_PORT, BBB_UDP, BBB_TCP,
+                                           COM_INTERFACE_TCP))
+        print("WORKERS={}".format(WORKERS_NUM))
     else:
         REDIS_SERVER_IP = sys.argv[1]
         REDIS_SERVER_PORT = int(sys.argv[2])
+        BBB_UDP = int(sys.argv[3])
+        BBB_TCP = int(sys.argv[4])
+        COM_INTERFACE_TCP = int(sys.argv[5])
+        try:
+            WORKERS_NUM = int(sys.argv[6])
+        except:
+            WORKERS_NUM = 10
 
 
     def sighandler(signum, frame):
@@ -30,9 +46,11 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, sighandler)
     signal.signal(signal.SIGINT, sighandler)
 
+    # bbbUdpPort=9876, bbbTcpPort=9877
+
     c = MonitorController(redis_server_ip=REDIS_SERVER_IP, redis_server_port=REDIS_SERVER_PORT)
-    n = DaemonHostListener(controller=c)
-    i = CommandInterface(controller=c)
+    n = DaemonHostListener(controller=c, bbbUdpPort=BBB_UDP, bbbTcpPort=BBB_TCP, workers=WORKERS_NUM)
+    i = CommandInterface(controller=c, comInterfacePort=COM_INTERFACE_TCP)
 
     while running:
         time.sleep(1)
