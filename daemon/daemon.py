@@ -1,4 +1,3 @@
-
 import shutil
 import socket
 import threading
@@ -26,7 +25,7 @@ class BBB():
         self.configPath = path
         self.typeRepoUrl = ""
         self.typeRcLocalPath = ""
-        self.type = ""
+        self.type = "none"
         self.readParameters()
 
     def reboot(self):
@@ -121,7 +120,6 @@ class Daemon():
         self.bindPort = bindPort
         self.bbb = BBB()
 
-        # self.pingThread = threading.Thread(target=self.ping)
         self.pingThread = threading.Thread(target=self.ping_udp)
         self.pinging = True
         self.pingThread.start()
@@ -143,42 +141,11 @@ class Daemon():
         pingSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         while self.pinging:
-            info = "{}|{}|{}{}" \
-                .format(
-                Command.PING,
-                self.bbb.name,
-                self.bbb.type,
-                self.myIp)
-            cksum = checksum(info)
-            message = "{}|{}".format(cksum, info)
+            info = "{}|{}|{}|{}" \
+                .format(Command.PING, self.bbb.name, self.bbb.type, self.myIp)
+            message = "{}|{}".format(checksum(info), info)
             ## {chk} | {cmd} | {name} | {type} | {ipAddr}
             pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
-            time.sleep(1)
-
-    def ping(self):
-
-        pingSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        pingSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        pingSocket.settimeout(10)
-
-        connected = False
-
-        while self.pinging:
-
-            try:
-                if not connected:
-                    pingSocket.connect((self.serverAddress, self.pingPort))
-                    print("connection established")
-                    connected = True
-                NetUtils.sendCommand(pingSocket, Command.PING)
-                NetUtils.sendObject(pingSocket, self.bbb.name)
-                NetUtils.sendObject(pingSocket, self.bbb.type)
-                NetUtils.sendObject(pingSocket, pingSocket.getsockname()[0])
-
-            except socket.error:
-                print("error")
-                connected = False
-
             time.sleep(1)
 
     def stop(self):
