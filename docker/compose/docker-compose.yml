@@ -11,7 +11,7 @@ services:
 
   bbb-server-service:
     container_name: bbb-serv-cont
-    image: lnlscon/bbb-daemon-container:bbb-server
+    image: lnlscon/bbb-daemon-container:latest
     ports:
       -  "6789:6789"
       -  "9876:9876"

@@ -1,33 +1,37 @@
-version: '3.3'
-
-version: '3.3'
+version: '3.2'
 services:
-  redis:
-    image: redis:latest 
-    container_name: redis_bbb
+  redis-db:
+    image: redis:latest
+    hostname: redis-db
     ports:
       -  "6379:6379"
+    dns:
+      - 10.0.0.71
+      - 10.0.0.72
     volumes:
-      - bbb-redis-data:/data
+      - /storage/network-services/redis/:/data
+    networks:
+      - bbb_daemon_network
     restart: always
 
-  bbb-server-service:
-    container_name: bbb-serv-cont
-    image: lnlscon/bbb-daemon-container:bbb-server
-    ports:
-      -  "6789:6789"
-      -  "9876:9876"
+  bbb-server:
+    hostname: bbb-server
+    image: lnlscon/bbb-daemon-container:latest
     dns:
       - 10.0.0.71
       - 10.0.0.72
     env_file:
-      -  /root/bbb-daemon/docker/bbb-server/bbb-server.env
+      -  /home/srv1/repository/bbb-daemon/docker/bbb-server/bbb-server.env
+    networks:
+      - bbb_daemon_network
     depends_on:
-      -  redis
+      - redis
     deploy:
       replicas: 1
     restart: always
 
-volumes:
-  bbb-redis-data:
-
+networks:
+  bbb_daemon_network:
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
