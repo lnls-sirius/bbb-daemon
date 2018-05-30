@@ -22,7 +22,7 @@ Each BBB uses basically two kinds of information during boot:
 - Its pin configuration, which is defined in a `*.dtbo`.
 - The scripts that should be executed. They are launched from a systemd service, called `rc-local.service` . This service uses the command defined in another file, `rc.local`. Therefore, `rc.local` must be updated depending on the function that the host will perform.
 
-Furthermore, we are added two more parameters:
+Furthermore, we added two more parameters:
 
 - The PV prefix that the IOC running in the BBB will use to create the variables.
 - A type parameter to identify the board that the BBB is connected to and the project that should be synchronized with.
