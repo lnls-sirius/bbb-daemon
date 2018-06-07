@@ -18,7 +18,7 @@ class MonitorInterface(QMainWindow):
 
     updateIcon = pyqtSignal(int)
 
-    def __init__(self, server="localhost", servPort: int = 6789):
+    def __init__(self, server: str = "localhost", servPort: int = 6789):
 
         super().__init__()
 

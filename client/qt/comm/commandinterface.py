@@ -9,7 +9,7 @@ from common.entity.entities import Type, Node
 
 class CommandInterface():
 
-    def __init__(self, serverAddress='10.0.6.70', serverPort=6789):
+    def __init__(self, serverAddress: str, serverPort: int):
 
         self.serverAddress = serverAddress
         self.port = serverPort
@@ -33,11 +33,13 @@ class CommandInterface():
                     print("connection established")
                     self.connectionLock.release()
                     return True
-                except socket.error:
+                except Exception as e:
+                    print("{}".format(e))
                     traceback.print_exc()
                     attempts = attempts - 1
 
             self.connectionLock.release()
+            print("Couldn't connect")
             return False
 
         return True
@@ -53,7 +55,8 @@ class CommandInterface():
             NetUtils.sendCommand(self.interfaceSocket, Command.SWITCH)
             NetUtils.sendObject(self.interfaceSocket, registeredNode)
             NetUtils.sendObject(self.interfaceSocket, unregisteredNode)
-        except socket.error:
+        except Exception as e:
+            print("{}".format(e))
             self.connection = False
 
         self.connectionLock.release()
@@ -68,7 +71,8 @@ class CommandInterface():
         try:
             NetUtils.sendCommand(self.interfaceSocket, Command.REBOOT)
             NetUtils.sendObject(self.interfaceSocket, registeredNode)
-        except socket.error:
+        except Exception as e:
+            print("{}".format(e))
             self.connection = False
 
         self.connectionLock.release()
@@ -85,7 +89,8 @@ class CommandInterface():
             NetUtils.sendCommand(self.interfaceSocket, Command.TYPE)
             NetUtils.sendObject(self.interfaceSocket, newType)
             success = True
-        except socket.error:
+        except Exception as e:
+            print("{}".format(e))
             self.connection = False
             success = False
 
@@ -103,7 +108,8 @@ class CommandInterface():
         try:
             NetUtils.sendCommand(self.interfaceSocket, Command.REMOVE_TYPE)
             NetUtils.sendObject(self.interfaceSocket, typeName)
-        except socket.error:
+        except Exception as e:
+            print("{}".format(e))
             self.connection = False
 
         self.connectionLock.release()
@@ -124,7 +130,8 @@ class CommandInterface():
                     types.append(NetUtils.recvObject(self.interfaceSocket))
 
                 command = NetUtils.recvCommand(self.interfaceSocket)
-        except socket.error:
+        except Exception as e:
+            print("{}".format(e))
             types = []
             self.connection = False
 
@@ -153,7 +160,8 @@ class CommandInterface():
                     nodes.append(NetUtils.recvObject(self.interfaceSocket))
 
                 command = NetUtils.recvCommand(self.interfaceSocket)
-        except socket.error:
+        except Exception as e:
+            print("{}".format(e))
             nodes = []
             self.connection = False
 
@@ -171,7 +179,8 @@ class CommandInterface():
             NetUtils.sendCommand(self.interfaceSocket, Command.APPEND_NODE)
             NetUtils.sendObject(self.interfaceSocket, node)
             success = True
-        except socket.error:
+        except Exception as e:
+            print("{}".format(e))
             success = False
             self.connection = False
 
@@ -191,7 +200,8 @@ class CommandInterface():
             NetUtils.sendCommand(self.interfaceSocket, Command.NODE)
             NetUtils.sendObject(self.interfaceSocket, node)
             success = True
-        except socket.error:
+        except Exception as e:
+            print("{}".format(e))
             success = False
             self.connection = False
 

@@ -139,6 +139,8 @@ class NodeDialog(QDialog):
                        sector=self.sectors.itemText(self.sectors.currentIndex()),
                        pvPrefix=self.prefix.displayText())
 
+        print('{}'.format(newNode))
+
         appended = self.controller.appendNode(newNode)
 
         if appended:
@@ -146,7 +148,8 @@ class NodeDialog(QDialog):
                                                        registered=True)
             self.nodeTableModel.setData(nodes)
         else:
-            QMessageBox(QMessageBox.Warning, "Failed!", "IP address already in use!", QMessageBox.Ok, self).open()
+            QMessageBox(QMessageBox.Warning, "Failed!", "Could not add a new node. Verify if the ip address !",
+                        QMessageBox.Ok, self).open()
 
     def keyPressEvent(self, evt):
 
