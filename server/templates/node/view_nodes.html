@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+{{super()}}
+ <script>
+
+    var active_sector_val = null;
+
+    function edit_node(obj){
+        var node_ip = obj.value;
+        console.log("Edit !" + node_ip);
+        console.log("{{ edit_url }}"+ "?node_ip="+node_ip);
+        window.location =  "{{ edit_url }}"+ "?node_ip="+node_ip + "&"+"node_sector="+active_sector_val
+    }
+                
+    function delete_node(obj){
+        var node_ip = obj.value;
+        console.log("Delete !" + node_ip);
+        
+        $.post('',{ 'action':'DELETE', 'node_ip': bbb_configured_selected, 'node_sector':active_sector_val})
+        .done(function(data){
+            console.log(data); 
+            refresh_bbbs();
+        });
+    }
+ 
+    function refresh_bbbs() {
+        
+        var current_sector_val = $('#current_sector').val();
+        console.log(current_sector_val);
+ 
+            
+        active_sector_val = current_sector_val;
+        
+        console.log(active_sector_val);
+
+        $.post( '{{ refresh_url }}', { 'sector': active_sector_val})            
+            .done(function( data ) {
+
+                $('#nodes_table').html(data);
+
+                
+        });
+         
+    }
+
+    refresh_bbbs();
+
+    setInterval(function () {
+        refresh_bbbs()
+    }, 2000);
+ 
+ </script>
+{% endblock %}
+
+{% block content%}
+{{super()}}
+
+<div class="container">
+    <div><strong><h3>Current Sector</h3></strong><br></div>
+    <div class="form-group ">
+        <div class="selectContainer">
+            <select class="form-control" name="size" id="current_sector">
+                {% for sector in sectors %}
+                    <option value={{sector}}>{{sector}}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div><br>
+
+<div class="container">
+    <h1>View Nodes</h1>
+    <br>
+    <table class="table table-hover">
+        <thead class="thead-dark">
+        <tr>
+            <th scope="col">IP Address</th>
+            <th scope="col">Name</th>
+            <th scope="col">Type Name</th>
+            <th scope="col">Type Repo URL</th>
+            <th scope="col">Type rc.local Path</th>
+            <th scope="col">Sector</th>
+            <th scope="col">PV Prefix</th>
+            <th scope="col">State</th>
+        </tr>
+        </thead>
+        <tbody  id="nodes_table">
+
+        </tbody>
+    </table>
+</div>
+{% endblock %}

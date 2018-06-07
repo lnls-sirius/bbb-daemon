@@ -1,0 +1,34 @@
+{% extends "bootstrap/base.html" %}
+{% block title %}
+{{super()}}
+    BBB Daemon
+{% endblock %}
+
+
+{% block content %}
+{{super()}}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}  alert-dismissible fade in">
+                  <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                  {{ message }}
+                </div>
+              {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+{% endblock %}
+
+{% block navbar %}
+    {{super()}}
+    {{ nav.my_navbar.render() }}
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    {{super()}}
+{% endblock %}
+
+

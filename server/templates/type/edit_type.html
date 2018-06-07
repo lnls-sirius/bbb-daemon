@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content%}
+<div class="content-section container">
+
+    {% if type %}
+        <h1>Edit Type</h1><br>
+    {% else %}
+        <h1>Insert Type</h1><br>
+    {% endif %}
+
+    {{super()}}
+    <form method="POST" action="" >
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend class="border-bottom">
+                Type Settings
+            </legend>
+            <div class="form-group">
+                {{ form.name.label(class="form-control-label") }}
+                    {% if form.name.errors %}
+                        {{ form.name(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.name.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.name(class="form-control form-control-lg") }}
+                    {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.repo_url.label(class="form-control-label") }}
+                    {% if form.repo_url.errors %}
+                            {{ form.repo_url(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.repo_url.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.repo_url(class="form-control form-control-lg") }}
+                    {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.description.label(class="form-control-label") }}
+                    {% if form.description.errors %}
+                         {{ form.description(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                    {% else %}
+                                {{ form.description(class="form-control form-control-lg") }}
+                    {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.rc_local_path.label(class="form-control-label") }}
+                {% if form.rc_local_path.errors %}
+                         {{ form.rc_local_path(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.rc_local_path.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                {% else %}
+                            {{ form.rc_local_path(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-info") }}
+        </div>
+    </form>
+
+</div>
+{% endblock %}

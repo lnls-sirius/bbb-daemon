@@ -1,0 +1,68 @@
+
+<table id="table_configured" class="table table-hover">
+    <h3>Configured</h3>
+    <thead class="thead-dark">
+    <tr class="alert-info">
+        <th scope="col">IP Address</th>
+        <th scope="col">Name</th>
+        <th scope="col">Type Name</th>
+        <th scope="col">Type Repo URL</th>
+        <th scope="col">Type rc.local Path</th>
+        <th scope="col">Sector</th>
+        <th scope="col">PV Prefix</th>
+        <th scope="col">State</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for node in configured_nodes %}
+    <tr >
+        <td>{{ node.ipAddress }}</td>
+        <td>{{ node.name }}</td>
+        {% if node.type %}
+            <td>{{ node.type.name }}</td>
+            <td>{{ node.type.repoUrl }}</td>
+            <td>{{ node.type.rcLocalPath }}</td>
+        {% else %}
+            <td></td>
+            <td></td>
+            <td></td>
+        {% endif %}
+        <td>{{ node.sector }}</td>
+        <td>{{ node.pvPrefix }}</td>
+        <td>{{ node.state_string }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br>
+<table id="table_unconfigured" class="table table-hover">
+    <h3>Not Configured</h3>
+    <thead class="thead-dark">
+    <tr class="alert-danger">
+        <th scope="col">IP Address</th>
+        <th scope="col">Name</th>
+        <th scope="col">Type Name</th>
+        <th scope="col">Type Repo URL</th>
+        <th scope="col">Type rc.local Path</th>
+        <th scope="col">Sector</th>
+        <th scope="col">PV Prefix</th>
+        <th scope="col">State</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for node in unconfigured_nodes %}
+    <tr>
+        <td>{{ node.ipAddress }}</td>
+        <td>{{ node.name }}</td>
+        {% if node.type %}
+        <td>{{ node.type.name }}</td>
+        <td>{{ node.type.repoUrl }}</td>
+        <td>{{ node.type.rcLocalPath }}</td>
+        {% endif %}
+        <td>{{ node.sector }}</td>
+        <td>{{ node.pvPrefix }}</td>
+        <td>{{ node.state_string }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
