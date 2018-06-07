@@ -1,3 +1,8 @@
+Flask
+Flask-Nav
+Flask-WTF
+flask-bootstrap
+flask-restful
 gitdb2==2.0.3
 GitPython==2.1.9
 redis==2.10.6

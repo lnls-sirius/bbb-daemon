@@ -13,8 +13,10 @@ services:
     container_name: bbb-serv-cont
     image: lnlscon/bbb-daemon-container:latest
     ports:
-      -  "6789:6789"
-      -  "9876:9876"
+      -  "4850:4850"
+      -  "6789:6789/tcp"
+      -  "9877:9877/tcp"
+      -  "9876:9876/udp"
     dns:
       - 10.0.0.71
       - 10.0.0.72
