@@ -1,3 +1,4 @@
+import ast
 import threading
 
 import redis
@@ -7,7 +8,7 @@ from common.entity.entities import Node, Type
 
 class RedisPersistence():
 
-    def __init__(self, host: str = '10.0.6.70', port: int = 6379):
+    def __init__(self, host: str, port: int):
 
         self.db = redis.StrictRedis(host=host, port=port, db=0)
 
@@ -21,14 +22,15 @@ class RedisPersistence():
         :return:
         """
         if nType is None or nType.name is None or nType.name == "":
-            raise ValueError("Type object isn't fit to be persisted.")
+            print("Type object isn't fit to be persisted. {}".format(nType))
+            return False
 
         self.typesListMutex.acquire()
-        if not self.db.exists(nType.name):
-            self.db.lpush("types", nType.name)
+        if not self.db.exists(nType.get_key()):
+            self.db.lpush("types", nType.get_key())
 
-        success = self.db.set(nType.name,
-                              str({k: vars(nType)[k] for k in ("description", "color", "repoUrl", "rcLocalPath")}))
+        key, val = nType.toSet()
+        success = self.db.set(key, val)
 
         self.typesListMutex.release()
 
@@ -38,110 +40,102 @@ class RedisPersistence():
         """
         Append a Node
         :param nNode:
-        :return:
+        :return: True or False
         """
         if nNode is None or nNode.name is None or nNode.name == "":
-            raise ValueError("Node object isn't fit to be persisted.")
+            print("Node Invalid  {}".format(nNode))
+            return False
 
         self.nodesListMutex.acquire()
-
-        # Trying to add a node that exists in other sector
-        if self.db.exists(nNode.name):
-            node = eval(self.db.get(nNode.name))
-            if nNode.sector != node["sector"]:
-                self.nodesListMutex.release()
-                return False
-
-        if self.db.exists(nNode.ipAddress) and self.db.get(nNode.ipAddress) is not None:
-            nodeName = self.db.get(nNode.ipAddress).decode("utf-8")
-            if self.db.exists(nodeName) and self.db.exists(nodeName) is not None:
-                node = eval(self.db.get(nodeName))
-
-                # Trying to add a node that exists in other sector
-                if nNode.sector != node["sector"]:
+        try:
+            # Trying to add a node that exists in other sector
+            oldNode = self.getNode(nNode.name)
+            if oldNode is not None:
+                # Node already exists
+                if oldNode.sector != nNode.sector:
+                    # Node exists on another sector. Abort !
                     self.nodesListMutex.release()
                     return False
 
-                self.db.delete(nodeName)
-                self.db.lrem(name=nNode.sector, value=nodeName, count=0)
+                self.db.delete(oldNode.get_key())
+                self.db.lrem(name=nNode.sector, value=oldNode.get_key(), count=0)
 
-        if not self.db.exists(nNode.name):
-            self.db.lpush(nNode.sector, nNode.name)
+            if not self.db.exists(nNode.get_key()):
+                self.db.lpush(nNode.sector, nNode.get_key())
 
-        nodeInfo = {"ipAddress": nNode.ipAddress, "type": nNode.type.name, "sector": nNode.sector,
-                    "prefix": nNode.pvPrefix}
+            k, v = nNode.toSet()
+            success = self.db.set(k, v)
+            success = self.db.set(nNode.ipAddress, nNode.get_key())
 
-        success = self.db.set(nNode.name, str(nodeInfo))
-        success = self.db.set(nNode.ipAddress, nNode.name)
-
+        except Exception as e:
+            print("Failed to append node ! {}".format(e))
+            success = False
         self.nodesListMutex.release()
 
         return success
 
     def fetchTypes(self):
-
         self.typesListMutex.acquire()
-
         typesList = []
-        typeMap = {}
-        typeMap.setdefault("")
+        try:
+            typesDb = self.db.lrange("types", 0, -1)
+            if typesDb is not None:
+                for tKey in typesDb:
+                    tName = Type.get_name_from_key(tKey)
+                    aType = self.getType(tName.decode("utf-8"))
+                    typesList.append(aType)
+        except Exception as e:
+            print("{}".format(e))
 
-        typesDb = self.db.lrange("types", 0, -1)
-
-        if typesDb is not None:
-            for tName in typesDb:
-                typeName = tName.decode("utf-8")
-                typeMap = self.db.get(typeName)
-                if typeMap is not None:
-                    typeMap = eval(typeMap)
-                    aType = Type(name=typeName, color=typeMap["color"], repoUrl=typeMap.get("repoUrl", ""),
-                                 rcLocalPath=typeMap.get("rcLocalPath", "init/rc.local"),
-                                 description=typeMap["description"])
-                else:
-                    aType = Type()
-
-                typesList.append(aType)
-
-            self.typesListMutex.release()
+        self.typesListMutex.release()
         return typesList
+
+    def getNode(self, nodeName: str):
+        aNode = None
+        try:
+            nodeMap = self.db.get(Node.key_prefix + nodeName)
+
+            if nodeMap is not None:
+                nM = nodeMap.decode('utf-8')
+                nM = ast.literal_eval(nM)
+                type = self.getType(nM.get('type', ''))
+                aNode = Node(typeNode=type, name=nodeName)
+                aNode.fromSet(nodeMap)
+
+        except Exception as e:
+            print("{}".format(e))
+
+        return aNode
+
+    def getType(self, typeName: str):
+        aType = None
+        try:
+            aType = Type(name=typeName)
+            aType.fromSet(str_dic=self.db.get(aType.get_key()))
+        except Exception as e:
+            print("{}".format(e))
+
+        return aType
 
     def fetchNodesFromSector(self, sector="1"):
         self.nodesListMutex.acquire()
-
         nodesDb = self.db.lrange(sector, 0, -1)
         nodes = []
 
-        for nNames in nodesDb:
-            nName = nNames.decode("utf-8")
-
-            nodeMap = {}
-            typeMap = {}
-            nodeMap.setdefault("")
-            typeMap.setdefault("")
-
-            nodeMap = self.db.get(nName)
-            if nodeMap is not None:
-                nodeMap = eval(nodeMap)
-                typeMap = self.db.get(nodeMap["type"])
-
-                if typeMap is not None:
-                    typeMap = eval(self.db.get(nodeMap["type"]))
-                    nType = Type(name=nodeMap["type"], color=typeMap["color"], repoUrl=typeMap.get("repoUrl", ""),
-                                 rcLocalPath=typeMap.get("rcLocalPath", "init/rc.local"),
-                                 description=typeMap["description"])
-                    pass
-                else:
-                    nType = Type()
-
-                nodes.append(Node(name=nName, ip=nodeMap["ipAddress"], typeNode=nType, sector=sector,
-                                  pvPrefix=nodeMap.get("prefix", "")))
+        for nKey in nodesDb:
+            nKey = nKey.decode("utf-8")
+            nName = Node.get_name_from_key(nKey)
+            nNode = self.getNode(nName)
+            if nNode:
+                nodes.append(nNode)
 
         self.nodesListMutex.release()
         return nodes
 
     def removeType(self, typeName):
-        self.typesListMutex.acquire()
 
+        self.typesListMutex.acquire()
+        typeName = Type.key_prefix + typeName
         if self.db.exists(typeName):
             self.db.delete(typeName)
             self.db.lrem(name="types", value=typeName, count=0)
@@ -156,12 +150,12 @@ class RedisPersistence():
 
         self.nodesListMutex.acquire()
 
-        print(node)
+        print("Node to be Removed {}".format(node))
 
-        if self.db.exists(node.name):
-            self.db.delete(node.name)
+        if self.db.exists(node.get_key()):
+            self.db.delete(node.get_key())
             self.db.delete(node.ipAddress)
-            count = self.db.lrem(name=node.sector, value=node.name, count=0)
+            count = self.db.lrem(name=node.sector, value=node.get_key(), count=0)
         elif self.db.exists(node.ipAddress):
             self.db.delete(node.ipAddress)
             count = self.db.lrem(name=node.sector, value=node.ipAddress, count=0)

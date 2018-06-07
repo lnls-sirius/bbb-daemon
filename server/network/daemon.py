@@ -74,10 +74,11 @@ class DaemonHostListener():
         print("Worker ... Finished")
 
     def listen_udp(self):
-        print("Listening ....")
         pingSocket = socket.socket(socket.AF_INET,  # Internet
                                    socket.SOCK_DGRAM)  # UDP
+        #pingSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         pingSocket.bind(("0.0.0.0", self.bbbUdpPort))
+        print("Listening ....")
         while self.listening:
             data, ipAddr = pingSocket.recvfrom(1024)  # buffer size is 1024 bytes
             data = str(data.decode('utf-8'))
@@ -85,12 +86,12 @@ class DaemonHostListener():
             if info:
                 self.queueUdp.put(info)
         pingSocket.close()
+        print('ping socket closed ')
 
     def stopAll(self):
         """
            Stop !
         """
-
         self.listening = False
         # In order to close the socket and exit from the accept () function, emulate a new connection
         self.executor.shutdown()

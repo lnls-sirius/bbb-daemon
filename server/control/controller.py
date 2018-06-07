@@ -4,11 +4,10 @@ import time
 
 from network.db import RedisPersistence
 
-
 class MonitorController():
     MAX_LOST_PING = 5
 
-    def __init__(self, redis_server_ip: str = 'localhost', redis_server_port: int = 6379):
+    def __init__(self, redis_server_ip: str, redis_server_port: int, ):
 
         self.db = RedisPersistence(host=redis_server_ip, port=redis_server_port)
 
@@ -21,9 +20,8 @@ class MonitorController():
             self.nodes[sector] = {"configured": [], "unconfigured": []}
             self.updateNodesLockList[sector] = threading.Lock()
 
-        self.updateNodesThread = threading.Thread(target=self.scanNodes)
         self.scanNodes = True
-
+        self.updateNodesThread = threading.Thread(target=self.scanNodesWorker)
         self.updateNodesThread.start()
 
     def fetchTypes(self):
@@ -32,7 +30,7 @@ class MonitorController():
     def appendType(self, newType):
         return self.db.appendType(newType)
 
-    def scanNodes(self):
+    def scanNodesWorker(self):
 
         while self.scanNodes:
 
@@ -67,6 +65,11 @@ class MonitorController():
             time.sleep(1)
 
     def appendNode(self, newNode: Node = None):
+        """
+
+        :param newNode:
+        :return: True or False
+        """
         success = self.db.appendNode(newNode)
 
         if success:
@@ -97,10 +100,7 @@ class MonitorController():
         self.db.removeType(t)
 
     def findTypeByName(self, typeName):
-        for t in self.fetchTypes():
-            if t.name == typeName:
-                return t
-        return None
+        return self.db.getType(typeName)
 
     def removeNodeFromSector(self, node):
         count = self.db.removeNodeFromSector(node)
@@ -128,20 +128,50 @@ class MonitorController():
         self.updateNodesLockList[sector].release()
         return nodes
 
-    def rebootNode(self, registeredNode):
-        self.daemon.sendCommand(command=Command.REBOOT, address=registeredNode.ipAddress)
+    def getNodeByAddr(self, ipAddress: str, sector):
+        if ipAddress is None or sector is None:
+            return None
+        nodes = self.db.fetchNodesFromSector(sector)
+        for node in nodes:
+            if node.ipAddress == ipAddress:
+                return node
+        return None
 
-        sector = registeredNode.sector
 
-        self.updateNodesLockList[sector].acquire()
 
+    def getConfiguredNode(self, nodeIp, nodeSector):
         try:
-            index = self.nodes[sector]["configured"].index(registeredNode)
-            self.nodes[sector]["configured"][index].state = NodeState.REBOOTING
+            nodeSector = int(nodeSector)
         except:
             pass
 
-        self.updateNodesLockList[sector].release()
+        if nodeIp is None or nodeSector is None:
+            return None
+
+        for node_conf in (self.nodes.get(nodeSector, [])).get("configured", []):
+            print('Nconf'.format(node_conf))
+            if node_conf.ipAddress == nodeIp:
+                return node_conf
+
+        return None
+
+    def rebootNode(self, registeredNode):
+        if registeredNode == None:
+            pass
+        else:
+            self.daemon.sendCommand(command=Command.REBOOT, address=registeredNode.ipAddress)
+
+            sector = registeredNode.sector
+
+            self.updateNodesLockList[sector].acquire()
+
+            try:
+                index = self.nodes[sector]["configured"].index(registeredNode)
+                self.nodes[sector]["configured"][index].state = NodeState.REBOOTING
+            except:
+                pass
+
+            self.updateNodesLockList[sector].release()
 
     def updateNode(self, oldNode, newNode):
         self.daemon.sendCommand(command=Command.SWITCH, address=oldNode.ipAddress, node=newNode)
@@ -197,7 +227,6 @@ class MonitorController():
                     break
 
             if not acknowlegedNode:
-
                 newUnconfigNode = Node(name=name, ip=address, state=NodeState.CONNECTED, typeNode=availableType,
                                        sector=sector, counter=MonitorController.MAX_LOST_PING)
                 if misconfiguredHost:
