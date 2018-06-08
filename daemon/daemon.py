@@ -1,17 +1,17 @@
+import os
 import shutil
 import socket
+import sys
 import threading
 import time
-import os
-import sys
 from configparser import ConfigParser
+from copy import copy
 
 from git import Repo
 
 from common.entity.entities import Command
-from common.network.utils import NetUtils, checksum, get_ip_address
-
-from shutil import copy
+from common.network.utils import NetUtils, checksum
+from common.network.utils import get_ip_address
 
 ##################################################################
 CONFIG_PATH = "/root/bbb-daemon/bbb.cfg"
@@ -28,20 +28,25 @@ bindPort = 9877
 
 class BBB():
 
-    def __init__(self, path=CONFIG_PATH):
-        self.configFile = ConfigParser()
-        self.configFile['NODE-CONFIG'] = {'node_name': '',
-                                          'node_ip': '',
-                                          'type_name': '',
-                                          'type_url': '',
-                                          'type_path': ''}
+    def __init__(self, path=None):
+
         self.configPath = path
+
         self.name = ""
+        self.desiredName = ""
         self.desiredIp = ""
         self.type = "none"
         self.typeRepoUrl = ""
         self.typeRcLocalPath = ""
+        self.myIp = ''
         self.readParameters()
+
+    def getInfo(self):
+        self.myIp = get_ip_address('eth0')
+        info = "{}|{}|{}|{}" \
+            .format(Command.PING, self.name, self.type, self.myIp)
+        print(info)
+        return info
 
     def reboot(self):
         os.system('reboot')
@@ -81,29 +86,38 @@ class BBB():
         except Exception as e:
             print("{}".format(e))
 
-    def update(self, newName, newType, typeRepoUrl, typeRcLocalPath):
+    def update(self, newName=None, newType=None, newTypeRepoUrl=None, newTypeRcLocalPath=None):
+        configFile = ConfigParser()
+        configFile['NODE-CONFIG'] = {'node_name': '',
+                                     'node_ip': '',
+                                     'type_name': '',
+                                     'type_url': '',
+                                     'type_path': ''}
         if newName is not None:
             self.name = newName
             hostnameFile = open("/etc/hostname", "w")
             hostnameFile.write(self.name.replace(":", "-"))
             hostnameFile.close()
-            self.configFile['NODE-CONFIG']['node_name'] = self.name
 
         if newType is not None:
             self.type = newType
-            self.configFile['NODE-CONFIG']['type_name'] = self.type
 
-        if typeRcLocalPath is not None and typeRepoUrl is not None:
-            self.typeRcLocalPath = typeRcLocalPath
-            self.typeRepoUrl = typeRepoUrl
-            self.configFile['NODE-CONFIG']['type_url'] = self.typeRepoUrl
-            self.configFile['NODE-CONFIG']['type_path'] = self.typeRcLocalPath
-
+        if newTypeRcLocalPath is not None and newTypeRepoUrl is not None:
+            self.typeRcLocalPath = newTypeRcLocalPath
+            self.typeRepoUrl = newTypeRepoUrl
             self.update_rclocal()
 
-        self.writeNodeConfig()
+        configFile['NODE-CONFIG']['node_name'] = self.name
+        configFile['NODE-CONFIG']['node_ip'] = self.myIp
+        configFile['NODE-CONFIG']['type_name'] = self.type
+        configFile['NODE-CONFIG']['type_url'] = self.typeRepoUrl
+        configFile['NODE-CONFIG']['type_path'] = self.typeRcLocalPath
+
+
+        self.writeNodeConfig(configFile=configFile)
 
     def readParameters(self):
+        self.readNodeConfig()
         try:
             name = os.popen("hostname", "r").readline()[:-1]
             indexes = [i for i, letter in enumerate(name) if letter == "-"]
@@ -115,40 +129,47 @@ class BBB():
         except FileNotFoundError:
             self.name = "error-hostname-not-found"
 
-        self.readNodeConfig()
-
     def readNodeConfig(self):
         try:
-            bbb_cfg_file = open(self.configPath, 'r')
-            self.configFile.read(bbb_cfg_file, encoding='utf-8')
-        except:
-            with open(self.configPath, 'w+') as bbb_cfg_file:
-                self.configFile.write(bbb_cfg_file)
+            configFile = ConfigParser()
+            configFile.read(self.configPath)
+            self.desiredName = configFile['NODE-CONFIG']['node_name']
+            self.desiredIp = configFile['NODE-CONFIG']['node_ip']
+            self.type = configFile['NODE-CONFIG']['type_name']
+            self.typeRepoUrl = configFile['NODE-CONFIG']['type_url']
+            self.typeRcLocalPath = configFile['NODE-CONFIG']['type_path']
+            self.update(newName=self.desiredName, newType=self.type, newTypeRepoUrl=self.typeRepoUrl,
+                        newTypeRcLocalPath=typeRcLocalPath)
+        except Exception as e:
+            print("{}".format(e))
+            configFile = ConfigParser()
+            configFile['NODE-CONFIG'] = {'node_name': 'default',
+                                         'node_ip': 'default',
+                                         'type_name': 'default',
+                                         'type_url': 'default',
+                                         'type_path': 'default'}
+            with open(self.configPath, 'w') as f:
+                configFile.write(f)
 
-#        self.name = self.configFile['NODE-CONFIG']['node_name']
-        self.desiredIp = self.configFile['NODE-CONFIG']['node_ip']
-        self.type = self.configFile['NODE-CONFIG']['type_name']
-        self.typeRepoUrl = self.configFile['NODE-CONFIG']['type_url']
-        self.typeRcLocalPath = self.configFile['NODE-CONFIG']['type_path']
+            self.desiredName = ''
+            self.desiredIp = ''
+            self.type = ''
+            self.typeRepoUrl = ''
+            self.typeRcLocalPath = ''
 
-
-    def writeNodeConfig(self):
+    def writeNodeConfig(self, configFile: ConfigParser):
         with open(self.configPath, 'w+') as bbb_cfg_file:
-            self.configFile.write(bbb_cfg_file)
+            configFile.write(bbb_cfg_file)
 
 
 class Daemon():
 
-    def __init__(self, path="", serverAddress="10.0.6.44", pingPort=9876, bindPort=9877):
+    def __init__(self, serverAddress: str, pingPort: int, bindPort: int):
 
-        if not os.path.exists('/root/bbb-daemon-repos/'):
-            os.makedirs('/root/bbb-daemon-repos/')
-        self.bbb = BBB()
-        self.myIp = get_ip_address('eth0')
+        self.bbb = BBB(path=CONFIG_PATH)
         self.serverAddress = serverAddress
         self.pingPort = pingPort
         self.bindPort = bindPort
-        self.bbb = BBB()
 
         self.pingThread = threading.Thread(target=self.ping_udp)
         self.pinging = True
@@ -171,8 +192,7 @@ class Daemon():
         pingSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         while self.pinging:
-            info = "{}|{}|{}|{}" \
-                .format(Command.PING, self.bbb.name, self.bbb.type, self.myIp)
+            info = self.bbb.getInfo()
             message = "{}|{}".format(checksum(info), info)
             ## {chk} | {cmd} | {name} | {type} | {ipAddr}
             pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
@@ -208,7 +228,8 @@ class Daemon():
 
                 print(typeName + " " + nodeName + " " + typeRepoUrl + " " + typeRcLocalPath)
 
-                self.bbb.update(nodeName, typeName, typeRepoUrl, typeRcLocalPath)
+                self.bbb.update(newName=nodeName, newType=typeName, newTypeRepoUrl=typeRepoUrl,
+                                newTypeRcLocalPath=typeRcLocalPath)
 
             if command == Command.REBOOT:
                 self.pinging = False
@@ -228,6 +249,9 @@ if __name__ == '__main__':
         servAddr = sys.argv[1]
         pingPort = int(sys.argv[2])
         bindPort = int(sys.argv[3])
+
+    if not os.path.exists('/root/bbb-daemon-repos/'):
+        os.makedirs('/root/bbb-daemon-repos/')
 
     print("arg[1]={}\targ[2]={}\targ[3]={}\t".format(servAddr, pingPort, bindPort))
     Daemon(serverAddress=servAddr, pingPort=pingPort, bindPort=bindPort)
