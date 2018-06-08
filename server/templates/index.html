@@ -7,10 +7,7 @@
 
     var btn_reboot = document.getElementById("btn_reboot_bbb");
     var btn_switch = document.getElementById("btn_switch_bbb");
-
-    console.log(btn_reboot);
-    console.log(btn_switch);
-
+ 
     var bbb_configured_selected = null;
     var bbb_unconfigured_selected = null;
 
@@ -54,51 +51,64 @@
             btn_switch.disabled = true;
         }
         
-        $.post( '{{ refresh_url }}', { sector: current_sector_val})
+        $.post( '{{ refresh_url }}',
+         { 'sector': current_sector_val})
+
             .done(function( data ) {
                 
-                $('#active_bbbs').html(data)
-                
+                $('#active_bbbs').html(data);
+
                 $("#table_configured").on('click', 'tr', function() {
-    
-                    var row_val = $(this).find('td:first').text();
+                    var row = $(this).find('td:nth-child(2)');
+                    var row_val = row.text();
                     
                     if(row_val == bbb_configured_selected){
                         bbb_configured_selected = null;
+                        //row.className ="alert alert-warning"
                     }else{ 
                         bbb_configured_selected = row_val;
+                        //row.className =""
                     }
-                    console.log(bbb_configured_selected);
-                    btn_reboot.disabled = (bbb_configured_selected == null);
-                    /*if(btn_reboot.disabled == false){
-                        btn_reboot.children().first().text = "Reboot BBB: "+ bbb_configured_selected;
-                    }else{
-                        btn_reboot.children().first().text = "Reboot BBB";
-                    }*/
-
-                    btn_switch.disabled = (bbb_unconfigured_selected == null || bbb_configured_selected == null);
-                    /*
-                    if(btn_switch){
-                        btn_switch.text("Switch Selected BBBs: " + bbb_configured_selected + " " + bbb_unconfigured_selected);
-                    }else{
-                        btn_switch.text("Switch Selected BBBs");
-                    }
-                    */
+                    
+                    updateBtnStatus();
 
                 });
 
                 $("#table_unconfigured").on('click', 'tr', function() {
-                    var row_val = $(this).find('td:first').text()
+                    var row_val = $(this).find('td:nth-child(2)').text()
 
                     if(row_val == bbb_unconfigured_selected){
                         bbb_unconfigured_selected = null;
                     }else{
                         bbb_unconfigured_selected = row_val;
                     }
+                    updateBtnStatus();
 
                 });
-
         });
+    }
+/*
+    function updateSelectedRowCss(ipAddr, conf){
+        $('#' + (conf ? 'c_' : 'u_') + ipAddr).tex
+        if (conf){
+            selected = (bbb_configured_selected)?(bbb_configured_selected == ipAddr):false;
+        }else{
+            selected = (bbb_unconfigured_selected)?(bbb_unconfigured_selected == ipAddr):false;
+        }
+        $('#' + (conf ? 'c_' : 'u_') + ipAddr).className = (selected?"alert alert-warning":"");
+    }*/
+
+    function updateBtnStatus(){
+
+        btn_reboot.disabled = (bbb_configured_selected == null);
+
+        btn_reboot.innerHTML = "Reboot BBB"+ (bbb_configured_selected?(':\t'+bbb_configured_selected):"") ;
+
+        btn_switch.innerHTML = 
+        "Switch \tConfigured: " + (bbb_configured_selected?bbb_configured_selected:"") 
+        + "\tNot Configured: " + (bbb_unconfigured_selected?bbb_unconfigured_selected:"") ;
+
+        btn_switch.disabled = (bbb_unconfigured_selected == null || bbb_configured_selected == null);
     }
 
     refresh_bbbs();

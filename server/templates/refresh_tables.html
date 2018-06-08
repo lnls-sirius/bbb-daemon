@@ -3,8 +3,8 @@
     <h3>Configured</h3>
     <thead class="thead-dark">
     <tr class="alert-info">
-        <th scope="col">IP Address</th>
         <th scope="col">Name</th>
+        <th scope="col">IP Address</th>
         <th scope="col">Type Name</th>
         <th scope="col">Type Repo URL</th>
         <th scope="col">Type rc.local Path</th>
@@ -15,9 +15,9 @@
     </thead>
     <tbody>
     {% for node in configured_nodes %}
-    <tr >
-        <td>{{ node.ipAddress }}</td>
+    <tr id={{'c_' + node.ipAddress}} >
         <td>{{ node.name }}</td>
+        <td>{{ node.ipAddress }}</td>
         {% if node.type %}
             <td>{{ node.type.name }}</td>
             <td>{{ node.type.repoUrl }}</td>
@@ -39,8 +39,8 @@
     <h3>Not Configured</h3>
     <thead class="thead-dark">
     <tr class="alert-danger">
-        <th scope="col">IP Address</th>
         <th scope="col">Name</th>
+        <th scope="col">IP Address</th>
         <th scope="col">Type Name</th>
         <th scope="col">Type Repo URL</th>
         <th scope="col">Type rc.local Path</th>
@@ -52,8 +52,8 @@
     <tbody>
     {% for node in unconfigured_nodes %}
     <tr>
-        <td>{{ node.ipAddress }}</td>
         <td>{{ node.name }}</td>
+        <td>{{ node.ipAddress }}</td>
         {% if node.type %}
         <td>{{ node.type.name }}</td>
         <td>{{ node.type.repoUrl }}</td>

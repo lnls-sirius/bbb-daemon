@@ -7,21 +7,23 @@
     var active_sector_val = null;
 
     function edit_node(obj){
-        var node_ip = obj.value;
-        console.log("Edit !" + node_ip);
-        console.log("{{ edit_url }}"+ "?node_ip="+node_ip);
-        window.location =  "{{ edit_url }}"+ "?node_ip="+node_ip + "&"+"node_sector="+active_sector_val
+        var node_name = obj.value;
+        window.location =  "{{ edit_url }}"+ "?node_name="+node_name
     }
                 
     function delete_node(obj){
-        var node_ip = obj.value;
-        console.log("Delete !" + node_ip);
-        
-        $.post('',{ 'action':'DELETE', 'node_ip': bbb_configured_selected, 'node_sector':active_sector_val})
-        .done(function(data){
-            console.log(data); 
-            refresh_bbbs();
-        });
+        console.log('innerHtml=' + obj.innerHTML)
+        console.log('val=' + obj.value)
+        console.log('val=' + obj.text)
+
+        var node_name = obj.value;
+        if(active_sector_val){
+            $.post('',{ 'action':'DELETE', 'node_name': node_name})
+                .done(function(data){
+                    console.log(data); 
+                    refresh_bbbs();
+            });
+        }
     }
  
     function refresh_bbbs() {
@@ -29,17 +31,11 @@
         var current_sector_val = $('#current_sector').val();
         console.log(current_sector_val);
  
-            
         active_sector_val = current_sector_val;
         
-        console.log(active_sector_val);
-
         $.post( '{{ refresh_url }}', { 'sector': active_sector_val})            
             .done(function( data ) {
-
                 $('#nodes_table').html(data);
-
-                
         });
          
     }
@@ -75,8 +71,8 @@
     <table class="table table-hover">
         <thead class="thead-dark">
         <tr>
-            <th scope="col">IP Address</th>
             <th scope="col">Name</th>
+            <th scope="col">IP Address</th>
             <th scope="col">Type Name</th>
             <th scope="col">Type Repo URL</th>
             <th scope="col">Type rc.local Path</th>

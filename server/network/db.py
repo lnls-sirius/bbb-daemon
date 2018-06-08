@@ -144,12 +144,10 @@ class RedisPersistence():
 
     def removeNodeFromSector(self, node: Node):
         count = 0
-
         if node is None:
             return count
 
         self.nodesListMutex.acquire()
-
         print("Node to be Removed {}".format(node))
 
         if self.db.exists(node.get_key()):

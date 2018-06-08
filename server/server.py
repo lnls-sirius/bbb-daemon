@@ -23,7 +23,7 @@ def init_conf():
 
     WORKERS_NUM = 10
 
-    print("arg[1]=REDIS_SERVER_IP\t"
+    print("arg[1]=REDIS_SERVER_IP\t" 
           "arg[2]=REDIS_SERVER_PORT\t"
           "arg[3]=BBB_UDP\t"
           "arg[4]=BBB_TCP\t"

@@ -105,7 +105,7 @@ class Node(BaseRedisEntity):
         return key, content
 
     def get_key(self):
-        return Node.key_prefix + self.name
+        return (Node.key_prefix + self.name).replace(' ', '')
 
     def fromSet(self, str_dic):
         """
@@ -128,7 +128,7 @@ class Node(BaseRedisEntity):
     # Change the current state of the object. Refer to the Control_Node_State class
     def changeState(self, state):
         self.state = state
-        self.state_string = self.NodeState.toString(state)
+        self.state_string = NodeState.toString(state)
 
     # Returns True if the state is Control_Node_State.CONNECTED
     def isConnected(self):

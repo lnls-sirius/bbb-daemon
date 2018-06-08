@@ -1,13 +1,13 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Length
+from wtforms.validators import DataRequired, Length, Regexp
 
 from common.entity.entities import Type, Node
 
 
 class EditNodeForm(FlaskForm):
-    ip_address = StringField("IP Address", validators=[DataRequired()])
-    name = StringField("Name", validators=[DataRequired()])
+    ip_address = StringField("IP Address", validators=[DataRequired(), Regexp('^([0-9]{1,3}\.){3}[0-9]{1,3}$', message='Must be a valid ip! xxx.xxx.xxx.xxx')])
+    name = StringField("Name", validators=[DataRequired(), Regexp('[^\s]',message='Spaces are not allowed!')])
     type = SelectField("Type", validators=[DataRequired()])
     sector = SelectField("Sector", validators=[DataRequired()])
     pv_prefix = StringField("PV Prefix", validators=[DataRequired()])

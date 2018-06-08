@@ -22,13 +22,14 @@ app.secret_key = "4dbae3052d7e8b16ebcfe8752f70a4efe68d2ae0558b4a1b25c5fd902284e5
 Bootstrap(app)
 nav = Nav(app)
 
-nav.register_element('my_navbar', Navbar('BBB Daemon System',
+@nav.navigation()
+def my_navbar():
+    return Navbar('BBB Daemon System',
                                          View('Home', 'home'),
                                          Subgroup("Nodes", View('View Nodes', 'view_nodes'),
                                                   View('Edit / Insert', 'edit_nodes')),
                                          Subgroup("Types", View('View Types', 'view_types'),
-                                                  View('Edit / Insert', 'edit_types'))))
-
+                                                  View('Edit / Insert', 'edit_types')))
 
 @app.route("/")
 @app.route("/home/", methods=['GET', 'POST'])
@@ -101,11 +102,15 @@ def view_nodes():
     if request.method == 'POST':
         action = request.form.get('action', '')
         if action == 'DELETE':
-            node_ip = request.form.get('node_ip', '')
-            node_sector = request.form.get('node_sector', '')
-            if node_ip == '' or node_sector == '':
-                return 'Invalid node sector/name'
-            return "{} {}".format(node_ip, node_sector)
+            node_name = request.form.get('node_name', '')
+            node = monitor_controller.getNode(node_name)
+            if node:
+                if monitor_controller.removeNodeFromSector(node):
+                    return 'Node Deleted !'
+                else:
+                    return 'Failed to Delete !'
+            else:
+                return 'Node not found'
 
     sectors_list = Sector.SECTORS
 
@@ -138,10 +143,9 @@ def edit_nodes(node=None):
 
     if request.method == 'GET':
         print("GET {}".format(request.args))
-        node_ip = request.args.get('node_ip', '')
-        node_sector = request.args.get('node_sector', '')
-        if node_ip is not '' and node_sector is not '':
-            node = monitor_controller.getNodeByAddr(node_ip, node_sector)
+        node_name = request.args.get('node_name', '')
+        node = monitor_controller.getNode(node_name)
+        if node:
             edit_nodes_form.set_initial_values(node)
 
     return render_template("node/edit_node.html", node=node, form=edit_nodes_form)

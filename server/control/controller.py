@@ -4,6 +4,7 @@ import time
 
 from network.db import RedisPersistence
 
+
 class MonitorController():
     MAX_LOST_PING = 5
 
@@ -47,9 +48,9 @@ class MonitorController():
                             # A host is considered disconnected if its internal counter reaches 0 (connected) or -90 (rebooting)
                             if (configuredNode.state != NodeState.REBOOTING and fetchedNode.counter <= 0) or \
                                     (configuredNode.state == NodeState.REBOOTING and fetchedNode.counter <= -90):
-                                fetchedNode.state = NodeState.DISCONNECTED
+                                fetchedNode.changeState(NodeState.DISCONNECTED)
                             else:
-                                fetchedNode.state = configuredNode.state
+                                fetchedNode.changeState(configuredNode.state)
 
                 # Updates configured nodes
                 self.nodes[sector]["configured"] = fetchedNodes
@@ -137,7 +138,8 @@ class MonitorController():
                 return node
         return None
 
-
+    def getNode(self, node_name: str = None):
+        return self.db.getNode(node_name)
 
     def getConfiguredNode(self, nodeIp, nodeSector):
         try:
@@ -167,7 +169,7 @@ class MonitorController():
 
             try:
                 index = self.nodes[sector]["configured"].index(registeredNode)
-                self.nodes[sector]["configured"][index].state = NodeState.REBOOTING
+                self.nodes[sector]["configured"][index].changeState(NodeState.REBOOTING)
             except:
                 pass
 
@@ -195,17 +197,18 @@ class MonitorController():
                 node.counter = MonitorController.MAX_LOST_PING
 
                 if node.name == name and node.type.name == hostType:
-                    node.state = NodeState.CONNECTED
+                    node.changeState(NodeState.CONNECTED)
+                    print('connected {}'.format(node))
                     isHostConnected = True
                 else:
-                    node.state = NodeState.MISCONFIGURED
+                    node.changeState(NodeState.MISCONFIGURED)
                     misconfiguredHost = True
                 break
 
         if not isHostConnected:
 
             availableType = self.findTypeByName(hostType)
-            if availableType == None:
+            if not availableType:
                 availableType = Type(name=hostType, description="Unknown type.")
 
             acknowlegedNode = False
@@ -219,9 +222,9 @@ class MonitorController():
                     unconfigNode.type = availableType
 
                     if misconfiguredHost:
-                        unconfigNode.state = NodeState.MISCONFIGURED
+                        unconfigNode.changeState(NodeState.MISCONFIGURED)
                     else:
-                        unconfigNode.state = NodeState.CONNECTED
+                        unconfigNode.changeState(NodeState.CONNECTED)
 
                     acknowlegedNode = True
                     break
@@ -230,7 +233,7 @@ class MonitorController():
                 newUnconfigNode = Node(name=name, ip=address, state=NodeState.CONNECTED, typeNode=availableType,
                                        sector=sector, counter=MonitorController.MAX_LOST_PING)
                 if misconfiguredHost:
-                    newUnconfigNode.state = NodeState.MISCONFIGURED
+                    newUnconfigNode.changeState(NodeState.MISCONFIGURED)
 
                 self.nodes[sector]["unconfigured"].append(newUnconfigNode)
 
