@@ -35,9 +35,7 @@ class BBB():
                                           'type_name': '',
                                           'type_url': '',
                                           'type_path': ''}
-
         self.configPath = path
-
         self.name = ""
         self.desiredIp = ""
         self.type = "none"
@@ -86,6 +84,9 @@ class BBB():
     def update(self, newName, newType, typeRepoUrl, typeRcLocalPath):
         if newName is not None:
             self.name = newName
+            hostnameFile = open("/etc/hostname", "w")
+            hostnameFile.write(self.name.replace(":", "-"))
+            hostnameFile.close()
             self.configFile['NODE-CONFIG']['node_name'] = self.name
 
         if newType is not None:
@@ -130,6 +131,7 @@ class BBB():
         self.typeRepoUrl = self.configFile['NODE-CONFIG']['type_url']
         self.typeRcLocalPath = self.configFile['NODE-CONFIG']['type_path']
 
+
     def writeNodeConfig(self):
         with open(self.configPath, 'w+') as bbb_cfg_file:
             self.configFile.write(bbb_cfg_file)
@@ -141,6 +143,7 @@ class Daemon():
 
         if not os.path.exists('/root/bbb-daemon-repos/'):
             os.makedirs('/root/bbb-daemon-repos/')
+        self.bbb = BBB()
         self.myIp = get_ip_address('eth0')
         self.serverAddress = serverAddress
         self.pingPort = pingPort
