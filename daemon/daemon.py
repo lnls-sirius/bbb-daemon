@@ -4,6 +4,7 @@ import threading
 import time
 import os
 import sys
+from configparser import ConfigParser
 
 from git import Repo
 
@@ -12,20 +13,36 @@ from common.network.utils import NetUtils, checksum, get_ip_address
 
 from shutil import copy
 
+##################################################################
+CONFIG_PATH = "/root/bbb-daemon/bbb.cfg"
+typeRcLocalPath = "init/rc.local"
+RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
+
+servAddr = "10.0.0.70"
+pingPort = 9876
+bindPort = 9877
+
+
+##################################################################
+# CLONE_PATH = "../"  # remember to place the forward slash !
 
 class BBB():
-    CONFIG_PATH = "/root/bbb-daemon/bbb.cfg"
-    typeRcLocalPath = "init/rc.local"
-    RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
-
-    # CLONE_PATH = "../"  # remember to place the forward slash !
 
     def __init__(self, path=CONFIG_PATH):
-        self.name = ""
+        self.configFile = ConfigParser()
+        self.configFile['NODE-CONFIG'] = {'node_name': '',
+                                          'node_ip': '',
+                                          'type_name': '',
+                                          'type_url': '',
+                                          'type_path': ''}
+
         self.configPath = path
+
+        self.name = ""
+        self.desiredIp = ""
+        self.type = "none"
         self.typeRepoUrl = ""
         self.typeRcLocalPath = ""
-        self.type = "none"
         self.readParameters()
 
     def reboot(self):
@@ -58,8 +75,8 @@ class BBB():
                 pass
 
                 print("Cloned repository {} at {}/{}".format(self.typeRepoUrl, os.getcwd(), repo_name))
-                copy(repo_dir + self.typeRcLocalPath, self.RC_LOCAL_DESTINATION_PATH)
-                print("Copied file {} to {}".format(repo_dir + self.typeRcLocalPath, self.RC_LOCAL_DESTINATION_PATH))
+                copy(repo_dir + self.typeRcLocalPath, RC_LOCAL_DESTINATION_PATH)
+                print("Copied file {} to {}".format(repo_dir + self.typeRcLocalPath, RC_LOCAL_DESTINATION_PATH))
                 shutil.rmtree(repo_dir)
             else:
                 print("Not repo URL defined.")
@@ -67,26 +84,23 @@ class BBB():
             print("{}".format(e))
 
     def update(self, newName, newType, typeRepoUrl, typeRcLocalPath):
-        try:
-            if newName is not None:
-                self.name = newName
-                hostnameFile = open("/etc/hostname", "w")
-                hostnameFile.write(self.name.replace(":", "-"))
-                hostnameFile.close()
+        if newName is not None:
+            self.name = newName
+            self.configFile['NODE-CONFIG']['node_name'] = self.name
 
-            if newType is not None:
-                self.type = newType
-                typeFile = open(self.configPath, "w+")
-                typeFile.write(self.type + "\n")
-                typeFile.close()
+        if newType is not None:
+            self.type = newType
+            self.configFile['NODE-CONFIG']['type_name'] = self.type
 
-            if typeRcLocalPath is not None and typeRepoUrl is not None:
-                self.typeRcLocalPath = typeRcLocalPath
-                self.typeRepoUrl = typeRepoUrl
-                self.update_rclocal()
+        if typeRcLocalPath is not None and typeRepoUrl is not None:
+            self.typeRcLocalPath = typeRcLocalPath
+            self.typeRepoUrl = typeRepoUrl
+            self.configFile['NODE-CONFIG']['type_url'] = self.typeRepoUrl
+            self.configFile['NODE-CONFIG']['type_path'] = self.typeRcLocalPath
 
-        except FileNotFoundError:
-            print("Configuration files not found.")
+            self.update_rclocal()
+
+        self.writeNodeConfig()
 
     def readParameters(self):
         try:
@@ -100,12 +114,25 @@ class BBB():
         except FileNotFoundError:
             self.name = "error-hostname-not-found"
 
+        self.readNodeConfig()
+
+    def readNodeConfig(self):
         try:
-            f = open(self.configPath, "r")
-            self.type = f.readline()[:-1]
-            f.close()
-        except FileNotFoundError:
-            print("Cfg file not found.")
+            bbb_cfg_file = open(self.configPath, 'r')
+            self.configFile.read(bbb_cfg_file, encoding='utf-8')
+        except:
+            with open(self.configPath, 'w+') as bbb_cfg_file:
+                self.configFile.write(bbb_cfg_file)
+
+#        self.name = self.configFile['NODE-CONFIG']['node_name']
+        self.desiredIp = self.configFile['NODE-CONFIG']['node_ip']
+        self.type = self.configFile['NODE-CONFIG']['type_name']
+        self.typeRepoUrl = self.configFile['NODE-CONFIG']['type_url']
+        self.typeRcLocalPath = self.configFile['NODE-CONFIG']['type_path']
+
+    def writeNodeConfig(self):
+        with open(self.configPath, 'w+') as bbb_cfg_file:
+            self.configFile.write(bbb_cfg_file)
 
 
 class Daemon():
@@ -184,7 +211,7 @@ class Daemon():
                 self.pinging = False
                 self.bbb.reboot()
 
-        self.commandSocket.close()
+        commandSocket.close()
 
     def stop(self):
         self.pinging = False
@@ -192,10 +219,6 @@ class Daemon():
 
 
 if __name__ == '__main__':
-
-    servAddr = "10.0.0.70"
-    pingPort = 9876
-    bindPort = 9877
 
     print("arg[1]=servAddress arg[2]=pingPort arg[3]=bindPort")
     if len(sys.argv) == 4:
