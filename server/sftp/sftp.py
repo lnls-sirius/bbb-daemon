@@ -1,3 +1,5 @@
+import os
+
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
@@ -41,6 +43,12 @@ class BBBHandler(FTPHandler):
 
 
 def start_ftp_server(ftp_home_dir='/home/', ftp_port: int = 1026):
+    if os.path.exists(ftp_home_dir) and not os.path.isdir(ftp_home_dir):
+        print('FTP Server Failed to Start! FTP_HOME Path is not valid !!')
+        return
+    if not os.path.isdir(ftp_home_dir):
+        os.mkdir(ftp_home_dir)
+
     authorizer = DummyAuthorizer()
     authorizer.add_anonymous(ftp_home_dir, perm="elr")
 

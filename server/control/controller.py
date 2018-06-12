@@ -1,15 +1,17 @@
-from common.entity.entities import Command, Node, NodeState, Sector, Type
+from common.entity.entities import Command, NodeState, Sector, Node, Type
 import threading
 import time
 
 from network.db import RedisPersistence
+from util.git import cloneRepository, checkUrlFunc
 
 
 class MonitorController():
     MAX_LOST_PING = 5
 
-    def __init__(self, redis_server_ip: str, redis_server_port: int, ):
+    def __init__(self, redis_server_ip: str, redis_server_port: int, sftp_home_dir: str = '/root/bbb-daemon-repos/'):
 
+        self.sftp_home_dir = sftp_home_dir
         self.db = RedisPersistence(host=redis_server_ip, port=redis_server_port)
 
         self.sectors = Sector.sectors()
@@ -241,3 +243,18 @@ class MonitorController():
 
     def stopAll(self):
         self.scanNodes = False
+
+    def validateRepository(self, rc_path: str = None, git_url: str = None):
+        """
+            Verify if the repository is valid.
+        :param git_url:
+        :return:  :return: (True or False), ("Message")
+        """
+        return checkUrlFunc(git_url=git_url, rc_local_path=rc_path)
+
+    def cloneRepository(self, git_url=None, rc_local_path=None):
+        """
+            Clone the repository from git to the ftp server!
+        :return: True or False
+        """
+        return cloneRepository(git_url=git_url, rc_local_path=rc_local_path, ftp_serv_location=self.sftp_home_dir)

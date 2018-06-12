@@ -119,8 +119,9 @@ class RedisPersistence():
 
     def fetchNodesFromSector(self, sector="1"):
         self.nodesListMutex.acquire()
-        nodesDb = self.db.lrange(sector, 0, -1)
         nodes = []
+
+        nodesDb = self.db.lrange(sector, 0, -1)
 
         for nKey in nodesDb:
             nKey = nKey.decode("utf-8")

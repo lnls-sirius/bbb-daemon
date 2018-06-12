@@ -1,20 +1,11 @@
-from flask import Flask, render_template, flash, redirect, url_for, request
+from flask import Flask, render_template, flash, redirect, url_for, request, jsonify
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
-from flask_nav.elements import Navbar, View, Subgroup
+from flask_nav.elements import Navbar, View
 
+from common.entity.entities import Sector, Type, Node
 from control.controller import MonitorController
-from common.entity.entities import Node, Type, Sector
-
 from forms import EditNodeForm, EditTypeForm
-
-################################
-################################
-
-monitor_controller = None
-
-################################
-################################
 
 app = Flask("server")
 app.secret_key = "4dbae3052d7e8b16ebcfe8752f70a4efe68d2ae0558b4a1b25c5fd902284e52e"
@@ -22,14 +13,16 @@ app.secret_key = "4dbae3052d7e8b16ebcfe8752f70a4efe68d2ae0558b4a1b25c5fd902284e5
 Bootstrap(app)
 nav = Nav(app)
 
+
 @nav.navigation()
 def my_navbar():
     return Navbar('BBB Daemon System',
-                                         View('Home', 'home'),
-                                         Subgroup("Nodes", View('View Nodes', 'view_nodes'),
-                                                  View('Edit / Insert', 'edit_nodes')),
-                                         Subgroup("Types", View('View Types', 'view_types'),
-                                                  View('Edit / Insert', 'edit_types')))
+                  View('Monitor Sectors', 'home'),
+                  View('View Nodes', 'view_nodes'),
+                  View('Insert Node', 'edit_nodes'),
+                  View('View Types', 'view_types'),
+                  View('Insert Type', 'edit_types'))
+
 
 @app.route("/")
 @app.route("/home/", methods=['GET', 'POST'])
@@ -129,17 +122,21 @@ def edit_nodes(node=None):
                                        format(s)) for s in Sector.SECTORS]
 
     if request.method == 'POST':
-        if edit_nodes_form.validate_on_submit():
-            type = monitor_controller.findTypeByName(edit_nodes_form.type.data)
-            node = Node(
-                name=edit_nodes_form.name.data,
-                ip=edit_nodes_form.ip_address.data,
-                sector=edit_nodes_form.sector.data,
-                pvPrefix=edit_nodes_form.pv_prefix.data,
-                typeNode=type)
-            monitor_controller.appendNode(node)
-            flash('Successfully edited node {} !'.format(node), 'success')
-            return redirect(url_for("view_nodes"))
+        action = request.form.get('action', '')
+        if action == '':
+            if edit_nodes_form.validate_on_submit():
+                type = monitor_controller.findTypeByName(edit_nodes_form.type.data)
+                node = Node(
+                    name=edit_nodes_form.name.data,
+                    ip=edit_nodes_form.ip_address.data,
+                    sector=edit_nodes_form.sector.data,
+                    pvPrefix=edit_nodes_form.pv_prefix.data,
+                    typeNode=type)
+                monitor_controller.appendNode(node)
+                flash('Successfully edited node {} !'.format(node), 'success')
+                return redirect(url_for("view_nodes"))
+        elif action == 'VALIDATE':
+            pass
 
     if request.method == 'GET':
         print("GET {}".format(request.args))
@@ -186,27 +183,48 @@ def edit_types(type=None):
     edit_types_form = EditTypeForm()
 
     if request.method == 'GET':
-        print("GET {}".format(request.args))
         type_name = request.args.get('type_name', '')
         if type_name is not '':
             type = monitor_controller.findTypeByName(type_name)
             edit_types_form.set_initial_values(type)
 
     if request.method == 'POST':
-        if edit_types_form.validate_on_submit():
-            new_type = Type(
-                name=edit_types_form.name.data,
-                repoUrl=edit_types_form.repo_url.data,
-                rcLocalPath=edit_types_form.rc_local_path.data,
-                description=edit_types_form.description.data)
-            monitor_controller.appendType(new_type)
-            flash('Successfully edited type {} !'.format(new_type), 'success')
-            return redirect(url_for("view_types"))
+        action = request.form.get('action', '')
 
-    return render_template("type/edit_type.html", type=type, form=edit_types_form)
+        if action == 'VALIDATE':
+
+            rc_path = request.form.get('rcPath')
+            git_url = request.form.get('gitUrl')
+
+            success, message = monitor_controller.validateRepository(rc_path=rc_path, git_url=git_url)
+
+            return jsonify(success=success, message=message)
+
+        elif action == '':
+            if edit_types_form.validate_on_submit():
+                new_type = Type(
+                    name=edit_types_form.name.data,
+                    repoUrl=edit_types_form.repo_url.data,
+                    rcLocalPath=edit_types_form.rc_local_path.data,
+                    description=edit_types_form.description.data)
+                monitor_controller.appendType(new_type)
+
+                flash('Successfully edited type {} !'.format(new_type), 'success')
+                return redirect(url_for("view_types"))
+        else:
+            return 'Invalid Command'
+
+    return render_template("type/edit_type.html", type=type, form=edit_types_form, url=url_for('edit_types'))
 
 
-def start_webserver(port: int = 5000, c: MonitorController = None):
+def set_controller(c: MonitorController = None):
     global monitor_controller
     monitor_controller = c
+
+
+def get_wsgi_app():
+    return app
+
+
+def start_webserver(port: int = 5000):
     app.run(debug=False, use_reloader=False, port=port, host="0.0.0.0")

@@ -76,7 +76,6 @@ class DaemonHostListener():
     def listen_udp(self):
         pingSocket = socket.socket(socket.AF_INET,  # Internet
                                    socket.SOCK_DGRAM)  # UDP
-        #pingSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         pingSocket.bind(("0.0.0.0", self.bbbUdpPort))
         print("Listening ....")
         while self.listening:
