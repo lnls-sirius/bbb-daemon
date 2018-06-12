@@ -1,63 +1,63 @@
 {% extends "base.html" %}
 
 {% block scripts %}
-{{super()}}
- <script>
-  
-    function edit_type( obj, type_name ){
-        var type_name = obj.value
-        console.log("Edit "+ type_name);
-        console.log("{{ edit_url }}"+ "?type_name="+type_name);
-        
-        window.location =  "{{ edit_url }}"+ "?type_name="+type_name
-    }
-                
-    function delete_type( obj, type_name ){
+    {{ super() }}
+    <script>
 
-        var type_name = obj.value
+        function edit_type(obj, type_name) {
+            var type_name = obj.value
+            console.log("Edit " + type_name);
+            console.log("{{ edit_url }}" + "?type_name=" + type_name);
 
-        console.log("Delete !" + type_name);
-        $.post('', { 'action':'DELETE', 'type_name': type_name})
-            .done(function(data){
-                console.log(data); 
-                refresh_types();
-        });
-    }
+            window.location = "{{ edit_url }}" + "?type_name=" + type_name
+        }
 
-    function refresh_types() {
-        $.post( '{{ refresh_url }}')
-            .done(function( data ) {
-                $('#types_table').html(data);
-        });
-    }
+        function delete_type(obj, type_name) {
 
-    setInterval(function () {
-        refresh_types()
-    }, 2000);
- 
-    refresh_types();
-  
- </script>
+            var type_name = obj.value
+
+            console.log("Delete !" + type_name);
+            $.post('', {'action': 'DELETE', 'type_name': type_name})
+                .done(function (data) {
+                    console.log(data);
+                    refresh_types();
+                });
+        }
+
+        function refresh_types() {
+            $.post('{{ refresh_url }}')
+                .done(function (data) {
+                    $('#types_table').html(data);
+                });
+        }
+
+        setInterval(function () {
+            refresh_types()
+        }, 2000);
+
+        refresh_types();
+
+    </script>
 {% endblock %}
 
-{% block content%}
-{{super()}}
+{% block content %}
+    {{ super() }}
 
-<div class="container">
-    <h1>View Types</h1>
-    <br>
-    <table class="table table-hover">
-        <thead class="thead-dark">
-        <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Repository URL</th>
-            <th scope="col">Path to rc.local</th>
-            <th scope="col">Description</th>
-        </tr>
-        </thead>
-        <tbody id="types_table">
-        
-        </tbody>
-    </table>
-</div>
+    <div class="container">
+        <h1>View Types</h1>
+        <br>
+        <table class="table table-hover">
+            <thead class="thead-dark">
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Repository URL</th>
+                <th scope="col">Path to rc.local</th>
+                <th scope="col">Description</th>
+            </tr>
+            </thead>
+            <tbody id="types_table">
+
+            </tbody>
+        </table>
+    </div>
 {% endblock %}

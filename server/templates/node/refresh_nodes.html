@@ -1,20 +1,25 @@
 {% if nodes %}
-{% for node in nodes %}
-<tr>
-    <td>{{ node.name }}</td>
-    <td>{{ node.ipAddress }}</td>
-    {% if node.type %}
-    <td>{{ node.type.name }}</td>
-    <td>{{ node.type.repoUrl }}</td>
-    <td>{{ node.type.rcLocalPath }}</td>
-    {% endif %}
-    <td>{{ node.sector }}</td>
-    <td>{{ node.pvPrefix }}</td>
-    <td>{{ node.state_string }}</td>
-    <td>
-        <button value='{{node.name}}' onclick="edit_node(this)" type="button" class="btn btn-success">Edit</button>
-        <button value='{{node.name}}' onclick="delete_node(this)" type="button" class="btn btn-danger">Delete</button>
-    </td>
-</tr>
-{% endfor %}
+    {% for node in nodes %}
+        <tr>
+            <td>{{ node.name }}</td>
+            <td>{{ node.ipAddress }}</td>
+            {% if node.type %}
+                <td>{{ node.type.name }}</td>
+                <td>{{ node.type.repoUrl }}</td>
+                <td>{{ node.type.rcLocalPath }}</td>
+            {% endif %}
+            <td>{{ node.sector }}</td>
+            <td>{{ node.pvPrefix }}</td>
+            <td>{{ node.state_string }}</td>
+            <td>
+                <button value='{{ node.name }}' onclick="edit_node(this)" type="button" class="btn btn-success">Edit
+                </button>
+
+
+                <button value='{{ node.name }}' onclick="delete_node(this)" type="button" class="btn btn-danger">
+                    Delete
+                </button>
+            </td>
+        </tr>
+    {% endfor %}
 {% endif %}
