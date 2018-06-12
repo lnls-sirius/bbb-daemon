@@ -6,6 +6,16 @@ Given the fact that the Controls Group will have more than 600 BeagleBone hosts 
 
 The server keeps a list of all hosts connected to the Controls Group's network. Move to the `server/` directory and execute `./run.sh`.
 
+
+An `SFTF server is running on PORT 1026`, this service is used to provide the projects defined on the types fields. Clients are only able to retrive data from 
+the FTP. The server application is responsable to to keep the data up-to-date and fetch is to its clients.
+
+A `web interface is present on PORT 4850`. Flask is the framework of choice for development and Waitress as the WSGI server.
+
+Flask is a microframework for Python based on Werkzeug, Jinja 2 and good intentions. 
+
+Waitress is meant to be a production-quality pure-Python WSGI server with very acceptable performance. It has no dependencies except ones which live in the Python standard library. It runs on CPython on Unix and Windows under Python 2.7+ and Python 3.3+. It is also known to run on PyPy 1.6.0+ on UNIX. It supports HTTP/1.0 and HTTP/1.1.
+
 ## Qt5 Graphical Interface
 
 A Qt5 interface to manage types and nodes. It connects to the server through a TCP socket and sends requests according to the user actions. Move to `client/qt` and run `run.sh`.
@@ -14,6 +24,9 @@ A Qt5 interface to manage types and nodes. It connects to the server through a T
 
 This program should be executed in the host that needs to be monitored. It pings the server every 1 second. It can also receive commands that should run in the host. Execute `run.sh` in `daemon/` folder.
 
+## Docker
+
+To launch the server application on swarm enter the directory `docker/swarm/ ` and run `sudo docker stack deploy -c docker-swarm.yml bbb-daemon`. To remove the containers `sudo docker stack rm bbb-daemon`.
 
 ### Configuration files
 

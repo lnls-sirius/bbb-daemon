@@ -4,18 +4,20 @@ import sys
 import threading
 import time
 
-from entity.bbb import BBB
+from bbb import BBB
 from common.entity.entities import Command
 from common.network.utils import NetUtils, checksum
 
 ##################################################################
 CONFIG_PATH = "/root/bbb-daemon/bbb.cfg"
-typeRcLocalPath = "init/rc.local"
+TYPE_RC_LOCAL_PATH = "init/rc.local"
 RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
+FTP_SERVER_PORT = 1026
 
 servAddr = "10.0.0.70"
 pingPort = 9876
 bindPort = 9877
+
 
 ##################################################################
 # CLONE_PATH = "../"  # remember to place the forward slash !
@@ -25,7 +27,8 @@ class Daemon():
 
     def __init__(self, serverAddress: str, pingPort: int, bindPort: int):
 
-        self.bbb = BBB(path=CONFIG_PATH)
+        self.bbb = BBB(path=CONFIG_PATH, rcLocalDestPath=RC_LOCAL_DESTINATION_PATH, sftp_port=FTP_SERVER_PORT,
+                       sfp_server_addr=servAddr)
         self.serverAddress = serverAddress
         self.pingPort = pingPort
         self.bindPort = bindPort
@@ -62,7 +65,10 @@ class Daemon():
         self.listening = False
 
     def listen(self):
-
+        """
+            Listen to commands from the server.
+        :return:
+        """
         commandSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         commandSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -103,7 +109,7 @@ class Daemon():
 
 if __name__ == '__main__':
 
-    print("arg[1]=servAddress arg[2]=pingPort arg[3]=bindPort")
+    print("arg[1]=servAddress\targ[2]=pingPort\targ[3]=bindPort\t")
     if len(sys.argv) == 4:
         servAddr = sys.argv[1]
         pingPort = int(sys.argv[2])

@@ -4,17 +4,16 @@ import time
 from configparser import ConfigParser
 from copy import copy
 
-from git import Repo
-
-from daemon import RC_LOCAL_DESTINATION_PATH, typeRcLocalPath
-from entity.entities import Command
-from network.utils import get_ip_address
+from common.entity.entities import Command
+from common.network.utils import get_ip_address
+from sftp import downloadFiles, connect_to_ftp_server
 
 
 class BBB():
 
-    def __init__(self, path=None):
+    def __init__(self, path: str = None, rcLocalDestPath: str = None, sfp_server_addr: str = None, sftp_port: int = 22):
 
+        self.rcLocalDestPath = rcLocalDestPath
         self.configPath = path
         self.name = ""
         self.desiredName = ""
@@ -24,6 +23,7 @@ class BBB():
         self.typeRcLocalPath = ""
         self.myIp = ''
         self.readParameters()
+        connect_to_ftp_server(sftp_port=sftp_port, sftp_server_addr=sfp_server_addr)
 
     def getInfo(self):
         self.myIp = get_ip_address('eth0')
@@ -35,42 +35,52 @@ class BBB():
     def reboot(self):
         os.system('reboot')
 
-    def update_rclocal(self):
+    def update_project(self):
+        """
+            Update the project, getting the current version available on the FTP server.
+            The responsability to keep it up to date is all on the server side.
+            Always removing the old ones.
+        :return: True or False
+        """
+        if type is None:
+            return False
         try:
-            if type is not None:
-                repo_name = self.typeRepoUrl.strip().split('/')[-1].split('.')[0]
+            repo_name = self.typeRepoUrl.strip().split('/')[-1].split('.')[0]
 
-                if not self.typeRepoUrl.endswith(".git") or (
-                        not self.typeRepoUrl.startswith("http://") and not self.typeRepoUrl.startswith("https://")):
-                    raise Exception("\'{}\' is not a valid git URL.".format(self.typeRepoUrl))
-
-                repo_dir = "/root/bbb-daemon-repos/" + repo_name + "/"
-                if os.path.exists(repo_dir) and os.path.isdir(repo_dir):
-                    shutil.rmtree(repo_dir)
-                    time.sleep(1)
-
-                Repo.clone_from(url=self.typeRepoUrl.strip(), to_path=repo_dir)
-
-                if repo_dir.endswith('/') and self.typeRcLocalPath.startswith('/'):
-                    self.typeRcLocalPath = self.typeRcLocalPath[1:]
-                elif not repo_dir.endswith('/') and not self.typeRcLocalPath.startswith('/'):
-                    repo_dir = repo_dir + '/'
-
-                if not os.path.isfile(repo_dir + self.typeRcLocalPath):
-                    shutil.rmtree(repo_dir)
-                    raise Exception("rc.local not found on path.")
-                pass
-
-                print("Cloned repository {} at {}/{}".format(self.typeRepoUrl, os.getcwd(), repo_name))
-                copy(repo_dir + self.typeRcLocalPath, RC_LOCAL_DESTINATION_PATH)
-                print("Copied file {} to {}".format(repo_dir + self.typeRcLocalPath, RC_LOCAL_DESTINATION_PATH))
+            repo_dir = "/root/bbb-daemon-repos/" + repo_name + "/"
+            if os.path.exists(repo_dir) and os.path.isdir(repo_dir):
                 shutil.rmtree(repo_dir)
-            else:
-                print("Not repo URL defined.")
+                time.sleep(1)
+
+            if repo_dir.endswith('/') and self.typeRcLocalPath.startswith('/'):
+                self.typeRcLocalPath = self.typeRcLocalPath[1:]
+            elif not repo_dir.endswith('/') and not self.typeRcLocalPath.startswith('/'):
+                repo_dir = repo_dir + '/'
+
+            if not os.path.isfile(repo_dir + self.typeRcLocalPath):
+                shutil.rmtree(repo_dir)
+                raise Exception("rc.local not found on path.")
+
+            downloadFiles(path=repo_name, destination=repo_dir)
+
+            print("Downloaded Node repository from FTP server {} at {}".format(self.typeRepoUrl, repo_name))
+            copy(repo_dir + self.typeRcLocalPath, self.rcLocalDestPath)
+            print("Copied file {} to {}".format(repo_dir + self.typeRcLocalPath, self.rcLocalDestPath))
+            shutil.rmtree(repo_dir)
+            return True
         except Exception as e:
             print("{}".format(e))
+            return False
 
     def update(self, newName=None, newType=None, newTypeRepoUrl=None, newTypeRcLocalPath=None):
+        """
+            Update the bbb with new data and refresh the project.
+        :param newName:
+        :param newType:
+        :param newTypeRepoUrl:
+        :param newTypeRcLocalPath:
+        :return:
+        """
         configFile = ConfigParser()
         configFile['NODE-CONFIG'] = {'node_name': '',
                                      'node_ip': '',
@@ -89,7 +99,6 @@ class BBB():
         if newTypeRcLocalPath is not None and newTypeRepoUrl is not None:
             self.typeRcLocalPath = newTypeRcLocalPath
             self.typeRepoUrl = newTypeRepoUrl
-            self.update_rclocal()
 
         configFile['NODE-CONFIG']['node_name'] = self.name
         configFile['NODE-CONFIG']['node_ip'] = self.myIp
@@ -98,6 +107,7 @@ class BBB():
         configFile['NODE-CONFIG']['type_path'] = self.typeRcLocalPath
 
         self.writeNodeConfig(configFile=configFile)
+        self.update_project()
 
     def readParameters(self):
         self.readNodeConfig()
@@ -122,7 +132,8 @@ class BBB():
             self.typeRepoUrl = configFile['NODE-CONFIG']['type_url']
             self.typeRcLocalPath = configFile['NODE-CONFIG']['type_path']
             self.update(newName=self.desiredName, newType=self.type, newTypeRepoUrl=self.typeRepoUrl,
-                        newTypeRcLocalPath=typeRcLocalPath)
+                        newTypeRcLocalPath=self.typeRcLocalPath)
+
         except Exception as e:
             print("{}".format(e))
             configFile = ConfigParser()

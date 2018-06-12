@@ -1,7 +1,6 @@
 """ This module contains all entity classes of the project. """
 import ast
 
-
 class BaseRedisEntity():
     key_prefix = 'prefix_'
     key_prefix_len = len(key_prefix)
@@ -76,7 +75,7 @@ class Node(BaseRedisEntity):
     key_prefix_len = len(key_prefix)
 
     def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, typeNode=None, sector=1, counter=0,
-                 pvPrefix=""):
+                 pvPrefix=[]):
 
         self.name = name
         self.ipAddress = ip
@@ -93,6 +92,9 @@ class Node(BaseRedisEntity):
         if len(key) <= Node.key_prefix_len:
             return ''
         return key[Node.key_prefix_len:]
+
+    def set_prefix(self):
+        pass
 
     def toSet(self):
         key = self.get_key()
@@ -122,7 +124,7 @@ class Node(BaseRedisEntity):
 
         if type(dic_obj) is dict:
             self.ipAddress = dic_obj.get("ipAddress", '')
-            self.pvPrefix = dic_obj.get("prefix", "")
+            self.pvPrefix = dic_obj.get("prefix", [])
             self.sector = dic_obj.get("sector", self.sector)
 
     # Change the current state of the object. Refer to the Control_Node_State class
