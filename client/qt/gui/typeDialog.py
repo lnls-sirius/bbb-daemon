@@ -1,15 +1,13 @@
-import os
-import shutil
 import threading
 import time
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-
-from git import RemoteProgress, Repo
+from git import RemoteProgress
 
 from common.entity.entities import Type
+from common.util.git import checkUrlFunc
 from gui.controller import GUIController
 from gui.tableModel import TypeTableModel
 
@@ -149,8 +147,8 @@ class TypeDialog(QDialog):
             selectedRow = selected.indexes()[0].row()
             typeObject = self.typeTableModel.types[selectedRow]
 
-            #print('ob={}'.format(typeObject))
-            #print('name={}'.format(typeObject.name))
+            # print('ob={}'.format(typeObject))
+            # print('name={}'.format(typeObject.name))
 
             self.name.setText(typeObject.name)
             self.repoUrl.setText(typeObject.repoUrl)
@@ -174,24 +172,22 @@ class TypeDialog(QDialog):
 
         def update(self, op_code, cur_count, max_count=None, message=''):
             ratio = cur_count / (max_count or 100.0)
-            #print('op_code={} cur_count={} max_count={} ratio={}'.format(op_code, cur_count, max_count,
+            # print('op_code={} cur_count={} max_count={} ratio={}'.format(op_code, cur_count, max_count,
             #                                                             ratio, message or "NO MESSAGE"))
             self.uiParent.progressBar.setValue(ratio * 100)
 
-    def checkUrlFunc(self):
-
-        repo_name = None
-        repo_dir = None
-
+    def checkUrlFunc(self, repo_name=None):
         url = self.repoUrl.displayText().strip()
         typeRcLocalPath = self.rcLocalPath.displayText()
+        return checkUrlFunc(git_url=url, rc_local_path=typeRcLocalPath, callback_func=self.CloneProgress(self))
+        '''
         if typeRcLocalPath is None or typeRcLocalPath.strip() is None or url == "":
             return False, "rc.local is not defined."
         if url is None or url.strip() is None or url == "":
             return False, "URL is not defined."
         if not url.endswith(".git") or (not url.startswith("http://") and not url.startswith("https://")):
             return False, "\'{}\' is not a valid git URL.".format(url)
-
+        repo_dir = None
         try:
 
             repo_name = url.strip().split('/')[-1].split('.')[0]
@@ -223,6 +219,7 @@ class TypeDialog(QDialog):
             if repo_name is not None and os.path.exists(repo_dir) and os.path.isdir(repo_dir):
                 shutil.rmtree(repo_dir)
             return False, "Error when cloning the repository. {}.".format(e)
+        '''
 
     def selectColor(self):
         self.cdialog.open()
@@ -236,7 +233,7 @@ class TypeDialog(QDialog):
                        rcLocalPath=self.rcLocalPath.displayText().strip(),
                        color=(selectedColor.red(), selectedColor.green(), selectedColor.blue()))
 
-        #print("-----------------------------------\n{}\n-----------------------------------".format(newType))
+        # print("-----------------------------------\n{}\n-----------------------------------".format(newType))
         self.controller.appendType(newType)
 
         self.typeTableModel.setData(self.controller.fetchTypes())

@@ -1,8 +1,10 @@
+waitress==1.1.0
 Flask
 Flask-Nav
 Flask-WTF
 flask-bootstrap
 flask-restful
+pyftpdlib==1.5.4
 gitdb2==2.0.3
 GitPython==2.1.9
 redis==2.10.6

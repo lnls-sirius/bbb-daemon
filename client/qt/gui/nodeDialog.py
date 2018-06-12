@@ -2,7 +2,7 @@ import threading
 import time
 
 from PyQt5.QtWidgets import *
-from common.entity.entities import Node, Sector
+from common.entity.entities import Sector, Node
 from gui.controller import GUIController
 from gui.tableModel import NodeTableModel
 

@@ -2,9 +2,8 @@ import socket
 import threading
 import traceback
 
-from common.entity.entities import Command
+from common.entity.entities import Command,Type,Node
 from common.network.utils import NetUtils
-from common.entity.entities import Type, Node
 
 
 class CommandInterface():
