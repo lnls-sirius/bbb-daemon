@@ -11,11 +11,11 @@ gitMutex = threading.Lock()
 def cloneRepository(git_url=None, rc_local_path=None, ftp_serv_location: str = '/root/bbb-daemon-repos/'):
     """
         Clone the repository from git to the ftp server!
-    :return: True or False
+    :return: (True or False) , (Error message or commit sha of the repo.)
     """
     if type is None:
         print("Not repo URL defined.")
-        return False
+        return False, 'Type is not defined'
     try:
         repo_name = git_url.strip().split('/')[-1].split('.')[0]
 
@@ -28,8 +28,11 @@ def cloneRepository(git_url=None, rc_local_path=None, ftp_serv_location: str = '
             shutil.rmtree(repo_dir)
             time.sleep(1)
 
-        Repo.clone_from(url=git_url.strip(), to_path=repo_dir)
-
+        repo = Repo.clone_from(url=git_url.strip(), to_path=repo_dir)
+        sha = repo.head.object.hexsha
+        print('SHA= {}'.format(sha))
+        # head.
+        ' git rev-parse  HEAD'
         if repo_dir.endswith('/') and rc_local_path.startswith('/'):
             rc_local_path = rc_local_path[1:]
         elif not repo_dir.endswith('/') and not rc_local_path.startswith('/'):
@@ -41,11 +44,11 @@ def cloneRepository(git_url=None, rc_local_path=None, ftp_serv_location: str = '
         pass
 
         print('Successfully cloned the repository {} at {}'.format(git_url, repo_dir))
-        return True
+        return True, sha
 
     except Exception as e:
         print("{}".format(e))
-        return False
+        return False, "{}".format(e)
 
 
 def checkUrlFunc(git_url=None, rc_local_path=None, callback_func=None):

@@ -1,9 +1,7 @@
 import os
-import shutil
 import time
+import shutil
 from configparser import ConfigParser
-from copy import copy
-
 from common.entity.entities import Command
 from common.network.utils import get_ip_address
 from sftp import downloadFiles, connect_to_ftp_server
@@ -22,13 +20,14 @@ class BBB():
         self.typeRepoUrl = ""
         self.typeRcLocalPath = ""
         self.myIp = ''
+        self.typeSha = ''
         self.readParameters()
         connect_to_ftp_server(sftp_port=sftp_port, sftp_server_addr=sfp_server_addr)
 
     def getInfo(self):
         self.myIp = get_ip_address('eth0')
-        info = "{}|{}|{}|{}" \
-            .format(Command.PING, self.name, self.type, self.myIp)
+        info = "{}|{}|{}|{}|{}" \
+            .format(Command.PING, self.name, self.type, self.myIp, self.typeSha)
         print(info)
         return info
 
@@ -64,15 +63,14 @@ class BBB():
             downloadFiles(path=repo_name, destination=repo_dir)
 
             print("Downloaded Node repository from FTP server {} at {}".format(self.typeRepoUrl, repo_name))
-            copy(repo_dir + self.typeRcLocalPath, self.rcLocalDestPath)
+            shutil.copy2((repo_dir + self.typeRcLocalPath), self.rcLocalDestPath)
             print("Copied file {} to {}".format(repo_dir + self.typeRcLocalPath, self.rcLocalDestPath))
-            shutil.rmtree(repo_dir)
             return True
         except Exception as e:
             print("{}".format(e))
             return False
 
-    def update(self, newName=None, newType=None, newTypeRepoUrl=None, newTypeRcLocalPath=None):
+    def update(self, newName=None, newType=None, newTypeRepoUrl=None, newTypeRcLocalPath=None, sha: str = ''):
         """
             Update the bbb with new data and refresh the project.
         :param newName:
@@ -86,7 +84,10 @@ class BBB():
                                      'node_ip': '',
                                      'type_name': '',
                                      'type_url': '',
-                                     'type_path': ''}
+                                     'type_path': '',
+                                     'type_sha': ''}
+        self.typeSha = sha
+
         if newName is not None:
             self.name = newName
             hostnameFile = open("/etc/hostname", "w")
@@ -105,6 +106,7 @@ class BBB():
         configFile['NODE-CONFIG']['type_name'] = self.type
         configFile['NODE-CONFIG']['type_url'] = self.typeRepoUrl
         configFile['NODE-CONFIG']['type_path'] = self.typeRcLocalPath
+        configFile['NODE-CONFIG']['type_sha'] = self.typeSha
 
         self.writeNodeConfig(configFile=configFile)
         self.update_project()
@@ -131,8 +133,9 @@ class BBB():
             self.type = configFile['NODE-CONFIG']['type_name']
             self.typeRepoUrl = configFile['NODE-CONFIG']['type_url']
             self.typeRcLocalPath = configFile['NODE-CONFIG']['type_path']
+            self.typeSha = configFile['NODE-CONFIG']['type_sha']
             self.update(newName=self.desiredName, newType=self.type, newTypeRepoUrl=self.typeRepoUrl,
-                        newTypeRcLocalPath=self.typeRcLocalPath)
+                        newTypeRcLocalPath=self.typeRcLocalPath, sha=self.typeSha)
 
         except Exception as e:
             print("{}".format(e))
@@ -141,7 +144,8 @@ class BBB():
                                          'node_ip': 'default',
                                          'type_name': 'default',
                                          'type_url': 'default',
-                                         'type_path': 'default'}
+                                         'type_path': 'default',
+                                         'type_sha': 'default'}
             with open(self.configPath, 'w') as f:
                 configFile.write(f)
 
@@ -150,6 +154,7 @@ class BBB():
             self.type = ''
             self.typeRepoUrl = ''
             self.typeRcLocalPath = ''
+            self.typeSha = ''
 
     def writeNodeConfig(self, configFile: ConfigParser):
         with open(self.configPath, 'w+') as bbb_cfg_file:

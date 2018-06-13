@@ -1,6 +1,7 @@
 """ This module contains all entity classes of the project. """
 import ast
 
+
 class BaseRedisEntity():
     key_prefix = 'prefix_'
     key_prefix_len = len(key_prefix)
@@ -154,12 +155,13 @@ class Type(BaseRedisEntity):
     key_prefix_len = len(key_prefix)
 
     def __init__(self, name="generic", repoUrl="A generic URL.", rcLocalPath="init/rc.local", color=(255, 255, 255),
-                 description="A generic host."):
+                 description="A generic host.", sha: str = ""):
         self.name = name
         self.color = color
         self.repoUrl = repoUrl
         self.description = description
         self.rcLocalPath = rcLocalPath
+        self.sha = sha
 
     @staticmethod
     def get_name_from_key(key: str):
@@ -169,7 +171,7 @@ class Type(BaseRedisEntity):
 
     def toSet(self):
         key = self.get_key()
-        content = str({k: vars(self)[k] for k in ("description", "color", "repoUrl", "rcLocalPath")})
+        content = str({k: vars(self)[k] for k in ("description", "color", "repoUrl", "rcLocalPath", "sha")})
         return key, content
 
     def get_key(self):
@@ -193,6 +195,7 @@ class Type(BaseRedisEntity):
             self.repoUrl = dic_obj.get('repoUrl', '')
             self.rcLocalPath = dic_obj.get('rcLocalPath', 'init/rc.local')
             self.description = dic_obj.get("description", '')
+            self.sha = dic_obj.get("sha", '')
 
     def __eq__(self, other):
         if other is None:

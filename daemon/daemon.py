@@ -56,7 +56,7 @@ class Daemon():
         while self.pinging:
             info = self.bbb.getInfo()
             message = "{}|{}".format(checksum(info), info)
-            ## {chk} | {cmd} | {name} | {type} | {ipAddr}
+            ## {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
             pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
             time.sleep(1)
 
@@ -87,6 +87,7 @@ class Daemon():
                 typeName = NetUtils.recvObject(connection)
                 typeRepoUrl = NetUtils.recvObject(connection)
                 typeRcLocalPath = NetUtils.recvObject(connection)
+                typeSha = NetUtils.recvObject(connection)
 
                 # Node
                 nodeName = NetUtils.recvObject(connection)
@@ -94,7 +95,7 @@ class Daemon():
                 print(typeName + " " + nodeName + " " + typeRepoUrl + " " + typeRcLocalPath)
 
                 self.bbb.update(newName=nodeName, newType=typeName, newTypeRepoUrl=typeRepoUrl,
-                                newTypeRcLocalPath=typeRcLocalPath)
+                                newTypeRcLocalPath=typeRcLocalPath, sha=typeSha)
 
             if command == Command.REBOOT:
                 self.pinging = False
