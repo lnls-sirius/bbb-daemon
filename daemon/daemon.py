@@ -14,6 +14,8 @@ TYPE_RC_LOCAL_PATH = "init/rc.local"
 RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
 FTP_SERVER_PORT = 1026
 
+# This info should contain a '/'
+FTP_DESTINATION_FOLDER = '/root/bbb-daemon-repos/'
 servAddr = "10.0.0.70"
 pingPort = 9876
 bindPort = 9877
@@ -25,10 +27,11 @@ bindPort = 9877
 
 class Daemon():
 
-    def __init__(self, serverAddress: str, pingPort: int, bindPort: int):
+    def __init__(self, serverAddress: str, pingPort: int, bindPort: int, ftpDestinationFolder: str):
+        self.ftpDestinationFolder = ftpDestinationFolder
 
         self.bbb = BBB(path=CONFIG_PATH, rcLocalDestPath=RC_LOCAL_DESTINATION_PATH, sftp_port=FTP_SERVER_PORT,
-                       sfp_server_addr=servAddr)
+                       sfp_server_addr=servAddr, ftpDestinationFolder=self.ftpDestinationFolder)
         self.serverAddress = serverAddress
         self.pingPort = pingPort
         self.bindPort = bindPort
@@ -82,7 +85,7 @@ class Daemon():
             command = NetUtils.recvCommand(connection)
 
             if command == Command.SWITCH:
-                print("Commando SWITCH")
+                print("Command SWITCH")
                 # Type ...
                 typeName = NetUtils.recvObject(connection)
                 typeRepoUrl = NetUtils.recvObject(connection)
@@ -116,8 +119,11 @@ if __name__ == '__main__':
         pingPort = int(sys.argv[2])
         bindPort = int(sys.argv[3])
 
-    if not os.path.exists('/root/bbb-daemon-repos/'):
-        os.makedirs('/root/bbb-daemon-repos/')
+    if not FTP_DESTINATION_FOLDER.endswith('/'):
+        FTP_DESTINATION_FOLDER = FTP_DESTINATION_FOLDER + '/'
+
+    if not os.path.exists(FTP_DESTINATION_FOLDER):
+        os.makedirs(FTP_DESTINATION_FOLDER)
 
     print("arg[1]={}\targ[2]={}\targ[3]={}\t".format(servAddr, pingPort, bindPort))
-    Daemon(serverAddress=servAddr, pingPort=pingPort, bindPort=bindPort)
+    Daemon(serverAddress=servAddr, pingPort=pingPort, bindPort=bindPort, ftpDestinationFolder=FTP_DESTINATION_FOLDER)

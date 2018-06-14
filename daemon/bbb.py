@@ -4,13 +4,15 @@ import shutil
 from configparser import ConfigParser
 from common.entity.entities import Command
 from common.network.utils import get_ip_address
-from sftp import downloadFiles, connect_to_ftp_server
+from sftp import downloadFiles, connect_to_ftp_server, download_from_ftp
 
 
 class BBB():
 
-    def __init__(self, path: str = None, rcLocalDestPath: str = None, sfp_server_addr: str = None, sftp_port: int = 22):
+    def __init__(self, path: str = None, rcLocalDestPath: str = None, sfp_server_addr: str = None, sftp_port: int = 22,
+                 ftpDestinationFolder: str = None):
 
+        self.ftpDestinationFolder = ftpDestinationFolder
         self.rcLocalDestPath = rcLocalDestPath
         self.configPath = path
         self.name = ""
@@ -21,8 +23,9 @@ class BBB():
         self.typeRcLocalPath = ""
         self.myIp = ''
         self.typeSha = ''
+        self.sftp_port = sftp_port
+        self.sfp_server_addr = sfp_server_addr
         self.readParameters()
-        connect_to_ftp_server(sftp_port=sftp_port, sftp_server_addr=sfp_server_addr)
 
     def getInfo(self):
         self.myIp = get_ip_address('eth0')
@@ -37,7 +40,7 @@ class BBB():
     def update_project(self):
         """
             Update the project, getting the current version available on the FTP server.
-            The responsability to keep it up to date is all on the server side.
+            The responsibility to keep it up to date is all on the server side.
             Always removing the old ones.
         :return: True or False
         """
@@ -46,23 +49,23 @@ class BBB():
         try:
             repo_name = self.typeRepoUrl.strip().split('/')[-1].split('.')[0]
 
-            repo_dir = "/root/bbb-daemon-repos/" + repo_name + "/"
+            repo_dir = self.ftpDestinationFolder + repo_name + "/"
             if os.path.exists(repo_dir) and os.path.isdir(repo_dir):
                 shutil.rmtree(repo_dir)
                 time.sleep(1)
 
             if repo_dir.endswith('/') and self.typeRcLocalPath.startswith('/'):
                 self.typeRcLocalPath = self.typeRcLocalPath[1:]
-            elif not repo_dir.endswith('/') and not self.typeRcLocalPath.startswith('/'):
-                repo_dir = repo_dir + '/'
+
+            download_from_ftp(sftp_server_addr=self.sfp_server_addr, sftp_port=self.sftp_port, path=repo_name,
+                              destination=repo_dir)
+
+            print("Downloaded Node repository from FTP server {} at {}".format(self.typeRepoUrl, repo_name))
 
             if not os.path.isfile(repo_dir + self.typeRcLocalPath):
                 shutil.rmtree(repo_dir)
                 raise Exception("rc.local not found on path.")
 
-            downloadFiles(path=repo_name, destination=repo_dir)
-
-            print("Downloaded Node repository from FTP server {} at {}".format(self.typeRepoUrl, repo_name))
             shutil.copy2((repo_dir + self.typeRcLocalPath), self.rcLocalDestPath)
             print("Copied file {} to {}".format(repo_dir + self.typeRcLocalPath, self.rcLocalDestPath))
             return True
@@ -109,6 +112,7 @@ class BBB():
         configFile['NODE-CONFIG']['type_sha'] = self.typeSha
 
         self.writeNodeConfig(configFile=configFile)
+
         self.update_project()
 
     def readParameters(self):
@@ -128,33 +132,26 @@ class BBB():
         try:
             configFile = ConfigParser()
             configFile.read(self.configPath)
-            self.desiredName = configFile['NODE-CONFIG']['node_name']
-            self.desiredIp = configFile['NODE-CONFIG']['node_ip']
-            self.type = configFile['NODE-CONFIG']['type_name']
-            self.typeRepoUrl = configFile['NODE-CONFIG']['type_url']
-            self.typeRcLocalPath = configFile['NODE-CONFIG']['type_path']
-            self.typeSha = configFile['NODE-CONFIG']['type_sha']
-            self.update(newName=self.desiredName, newType=self.type, newTypeRepoUrl=self.typeRepoUrl,
-                        newTypeRcLocalPath=self.typeRcLocalPath, sha=self.typeSha)
+            if configFile['NODE-CONFIG']:
+                config = configFile['NODE-CONFIG']
 
+                self.desiredName = config.get('node_name', 'default')
+                self.desiredIp = config.get('node_name', 'node_ip', 'default')
+                self.type = config.get('node_name', 'type_name', 'default')
+                self.typeRepoUrl = config.get('node_name', 'type_url', 'default')
+                self.typeRcLocalPath = config.get('node_name', 'type_path', 'default')
+                self.typeSha = config.get('node_name', 'type_sha', 'default')
+
+                self.update(newName=self.desiredName, newType=self.type, newTypeRepoUrl=self.typeRepoUrl,
+                            newTypeRcLocalPath=self.typeRcLocalPath, sha=self.typeSha)
         except Exception as e:
-            print("{}".format(e))
-            configFile = ConfigParser()
-            configFile['NODE-CONFIG'] = {'node_name': 'default',
-                                         'node_ip': 'default',
-                                         'type_name': 'default',
-                                         'type_url': 'default',
-                                         'type_path': 'default',
-                                         'type_sha': 'default'}
-            with open(self.configPath, 'w') as f:
-                configFile.write(f)
-
-            self.desiredName = ''
-            self.desiredIp = ''
-            self.type = ''
-            self.typeRepoUrl = ''
-            self.typeRcLocalPath = ''
-            self.typeSha = ''
+            print('Read node config exception {}'.format(e))
+            self.desiredName = 'default'
+            self.desiredIp = 'default'
+            self.type = 'default'
+            self.typeRepoUrl = 'default'
+            self.typeRcLocalPath = 'default'
+            self.typeSha = 'default'
 
     def writeNodeConfig(self, configFile: ConfigParser):
         with open(self.configPath, 'w+') as bbb_cfg_file:

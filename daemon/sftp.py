@@ -1,65 +1,51 @@
 #!/usr/bin/python
-import errno
-import sys
 import ftplib
+
 import os
-import time
 
-user = "anonymous"
-password = "anonymous"
-interval = 0.05
-
-ftp = ftplib.FTP()
+import ftputil
 
 
-def connect_to_ftp_server(sftp_server_addr: str = '0.0.0.0', sftp_port: int = 22):
-    ftp.connect(sftp_server_addr, sftp_port)
-    ftp.login(user, password)
+class MySession(ftplib.FTP):
+
+    def __init__(self, host, userid, password, port):
+        """Act like ftplib.FTP's constructor but connect to another port."""
+        ftplib.FTP.__init__(self)
+        self.connect(host, port)
+        self.login(userid, password)
 
 
-def downloadFiles(path, destination):
-    """
-        Download the file located on the path and copy it to the destination
-    :param path: file or folder to be copied
-    :param destination: Place on the client to copy to
-    :return:
-    """
-    try:
-        ftp.cwd(path)
-        os.chdir(destination)
-        mkdir_p(destination[0:len(destination) - 1] + path)
-        print("Created: " + destination[0:len(destination) - 1] + path)
-    except OSError:
-        pass
-    except ftplib.error_perm:
-        print("Error: could not change to " + path)
-        sys.exit("Ending Application")
+# Download some files from the login directory.
 
-    filelist = ftp.nlst()
-
-    for file in filelist:
-        time.sleep(interval)
-        try:
-            ftp.cwd(path + file + "/")
-            downloadFiles(path + file + "/", destination)
-        except ftplib.error_perm:
-            os.chdir(destination[0:len(destination) - 1] + path)
-
-            try:
-                ftp.retrbinary("RETR " + file, open(os.path.join(destination + path, file), "wb").write)
-                print("Downloaded: " + file)
-            except:
-                print("Error: File could not be downloaded " + file)
-    return
+def download_from_ftp(sftp_server_addr: str = '0.0.0.0', sftp_port: int = 22, path=None, destination=None):
+    print('\n\ndownload_from_ftp\n\npath={}\tdestination={}'.format(path, destination))
+    with ftputil.FTPHost(sftp_server_addr, 'anonymous', 'anonymous', port=sftp_port,
+                         session_factory=MySession) as host:
+        host.chdir(path)
+        names = host.listdir(host.curdir)
+        for name in names:
+            if host.path.isfile(name):
+                # Remote name, local name
+                host.download(name, destination + '/' + name)
+                print('Downloaded {} at {}'.format(name, (destination + '/' + name)))
+            elif host.path.isdir(name):
+                cur_dir = host.getcwd()
+                download_dir(host=host, path=name, destination=destination + name)
+                host.chdir(cur_dir)
 
 
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
-
-
+def download_dir(host=None, path=None, destination=None):
+    if not os.path.isdir(destination):
+        os.mkdir(destination)
+    host.chdir(path)
+    names = host.listdir(host.curdir)
+    for name in names:
+        print('name in names={}'.format(name))
+        if host.path.isfile(name):
+            # Remote name, local name
+            host.download(name, destination + '/' + name)
+            print('Downloaded {} at {}'.format(name, (destination + '/' + name)))
+        elif host.path.isdir(name):
+            cur_dir = host.getcwd()
+            download_dir(host=host, path=name, destination=destination + '/' + name)
+            host.chdir(cur_dir)
