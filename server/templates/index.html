@@ -5,7 +5,7 @@
  
 <script>
 
-    var btn_reboot = document.getElementById("btn_reboot_bbb");
+  //  var btn_reboot = document.getElementById("btn_reboot_bbb");
     var btn_switch = document.getElementById("btn_switch_bbb");
  
     var bbb_configured_selected = null;
@@ -13,7 +13,7 @@
 
     var active_sector_val = null;
     
-    $("#btn_reboot_bbb").click( function() {
+   /* $("#btn_reboot_bbb").click( function() {
         console.log("id="+bbb_configured_selected);
         $.post(
             '{{ reboot_bbb_url }}',
@@ -21,8 +21,19 @@
         ).done(function(data){
             console.log(data); 
         });
-    });
-    
+    });*/
+
+    function rebootThis(me){
+        console.log(me)
+        var myIp = me.getAttribute("myIp");
+            $.post(
+                '{{ reboot_bbb_url }}',
+                { bbb_ip: myIp, bbb_sector:active_sector_val}
+            ).done(function(data){
+                console.log(data);
+        });
+    }
+
     $("#btn_switch_bbb").click( function() {
         console.log("id="+bbb_configured_selected + "id2="+bbb_unconfigured_selected);
 
@@ -47,7 +58,7 @@
             bbb_configured_selected = null;
             bbb_unconfigured_selected = null;
 
-            btn_reboot.disabled = true;
+          //  btn_reboot.disabled = true;
             btn_switch.disabled = true;
         }
         
@@ -59,14 +70,19 @@
                 $('#active_bbbs').html(data);
 
                 $("#table_configured").on('click', 'tr', function() {
-                    var row = $(this).find('td:nth-child(2)');
+                    // First column is the status one ...
+                    //var status_row =  $(this).find('td:nth-child(1)');
+                    //console.log(status_row);
+                    var row = $(this).find('td:nth-child(3)');
                     var row_val = row.text();
-                    
+
                     if(row_val == bbb_configured_selected){
                         bbb_configured_selected = null;
+                        //status_row.innerHTML = 'X';
                         //row.className ="alert alert-warning"
                     }else{ 
                         bbb_configured_selected = row_val;
+                        //status_row.innerHTML = 'O';
                         //row.className =""
                     }
                     
@@ -75,7 +91,9 @@
                 });
 
                 $("#table_unconfigured").on('click', 'tr', function() {
-                    var row_val = $(this).find('td:nth-child(2)').text()
+                    // First column is the status one ...
+                    var status_row =  $(this).find('td:nth-child(1)');
+                    var row_val = $(this).find('td:nth-child(3)').text()
 
                     if(row_val == bbb_unconfigured_selected){
                         bbb_unconfigured_selected = null;
@@ -83,7 +101,6 @@
                         bbb_unconfigured_selected = row_val;
                     }
                     updateBtnStatus();
-
                 });
         });
     }
@@ -100,13 +117,13 @@
 
     function updateBtnStatus(){
 
-        btn_reboot.disabled = (bbb_configured_selected == null);
+      //  btn_reboot.disabled = (bbb_configured_selected == null);
 
-        btn_reboot.innerHTML = "Reboot BBB"+ (bbb_configured_selected?(':\t'+bbb_configured_selected):"") ;
+     //   btn_reboot.innerHTML = "Reboot BBB"+ (bbb_configured_selected?(':\t'+bbb_configured_selected):"") ;
 
         btn_switch.innerHTML = 
-        "Switch \tConfigured: " + (bbb_configured_selected?bbb_configured_selected:"") 
-        + "\tNot Configured: " + (bbb_unconfigured_selected?bbb_unconfigured_selected:"") ;
+        "Switch <strong> <br>Configured: " + (bbb_configured_selected?bbb_configured_selected:"")
+        + "<br>Not Configured: " + (bbb_unconfigured_selected?bbb_unconfigured_selected:"" + "</strong>") ;
 
         btn_switch.disabled = (bbb_unconfigured_selected == null || bbb_configured_selected == null);
     }
@@ -148,6 +165,7 @@
             <th scope="col">Sector</th>
             <th scope="col">PV Prefix</th>
             <th scope="col">State</th>
+            <th scope="col"></th>
         </tr>
         </thead>
     </table>
@@ -162,14 +180,14 @@
             <th scope="col">Sector</th>
             <th scope="col">PV Prefix</th>
             <th scope="col">State</th>
+            <th scope="col"></th>
         </tr>
         </thead>
     </table>
  
 </div>
 <div class="container">
-    <button id="btn_reboot_bbb" type="button" class="btn btn-primary" disabled>Reboot BBB</button>
-    <button id="btn_switch_bbb" type="button" class="btn btn-primary" disabled>Switch Selected BBBs</button>
+    <button id="btn_switch_bbb" type="button" class="btn btn-primary btn-block " disabled>Switch Selected BBBs</button>
 </div>
 
 {% endblock %}

@@ -76,7 +76,7 @@ class Node(BaseRedisEntity):
     key_prefix_len = len(key_prefix)
 
     def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, typeNode=None, sector=1, counter=0,
-                 pvPrefix=[]):
+                 pvPrefix=[], rcLocalPath=''):
 
         self.name = name
         self.ipAddress = ip
@@ -87,6 +87,39 @@ class Node(BaseRedisEntity):
         self.sector = sector
         self.pvPrefix = pvPrefix
         self.counter = counter
+        self.rcLocalPath = rcLocalPath
+
+    @staticmethod
+    def get_prefix_string(pref: []):
+        """
+            Array to String !
+        :return:
+        """
+        pref_str = ''
+        if pref:
+            for str in pref:
+                pref_str += str + '\n'
+
+        if pref_str.endswith('\r\n'):
+            pref_str = pref_str[:-2]
+        elif pref_str.endswith('\n') or pref_str.endswith('\r'):
+            pref_str = pref_str[:-1]
+        return pref_str
+
+    @staticmethod
+    def get_prefix_array(pref: str):
+        """
+        String to array !
+        :param pref:
+        :return:
+        """
+        pref_array = []
+        if pref:
+            pref = pref.replace(' ', '')
+            for str in pref.split('\r\n'):
+                pref_array.append(str)
+
+        return set(pref_array)
 
     @staticmethod
     def get_name_from_key(key: str):
@@ -99,7 +132,8 @@ class Node(BaseRedisEntity):
 
     def toSet(self):
         key = self.get_key()
-        nodeInfo = {"ipAddress": self.ipAddress, "sector": self.sector, "prefix": self.pvPrefix}
+        nodeInfo = {"ipAddress": self.ipAddress, "sector": self.sector, "prefix": self.pvPrefix,
+                    "rcLocalPath": self.rcLocalPath}
         if self.type is None:
             nodeInfo["type"] = None
         else:
@@ -124,6 +158,7 @@ class Node(BaseRedisEntity):
             dic_obj = ast.literal_eval(dic_obj)
 
         if type(dic_obj) is dict:
+            self.rcLocalPath = dic_obj.get('rcLocalPath', '')
             self.ipAddress = dic_obj.get("ipAddress", '')
             self.pvPrefix = dic_obj.get("prefix", [])
             self.sector = dic_obj.get("sector", self.sector)
@@ -154,13 +189,12 @@ class Type(BaseRedisEntity):
     key_prefix = 'type_'
     key_prefix_len = len(key_prefix)
 
-    def __init__(self, name="generic", repoUrl="A generic URL.", rcLocalPath="init/rc.local", color=(255, 255, 255),
+    def __init__(self, name="generic", repoUrl="A generic URL.", color=(255, 255, 255),
                  description="A generic host.", sha: str = ""):
         self.name = name
         self.color = color
         self.repoUrl = repoUrl
         self.description = description
-        self.rcLocalPath = rcLocalPath
         self.sha = sha
 
     @staticmethod
@@ -171,7 +205,7 @@ class Type(BaseRedisEntity):
 
     def toSet(self):
         key = self.get_key()
-        content = str({k: vars(self)[k] for k in ("description", "color", "repoUrl", "rcLocalPath", "sha")})
+        content = str({k: vars(self)[k] for k in ("description", "color", "repoUrl", "sha")})
         return key, content
 
     def get_key(self):
@@ -193,7 +227,6 @@ class Type(BaseRedisEntity):
         if type(dic_obj) is dict:
             self.color = dic_obj.get('color', '')
             self.repoUrl = dic_obj.get('repoUrl', '')
-            self.rcLocalPath = dic_obj.get('rcLocalPath', 'init/rc.local')
             self.description = dic_obj.get("description", '')
             self.sha = dic_obj.get("sha", '')
 

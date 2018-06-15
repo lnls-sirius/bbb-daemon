@@ -1,7 +1,7 @@
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from common.entity.entities import NodeState
+from common.entity.entities import NodeState, Node
 
 
 class MonitorTableModel(QAbstractTableModel):
@@ -203,7 +203,7 @@ class NodeTableModel(QAbstractTableModel):
             if col == 2 and node.type is not None:
                 return node.type.name
             if col == 3:
-                return node.pvPrefix
+                return Node.get_prefix_string(node.pvPrefix)
 
             return ""
 

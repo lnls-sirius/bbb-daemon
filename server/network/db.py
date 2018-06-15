@@ -90,6 +90,21 @@ class RedisPersistence():
         self.typesListMutex.release()
         return typesList
 
+    def getNodeByAddr(self, node_addr: str = None):
+        if node_addr is None:
+            return None
+        try:
+            node_name = self.db.get(node_addr).decode('utf-8')
+
+            if node_name is not None:
+                if str(node_name).startswith(Node.key_prefix):
+                    node_name = node_name[Node.key_prefix_len:]
+                    node = self.getNode(node_name)
+                    return node
+
+        except Exception as e:
+            print("{}".format(e))
+
     def getNode(self, nodeName: str):
         aNode = None
         try:

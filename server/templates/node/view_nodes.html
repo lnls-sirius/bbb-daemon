@@ -2,7 +2,7 @@
 
 {% block scripts %}
 {{super()}}
- <script>
+<script>
 
     var active_sector_val = null;
 
@@ -45,8 +45,40 @@
     setInterval(function () {
         refresh_bbbs()
     }, 2000);
- 
- </script>
+
+
+   function validate_repo() {
+
+            var gitUrl = document.getElementById('repo_url').value;
+            var rcPath = document.getElementById('rc_local_path').value;
+
+
+            $.post('{{ url }}', {'action': 'VALIDATE', 'gitUrl': gitUrl, 'rcPath': rcPath})
+                .done(function (data) {
+                    var alert_comp = null;
+
+                    var div = document.createElement('div');
+                    if (data['success']) {
+                        alert_comp =
+                            '<div class="alert alert-success alert-dismissible fade in" role="alert">' +
+                            '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'
+                            + data['message']
+                            + '</div>';
+                    } else {
+                        alert_comp =
+                            '<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
+                            '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' +
+                            data['message'] +
+                            '</div>';
+                    }
+
+                    div.innerHTML = alert_comp;
+                    document.getElementById('alert-div').appendChild(div);
+
+                });
+        }
+
+</script>
 {% endblock %}
 
 {% block content%}
@@ -58,7 +90,7 @@
         <div class="selectContainer">
             <select class="form-control" name="size" id="current_sector">
                 {% for sector in sectors %}
-                    <option value={{sector}}>{{sector}}</option>
+                <option value={{sector}}>{{sector}}</option>
                 {% endfor %}
             </select>
         </div>
@@ -79,11 +111,13 @@
             <th scope="col">Sector</th>
             <th scope="col">PV Prefix</th>
             <th scope="col">State</th>
+            <th scope="col">rc.local Path</th>
         </tr>
         </thead>
-        <tbody  id="nodes_table">
+        <tbody id="nodes_table">
 
         </tbody>
     </table>
 </div>
+
 {% endblock %}

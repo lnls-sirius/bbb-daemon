@@ -123,20 +123,44 @@ def edit_nodes(node=None):
 
     if request.method == 'POST':
         action = request.form.get('action', '')
-        if action == '':
+
+        if action == 'VALIDATE':
+            # git_url = request.form.get('gitUrl', '')
+
+            # success, message = monitor_controller.validateRepository(git_url=git_url)
+
+            # return jsonify(success=success, message=message)
+            pass
+        elif action == 'EDIT':
+            # @todo: impplement an edit function.... currently everything goes to action == ''
+            pass
+        elif action == '':
+            # Insert new  node
             if edit_nodes_form.validate_on_submit():
                 type = monitor_controller.findTypeByName(edit_nodes_form.type.data)
-                node = Node(
-                    name=edit_nodes_form.name.data,
-                    ip=edit_nodes_form.ip_address.data,
-                    sector=edit_nodes_form.sector.data,
-                    pvPrefix=edit_nodes_form.pv_prefix.data,
-                    typeNode=type)
-                monitor_controller.appendNode(node)
-                flash('Successfully edited node {} !'.format(node), 'success')
-                return redirect(url_for("view_nodes"))
-        elif action == 'VALIDATE':
-            pass
+                if type:
+                    res, message = monitor_controller.validateRepository(rc_path=edit_nodes_form.rc_local_path.data,
+                                                                         git_url=type.repoUrl, check_rc_local=True)
+                    if res:
+                        flash('Successfully edited node {} !'.format(node), 'success')
+                    else:
+                        flash("Failed to edit/insert node. {}".format(message), 'danger')
+                    res, message = monitor_controller.checkIpAvailable(ip=edit_nodes_form.ip_address.data,
+                                                                       name=edit_nodes_form.name.data)
+
+                    if res:
+                        node = Node(name=edit_nodes_form.name.data,
+                                    ip=edit_nodes_form.ip_address.data,
+                                    sector=edit_nodes_form.sector.data,
+                                    pvPrefix=Node.get_prefix_array(edit_nodes_form.pv_prefix.data),
+                                    typeNode=type,
+                                    rcLocalPath=edit_nodes_form.rc_local_path.data)
+                        monitor_controller.appendNode(node)
+                        flash('Successfully edited node {} !'.format(node), 'success')
+                        return redirect(url_for("view_nodes"))
+                    else:
+                        flash("Failed to edit/insert node. {}".format(message), 'danger')
+                        print('Flash Error !')
 
     if request.method == 'GET':
         print("GET {}".format(request.args))
@@ -193,24 +217,25 @@ def edit_types(type=None):
 
         if action == 'VALIDATE':
 
-            rc_path = request.form.get('rcPath')
             git_url = request.form.get('gitUrl')
 
-            success, message = monitor_controller.validateRepository(rc_path=rc_path, git_url=git_url)
+            success, message = monitor_controller.validateRepository(git_url=git_url)
 
             return jsonify(success=success, message=message)
 
         elif action == '':
             if edit_types_form.validate_on_submit():
-                new_type = Type(
-                    name=edit_types_form.name.data,
-                    repoUrl=edit_types_form.repo_url.data,
-                    rcLocalPath=edit_types_form.rc_local_path.data,
-                    description=edit_types_form.description.data)
-                monitor_controller.appendType(new_type)
+                success, message_sha = monitor_controller.cloneRepository(git_url=edit_types_form.repo_url.data)
+                if success:
+                    new_type = Type(name=edit_types_form.name.data,
+                                    repoUrl=edit_types_form.repo_url.data,
+                                    description=edit_types_form.description.data, sha=message_sha)
+                    monitor_controller.appendType(new_type)
 
-                flash('Successfully edited type {} !'.format(new_type), 'success')
-                return redirect(url_for("view_types"))
+                    flash('Successfully edited type {} !'.format(new_type), 'success')
+                    return redirect(url_for("view_types"))
+                else:
+                    flash('Failed to edit/insert type {} !'.format(message_sha), 'danger')
         else:
             return 'Invalid Command'
 

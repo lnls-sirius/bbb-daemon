@@ -27,7 +27,7 @@ def init_conf():
     WORKERS_NUM = 10
 
     FTP_SERVER_PORT = 1026
-    FTP_HOME_DIR = '/home/carneirofc/types/'
+    FTP_HOME_DIR = '/root/'
 
     print("=======================================================")
     print('                 BBB DAEMON SERVER STARTED             ')

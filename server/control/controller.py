@@ -140,6 +140,20 @@ class MonitorController():
                 return node
         return None
 
+    def checkIpAvailable(self,ip=None,
+                         name=None):
+        if ip is None or name is None:
+            return False, "Node name/ip is not defined."
+
+        node = self.db.getNodeByAddr(node_addr=ip)
+        if node is None:
+            return True, "No node with the ip {} is registered.".format(ip)
+        else:
+            if node.name == name:
+                return True, "The ip {} is already belong to this node ({})".format(ip,name)
+            else:
+                return False, "This ip {} is linked to another node ({})".format(ip,node.name)
+
     def getNode(self, node_name: str = None):
         return self.db.getNode(node_name)
 
@@ -244,17 +258,18 @@ class MonitorController():
     def stopAll(self):
         self.scanNodes = False
 
-    def validateRepository(self, rc_path: str = None, git_url: str = None):
+    def validateRepository(self, rc_path: str = None, git_url: str = None, check_rc_local: bool = False):
         """
             Verify if the repository is valid.
         :param git_url:
+        :param check_rc_local defaults to False. If true the exitence of the rc.local file will be checked.
         :return:  :return: (True or False), ("Message")
         """
-        return checkUrlFunc(git_url=git_url, rc_local_path=rc_path)
+        return checkUrlFunc(git_url=git_url, rc_local_path=rc_path, check_rc_local=check_rc_local)
 
     def cloneRepository(self, git_url=None, rc_local_path=None):
         """
             Clone the repository from git to the ftp server!
-        :return: True or False
+        :return: (True or False) , (message in case of Failure, SHA of the HEAD commit)
         """
         return cloneRepository(git_url=git_url, rc_local_path=rc_local_path, ftp_serv_location=self.sftp_home_dir)

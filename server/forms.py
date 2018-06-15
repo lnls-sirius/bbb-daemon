@@ -12,6 +12,7 @@ class EditNodeForm(FlaskForm):
     type = SelectField("Type", validators=[DataRequired()])
     sector = SelectField("Sector", validators=[DataRequired()])
     submit = SubmitField("Save Changes")
+    rc_local_path = StringField("Path to rc.local", validators=[DataRequired()], id='rc_local_path')
 
     pv_prefix = TextAreaField("PV Prefix", validators=[DataRequired()])
 
@@ -19,6 +20,7 @@ class EditNodeForm(FlaskForm):
         if node is not None:
             self.ip_address.data = node.ipAddress
             self.name.data = node.name
+            self.rc_local_path.data = node.rcLocalPath
 
             if node.type is None:
                 self.type.data = ''
@@ -26,13 +28,12 @@ class EditNodeForm(FlaskForm):
                 self.type.data = node.type.name
 
             self.sector.data = node.sector
-            self.pv_prefix.data = node.pvPrefix
+            self.pv_prefix.data = Node.get_prefix_string(node.pvPrefix)
 
 
 class EditTypeForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     repo_url = StringField("Repository Url", validators=[DataRequired()], id='repo_url')
-    rc_local_path = StringField("Path to rc.local", validators=[DataRequired()], id='rc_local_path')
     description = TextAreaField("Description", validators=[DataRequired()])
     submit = SubmitField("Save Changes")
 
@@ -40,5 +41,4 @@ class EditTypeForm(FlaskForm):
         if type is not None:
             self.name.data = type.name
             self.repo_url.data = type.repoUrl
-            self.rc_local_path.data = type.rcLocalPath
             self.description.data = type.description

@@ -137,7 +137,7 @@ class NodeDialog(QDialog):
         newNode = Node(name=self.idtext.displayText(), ip=self.addrtext.displayText(),
                        typeNode=self.types.itemData(self.types.currentIndex()),
                        sector=self.sectors.itemText(self.sectors.currentIndex()),
-                       pvPrefix=self.prefix.displayText())
+                       pvPrefix=Node.get_prefix_array(self.prefix.displayText()))
 
         print('{}'.format(newNode))
 
@@ -162,7 +162,7 @@ class NodeDialog(QDialog):
                               ip=self.nodeTableModel.nodes[selectedRow].ipAddress,
                               typeNode=self.nodeTableModel.nodes[selectedRow].type,
                               sector=self.nodeTableModel.nodes[selectedRow].sector,
-                              pvPrefix=self.nodeTableModel.nodes[selectedRow].pvPrefix)
+                              pvPrefix=Node.get_prefix_array(self.nodeTableModel.nodes[selectedRow].pvPrefix))
 
             self.controller.removeNodeFromSector(removeNode)
             nodes = self.controller.getNodesFromSector(sector=self.sectors.itemText(self.sectors.currentIndex()),
@@ -186,7 +186,7 @@ class NodeDialog(QDialog):
 
             self.idtext.setText(nodeObject.name)
             self.addrtext.setText(nodeObject.ipAddress)
-            self.prefix.setText(nodeObject.pvPrefix)
+            self.prefix.setText(Node.get_prefix_string(nodeObject.pvPrefix))
 
             items = [self.types.itemText(i) for i in range(self.types.count())]
             for index, item in enumerate(items):

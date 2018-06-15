@@ -1,35 +1,46 @@
-
 <table id="table_configured" class="table table-hover">
     <h3>Configured</h3>
     <thead class="thead-dark">
     <tr class="alert-info">
+        <th scope="col">asdf</th>
         <th scope="col">Name</th>
         <th scope="col">IP Address</th>
         <th scope="col">Type Name</th>
         <th scope="col">Type Repo URL</th>
-        <th scope="col">Type rc.local Path</th>
+        <th scope="col">rc.local Path</th>
         <th scope="col">Sector</th>
         <th scope="col">PV Prefix</th>
         <th scope="col">State</th>
+        <td scope="col"></td>
     </tr>
     </thead>
     <tbody>
     {% for node in configured_nodes %}
-    <tr id={{'c_' + node.ipAddress}} >
+    <tr id={{'c_' + node.ipAddress}}>
+        <td  ></td>
         <td>{{ node.name }}</td>
         <td>{{ node.ipAddress }}</td>
         {% if node.type %}
-            <td>{{ node.type.name }}</td>
-            <td>{{ node.type.repoUrl }}</td>
-            <td>{{ node.type.rcLocalPath }}</td>
+        <td>{{ node.type.name }}</td>
+        <td>{{ node.type.repoUrl }}</td>
         {% else %}
-            <td></td>
-            <td></td>
-            <td></td>
+        <td></td>
+        <td></td>
         {% endif %}
+        <td>{{ node.rcLocalPath }}</td>
         <td>{{ node.sector }}</td>
         <td>{{ node.pvPrefix }}</td>
         <td>{{ node.state_string }}</td>
+        <td>
+            {% if node.state_string== "Disconnected" %}
+            <button type="button" class="btn btn-danger" disabled>Reboot BBB
+            </button>
+            {% else %}
+            <button onclick="rebootThis(this);" myName="{{ node.name }}" myIp="{{ node.ipAddress }}" type="button"
+                    class="btn btn-danger">Reboot BBB
+            </button>
+            {% endif %}
+        </td>
     </tr>
     {% endfor %}
     </tbody>
@@ -39,29 +50,37 @@
     <h3>Not Configured</h3>
     <thead class="thead-dark">
     <tr class="alert-danger">
+        <th scope="col">asdf</th>
         <th scope="col">Name</th>
         <th scope="col">IP Address</th>
         <th scope="col">Type Name</th>
         <th scope="col">Type Repo URL</th>
-        <th scope="col">Type rc.local Path</th>
+        <th scope="col">rc.local Path</th>
         <th scope="col">Sector</th>
         <th scope="col">PV Prefix</th>
         <th scope="col">State</th>
+        <th scope="col"></th>
     </tr>
     </thead>
     <tbody>
     {% for node in unconfigured_nodes %}
     <tr>
+        <td></td>
         <td>{{ node.name }}</td>
         <td>{{ node.ipAddress }}</td>
         {% if node.type %}
         <td>{{ node.type.name }}</td>
         <td>{{ node.type.repoUrl }}</td>
-        <td>{{ node.type.rcLocalPath }}</td>
         {% endif %}
+        <td>{{ node.rcLocalPath }}</td>
         <td>{{ node.sector }}</td>
         <td>{{ node.pvPrefix }}</td>
         <td>{{ node.state_string }}</td>
+        <td>
+            <button onclick="rebootThis(this);" myName="{{ node.name }}" myIp="{{ node.ipAddress }}" type="button"
+                    class="btn btn-danger" disabled>Reboot BBB
+            </button>
+        </td>
     </tr>
     {% endfor %}
     </tbody>

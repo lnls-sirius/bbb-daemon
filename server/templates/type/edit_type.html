@@ -55,19 +55,7 @@
                         {{ form.description(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
-                <div class="form-group">
-                    {{ form.rc_local_path.label(class="form-control-label") }}
-                    {% if form.rc_local_path.errors %}
-                        {{ form.rc_local_path(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.rc_local_path.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.rc_local_path(class="form-control form-control-lg") }}
-                    {% endif %}
-                </div>
+
             </fieldset>
             <div>
                 <button id="validate-btn" onclick="validate_repo();" type="button"
@@ -93,10 +81,9 @@
         function validate_repo() {
 
             var gitUrl = document.getElementById('repo_url').value;
-            var rcPath = document.getElementById('rc_local_path').value;
 
 
-            $.post('{{ url }}', {'action': 'VALIDATE', 'gitUrl': gitUrl, 'rcPath': rcPath})
+            $.post('{{ url }}', {'action': 'VALIDATE', 'gitUrl': gitUrl })
                 .done(function (data) {
                     var alert_comp = null;
 

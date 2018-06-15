@@ -46,7 +46,7 @@ class DaemonHostListener():
                 node = kargs["node"]
                 NetUtils.sendObject(commandSocket, node.type.name)
                 NetUtils.sendObject(commandSocket, node.type.repoUrl)
-                NetUtils.sendObject(commandSocket, node.type.rcLocalPath)
+                NetUtils.sendObject(commandSocket, node.rcLocalPath)
                 NetUtils.sendObject(commandSocket, node.name)
                 NetUtils.sendObject(commandSocket, node.ipAddress)
 
