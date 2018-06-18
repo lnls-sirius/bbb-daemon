@@ -1,27 +1,132 @@
 {% extends "base.html" %}
 
+
+{% block head %}
+    {{super()}}
+{% endblock %}
+
+{% block content %}
+{{super()}}
+
+<div class="container">
+    <div><strong><h3>Current Sector</h3></strong><br></div>
+    <div class="form-group ">
+        <div class="selectContainer">
+            <select class="form-control" name="size" id="current_sector">
+                {% for sector in sectors %}
+                    <option value={{sector}}>{{sector}}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div><br>
+
+
+<div class="container">  
+    <div style="float:left;">
+        <canvas class="col-4" id="cChart" width="550" height="400"></canvas> 
+    </div>
+    <div style="float:right;">
+        <canvas class="col-4" id="uChart" width="550" height="400"></canvas> 
+    </div>
+</div>
+    
+<div class="container" id="active_bbbs">
+</div>
+<div class="container">
+    <button id="btn_switch_bbb" type="button" class="btn btn-primary btn-block " disabled>Switch Selected BBBs</button>
+</div>
+
+{% endblock %}
+
+
 {% block scripts %}
 {{super()}}
- 
-<script>
 
-  //  var btn_reboot = document.getElementById("btn_reboot_bbb");
+<script>
+    function addData(chart, label, data) {
+        chart.data.labels.push(label);
+        chart.data.datasets.forEach((dataset) => {
+            dataset.data = data;
+        });
+
+        chart.update();
+    }
+
+    function removeData(chart) {
+        chart.data.labels.pop();
+        chart.data.datasets.forEach((dataset) => {
+            dataset.data.pop();
+        });
+        chart.update();
+}
+    var ctx_c = document.getElementById("cChart").getContext('2d');
+    var chart_c = new Chart(ctx_c, {
+                    responsive: true,   
+                    type: 'bar',
+                    data: {  
+                        datasets: [{
+                            label: 'Connected Nodes',  
+                            borderWidth: 1, 
+                            backgroundColor: 'rgb(144, 238, 144)',
+                            borderColor: 'rgb(50, 205, 50)'
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero:true
+                                }
+                            }],
+                            xAxes: [{
+                                    stacked: false,
+                                    beginAtZero: true, 
+                                    ticks: {
+                                        stepSize: 1,
+                                        min: 0,
+                                        autoSkip: false
+                                    }
+                            }]
+                        }
+                }});
+    var ctx_u = document.getElementById("uChart").getContext('2d');
+    var chart_u = new Chart(ctx_u, {
+        responsive: true,   
+                    type: 'bar',
+                    data: {  
+                        datasets: [{
+                            label: 'Disconnected/Unconfigured Nodes',  
+                            borderWidth: 1,
+                            backgroundColor: 'rgb(220, 20, 60)',
+                            borderColor: 'rgb(255, 0, 0)'
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero:true
+                                }
+                            }],
+                            xAxes: [{
+                                    stacked: false,
+                                    beginAtZero: true, 
+                                    ticks: {
+                                        stepSize: 1,
+                                        min: 0,
+                                        autoSkip: false
+                                    }
+                            }]
+                        }
+                }});
+
     var btn_switch = document.getElementById("btn_switch_bbb");
- 
+
     var bbb_configured_selected = null;
     var bbb_unconfigured_selected = null;
 
     var active_sector_val = null;
-    
-   /* $("#btn_reboot_bbb").click( function() {
-        console.log("id="+bbb_configured_selected);
-        $.post(
-            '{{ reboot_bbb_url }}',
-            { bbb_ip: bbb_configured_selected, bbb_sector:active_sector_val}
-        ).done(function(data){
-            console.log(data); 
-        });
-    });*/
 
     function rebootThis(me){
         console.log(me)
@@ -43,49 +148,64 @@
                 { c_bbb_ip: bbb_configured_selected, c_bbb_sector:active_sector_val,
                     u_bbb_ip: bbb_unconfigured_selected, u_bbb_sector:active_sector_val}
             ).done(function(data){
-                console.log(data); 
+                console.log(data);
             });
         }
     });
-    
+
+    function refresh_chart(){
+        $.post(
+            '{{ refresh_chart_url }}'
+        ).done(function(data,success){
+            if(success){ 
+                if (data['lbls'].length == data['c_vals'].length &&  data['lbls'].length == data['u_vals'].length){
+                    chart_c.data.labels = data['lbls'];
+                    chart_c.data.datasets.forEach((dataset) => {
+                        dataset.data = data['c_vals'];
+                    });
+                    chart_c.update();
+
+                    chart_u.data.labels = data['lbls'];
+                    chart_u.data.datasets.forEach((dataset) => {
+                        dataset.data = data['u_vals'];
+                    });
+                    chart_u.update();
+                     
+                }
+            }
+        });
+    }
     function refresh_bbbs() {
         var current_sector_val = $('#current_sector').val();
         console.log(current_sector_val);
-        
+
         if(active_sector_val != current_sector_val ){
             active_sector_val = current_sector_val;
-        
+
             bbb_configured_selected = null;
             bbb_unconfigured_selected = null;
 
-          //  btn_reboot.disabled = true;
             btn_switch.disabled = true;
         }
-        
+
         $.post( '{{ refresh_url }}',
          { 'sector': current_sector_val})
 
             .done(function( data ) {
-                
+
                 $('#active_bbbs').html(data);
 
                 $("#table_configured").on('click', 'tr', function() {
-                    // First column is the status one ...
-                    //var status_row =  $(this).find('td:nth-child(1)');
-                    //console.log(status_row);
+                    // First column is the status one ... 
                     var row = $(this).find('td:nth-child(3)');
                     var row_val = row.text();
 
                     if(row_val == bbb_configured_selected){
-                        bbb_configured_selected = null;
-                        //status_row.innerHTML = 'X';
-                        //row.className ="alert alert-warning"
-                    }else{ 
-                        bbb_configured_selected = row_val;
-                        //status_row.innerHTML = 'O';
-                        //row.className =""
+                        bbb_configured_selected = null; 
+                    }else{
+                        bbb_configured_selected = row_val; 
                     }
-                    
+
                     updateBtnStatus();
 
                 });
@@ -104,24 +224,10 @@
                 });
         });
     }
-/*
-    function updateSelectedRowCss(ipAddr, conf){
-        $('#' + (conf ? 'c_' : 'u_') + ipAddr).tex
-        if (conf){
-            selected = (bbb_configured_selected)?(bbb_configured_selected == ipAddr):false;
-        }else{
-            selected = (bbb_unconfigured_selected)?(bbb_unconfigured_selected == ipAddr):false;
-        }
-        $('#' + (conf ? 'c_' : 'u_') + ipAddr).className = (selected?"alert alert-warning":"");
-    }*/
 
     function updateBtnStatus(){
 
-      //  btn_reboot.disabled = (bbb_configured_selected == null);
-
-     //   btn_reboot.innerHTML = "Reboot BBB"+ (bbb_configured_selected?(':\t'+bbb_configured_selected):"") ;
-
-        btn_switch.innerHTML = 
+        btn_switch.innerHTML =
         "Switch <strong> <br>Configured: " + (bbb_configured_selected?bbb_configured_selected:"")
         + "<br>Not Configured: " + (bbb_unconfigured_selected?bbb_unconfigured_selected:"" + "</strong>") ;
 
@@ -129,65 +235,17 @@
     }
 
     refresh_bbbs();
+    refresh_chart();
 
     setInterval(function () {
         refresh_bbbs()
     }, 2000);
+
+    setInterval(function () {
+        refresh_chart()
+    }, 2000);
+
+
     
  </script>
-{% endblock %}
-
-{% block content %}
-{{super()}}
-
-<div class="container">
-    <div><strong><h3>Current Sector</h3></strong><br></div>
-    <div class="form-group ">
-        <div class="selectContainer">
-            <select class="form-control" name="size" id="current_sector">
-                {% for sector in sectors %}
-                    <option value={{sector}}>{{sector}}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-</div><br>
-
-<div class="container" id="active_bbbs">
-    <h2>Current Active BBBBs</h2><br>
-    <table class="table table-hover">
-        <h3>Configured</h3>
-        <thead class="thead-dark">
-        <tr>
-            <th scope="col">IP Address</th>
-            <th scope="col">Name</th>
-            <th scope="col">Type</th>
-            <th scope="col">Sector</th>
-            <th scope="col">PV Prefix</th>
-            <th scope="col">State</th>
-            <th scope="col"></th>
-        </tr>
-        </thead>
-    </table>
-    <br>
-    <table class="table table-hover">
-        <h3>Not Configured</h3>
-        <thead class="thead-dark">
-        <tr>
-            <th scope="col">IP Address</th>
-            <th scope="col">Name</th>
-            <th scope="col">Type</th>
-            <th scope="col">Sector</th>
-            <th scope="col">PV Prefix</th>
-            <th scope="col">State</th>
-            <th scope="col"></th>
-        </tr>
-        </thead>
-    </table>
- 
-</div>
-<div class="container">
-    <button id="btn_switch_bbb" type="button" class="btn btn-primary btn-block " disabled>Switch Selected BBBs</button>
-</div>
-
 {% endblock %}

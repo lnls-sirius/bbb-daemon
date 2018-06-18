@@ -82,8 +82,9 @@ class RedisPersistence():
             if typesDb is not None:
                 for tKey in typesDb:
                     tName = Type.get_name_from_key(tKey)
-                    aType = self.getType(tName.decode("utf-8"))
-                    typesList.append(aType)
+                    if tName != '':
+                        aType = self.getType(tName.decode("utf-8"))
+                        typesList.append(aType)
         except Exception as e:
             print("{}".format(e))
 
@@ -177,3 +178,4 @@ class RedisPersistence():
         self.nodesListMutex.release()
 
         return count
+

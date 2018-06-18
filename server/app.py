@@ -3,11 +3,11 @@ from flask_bootstrap import Bootstrap
 from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 
-from common.entity.entities import Sector, Type, Node
+from common.entity.entities import Sector, Type, Node, NodeState
 from control.controller import MonitorController
 from forms import EditNodeForm, EditTypeForm
 
-app = Flask("server")
+app = Flask(__name__)
 app.secret_key = "4dbae3052d7e8b16ebcfe8752f70a4efe68d2ae0558b4a1b25c5fd902284e52e"
 
 Bootstrap(app)
@@ -31,8 +31,32 @@ def home():
     refresh_url = url_for('refresh_active_nodes')
     reboot_bbb_url = url_for('reboot_bbb')
     switch_bbb_url = url_for('switch_bbb')
+    refresh_chart_url = url_for('refresh_chart_url')
+
     return render_template('index.html', refresh_url=refresh_url, switch_bbb_url=switch_bbb_url,
-                           reboot_bbb_url=reboot_bbb_url, sectors=sectors_list)
+                           reboot_bbb_url=reboot_bbb_url, sectors=sectors_list, refresh_chart_url=refresh_chart_url)
+
+
+@app.route('/refresh_chart_url/', methods=['POST'])
+def refresh_chart_url():
+    sectors_lbls = Sector.SECTORS
+    c_vals = []
+    u_vals = []
+
+    for sector in Sector.SECTORS:
+        c = 0
+        u = len(monitor_controller.nodes[sector]['unconfigured'])
+
+        for node in monitor_controller.nodes[sector]['configured']:
+            if node.state == NodeState.CONNECTED:
+                c = c + 1
+            else:
+                u = u + 1
+        print(" {} {} ".format(c, u))
+        c_vals.append(c)
+        u_vals.append(u)
+
+    return jsonify(lbls=sectors_lbls, c_vals=c_vals, u_vals=u_vals)
 
 
 @app.route('/refresh_active_nodes/', methods=['POST', 'GET'])
@@ -139,16 +163,13 @@ def edit_nodes(node=None):
             if edit_nodes_form.validate_on_submit():
                 type = monitor_controller.findTypeByName(edit_nodes_form.type.data)
                 if type:
-                    res, message = monitor_controller.validateRepository(rc_path=edit_nodes_form.rc_local_path.data,
-                                                                         git_url=type.repoUrl, check_rc_local=True)
-                    if res:
-                        flash('Successfully edited node {} !'.format(node), 'success')
-                    else:
-                        flash("Failed to edit/insert node. {}".format(message), 'danger')
-                    res, message = monitor_controller.checkIpAvailable(ip=edit_nodes_form.ip_address.data,
-                                                                       name=edit_nodes_form.name.data)
 
-                    if res:
+                    res_1, message_1 = monitor_controller.validateRepository(rc_path=edit_nodes_form.rc_local_path.data,
+                                                                             git_url=type.repoUrl, check_rc_local=True)
+
+                    res_2, message_2 = monitor_controller.checkIpAvailable(ip=edit_nodes_form.ip_address.data,
+                                                                           name=edit_nodes_form.name.data)
+                    if res_1 and res_2:
                         node = Node(name=edit_nodes_form.name.data,
                                     ip=edit_nodes_form.ip_address.data,
                                     sector=edit_nodes_form.sector.data,
@@ -159,8 +180,11 @@ def edit_nodes(node=None):
                         flash('Successfully edited node {} !'.format(node), 'success')
                         return redirect(url_for("view_nodes"))
                     else:
-                        flash("Failed to edit/insert node. {}".format(message), 'danger')
-                        print('Flash Error !')
+                        flash("Failed to edit/insert node.", 'danger')
+                        if not res_1:
+                            flash("{}".format(message_1), 'danger')
+                        if not res_2:
+                            flash("{}".format(message_2), 'danger')
 
     if request.method == 'GET':
         print("GET {}".format(request.args))
