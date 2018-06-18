@@ -1,9 +1,8 @@
 #!/usr/bin/python
 import ftplib
-
+import ftputil
 import os
 
-import ftputil
 
 
 class MySession(ftplib.FTP):

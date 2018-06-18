@@ -52,7 +52,6 @@ def refresh_chart_url():
                 c = c + 1
             else:
                 u = u + 1
-        print(" {} {} ".format(c, u))
         c_vals.append(c)
         u_vals.append(u)
 
@@ -149,6 +148,7 @@ def edit_nodes(node=None):
         action = request.form.get('action', '')
 
         if action == 'VALIDATE':
+            # @todo: implement this !
             # git_url = request.form.get('gitUrl', '')
 
             # success, message = monitor_controller.validateRepository(git_url=git_url)
@@ -156,7 +156,7 @@ def edit_nodes(node=None):
             # return jsonify(success=success, message=message)
             pass
         elif action == 'EDIT':
-            # @todo: impplement an edit function.... currently everything goes to action == ''
+            # @todo: implement an edit function.... currently everything goes to action == ''
             pass
         elif action == '':
             # Insert new  node

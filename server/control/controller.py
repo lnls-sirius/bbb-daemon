@@ -1,9 +1,11 @@
 from common.entity.entities import Command, NodeState, Sector, Node, Type
+from common.util.git import cloneRepository, checkUrlFunc
+
 import threading
 import time
 
 from network.db import RedisPersistence
-from util.git import cloneRepository, checkUrlFunc
+
 
 
 class MonitorController():

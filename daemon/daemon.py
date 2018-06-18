@@ -100,6 +100,10 @@ class Daemon():
                 self.bbb.update(newName=nodeName, newType=typeName, newTypeRepoUrl=typeRepoUrl,
                                 newTypeRcLocalPath=typeRcLocalPath, sha=typeSha)
 
+                print("bbb updated ! Rebooting now !")
+                self.pinging = False
+                self.bbb.reboot()
+
             if command == Command.REBOOT:
                 self.pinging = False
                 self.bbb.reboot()
@@ -113,11 +117,12 @@ class Daemon():
 
 if __name__ == '__main__':
 
-    print("arg[1]=servAddress\targ[2]=pingPort\targ[3]=bindPort\t")
+    print("arg[1]=servAddress\targ[2]=pingPort\targ[3]=bindPort\targ[4]=FTP_DESTINATION_FOLDER")
     if len(sys.argv) == 4:
         servAddr = sys.argv[1]
         pingPort = int(sys.argv[2])
         bindPort = int(sys.argv[3])
+        FTP_DESTINATION_FOLDER = sys.argv[4]
 
     if not FTP_DESTINATION_FOLDER.endswith('/'):
         FTP_DESTINATION_FOLDER = FTP_DESTINATION_FOLDER + '/'

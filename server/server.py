@@ -1,3 +1,4 @@
+import os
 import signal
 import time
 import sys
@@ -39,8 +40,8 @@ def init_conf():
           "\targ[4]=BBB_TCP\n"
           "\targ[5]=COM_INTERFACE_TCP\n"
           "\targ[6]=WORKERS_NUM\n"
-          "\targ[7]=FTP_SERVER_PORT\n"
-          "\targ[8]=FTP_HOME_DIR\n")
+          "\targ[7]=FTP_HOME_DIR\n"
+          "\targ[8]=FTP_SERVER_PORT\n")
 
     try:
         REDIS_SERVER_IP = sys.argv[1]
@@ -49,10 +50,9 @@ def init_conf():
         BBB_TCP = int(sys.argv[4])
         COM_INTERFACE_TCP = int(sys.argv[5])
         WORKERS_NUM = int(sys.argv[6])
-        FTP_SERVER_PORT = int(sys.argv[7])
-        FTP_HOME_DIR = sys.argv[8]
+        FTP_HOME_DIR = sys.argv[7]
+        FTP_SERVER_PORT = int(sys.argv[8])
     except:
-        pass
         print('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t'.format(REDIS_SERVER_IP, REDIS_SERVER_PORT, BBB_UDP, BBB_TCP,
                                                         COM_INTERFACE_TCP, WORKERS_NUM, \
                                                         WEB_CLIENT_SERVER_PORT, FTP_HOME_DIR, FTP_SERVER_PORT))
@@ -76,13 +76,15 @@ def stop_services(c: MonitorController, n: DaemonHostListener, i: CommandInterfa
 
 
 if __name__ == '__main__':
-    REDIS_SERVER_IP, REDIS_SERVER_PORT, BBB_UDP, BBB_TCP, COM_INTERFACE_TCP, WORKERS_NUM, WEB_CLIENT_SERVER_PORT, \
-    FTP_HOME_DIR, FTP_SERVER_PORT = init_conf()
+    REDIS_SERVER_IP, REDIS_SERVER_PORT, BBB_UDP, BBB_TCP, COM_INTERFACE_TCP, WORKERS_NUM, WEB_CLIENT_SERVER_PORT, FTP_HOME_DIR, FTP_SERVER_PORT = init_conf()
 
     running = True
 
     signal.signal(signal.SIGTERM, sighandler)
     signal.signal(signal.SIGINT, sighandler)
+
+    if not os.path.exists(FTP_HOME_DIR):
+        os.mkdir(FTP_HOME_DIR)
 
     # Start FTP server
     Thread(target=start_ftp_server, args=[FTP_HOME_DIR, FTP_SERVER_PORT]).start()

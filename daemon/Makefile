@@ -10,6 +10,7 @@ SERVICE_FILE_DEST = /etc/systemd/system
 all:
 
 install:
+    pip3 install --no-cache-dir -r ../docker/bbb-server/requirements.txt
 	cp --preserve=mode ${SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
 	systemctl daemon-reload
 	systemctl stop ${SERVICE_NAME}
