@@ -9,7 +9,10 @@ from network.db import RedisPersistence
 
 
 class MonitorController():
+
+    monitor_controller = None
     MAX_LOST_PING = 5
+
 
     def __init__(self, redis_server_ip: str, redis_server_port: int, sftp_home_dir: str = '/root/bbb-daemon-repos/'):
 

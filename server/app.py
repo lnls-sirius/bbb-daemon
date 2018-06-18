@@ -39,15 +39,19 @@ def home():
 
 @app.route('/refresh_chart_url/', methods=['POST'])
 def refresh_chart_url():
+    """
+        Json. Gets the Connected nodes in a list and misconfigured/disconnected ones on another.
+    :return: (list with all the sectors), (all connected nodes), (all disconnected/misconfigured nodes)
+    """
     sectors_lbls = Sector.SECTORS
     c_vals = []
     u_vals = []
 
     for sector in Sector.SECTORS:
         c = 0
-        u = len(monitor_controller.nodes[sector]['unconfigured'])
+        u = len(MonitorController.monitor_controller.nodes[sector]['unconfigured'])
 
-        for node in monitor_controller.nodes[sector]['configured']:
+        for node in MonitorController.monitor_controller.nodes[sector]['configured']:
             if node.state == NodeState.CONNECTED:
                 c = c + 1
             else:
@@ -65,8 +69,8 @@ def refresh_active_nodes():
 
     if request.method == 'POST':
         sector = request.form.get('sector', 'Conectividade')
-        c_nodes = monitor_controller.nodes[sector]["configured"]
-        u_nodes = monitor_controller.nodes[sector]["unconfigured"]
+        c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
+        u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
 
     return render_template("refresh_tables.html", configured_nodes=c_nodes, unconfigured_nodes=u_nodes)
 
@@ -78,9 +82,9 @@ def reboot_bbb():
 
     print('id={} sector={}'.format(bbb_ip, bbb_sector))
     if bbb_ip != '' and bbb_sector != '':
-        node = monitor_controller.getConfiguredNode(bbb_ip, bbb_sector)
+        node = MonitorController.monitor_controller.getConfiguredNode(bbb_ip, bbb_sector)
         if node:
-            monitor_controller.rebootNode(node)
+            MonitorController.monitor_controller.rebootNode(node)
             return 'Node Rebooted'
 
     return 'Not OK'
@@ -96,11 +100,11 @@ def switch_bbb():
 
     if c_bbb_ip != '' and c_bbb_sector != '' and u_bbb_ip != '' and u_bbb_sector != '':
 
-        c_node = monitor_controller.getConfiguredNode(c_bbb_ip, c_bbb_sector)
-        u_node = monitor_controller.getConfiguredNode(u_bbb_ip, u_bbb_sector)
+        c_node = MonitorController.monitor_controller.getConfiguredNode(c_bbb_ip, c_bbb_sector)
+        u_node = MonitorController.monitor_controller.getConfiguredNode(u_bbb_ip, u_bbb_sector)
 
         if c_node and u_node:
-            monitor_controller.updateNode(c_node, u_node)
+            MonitorController.monitor_controller.updateNode(c_node, u_node)
             return 'Node Switched'
 
     return 'Not OK'
@@ -109,7 +113,7 @@ def switch_bbb():
 @app.route('/list_nodes/', methods=['POST'])
 def list_nodes():
     sector = request.form.get('sector', 'Conectividade')
-    nodes = monitor_controller.fetchNodesFromSector(sector)
+    nodes = MonitorController.monitor_controller.fetchNodesFromSector(sector)
     return render_template("node/refresh_nodes.html", nodes=nodes)
 
 
@@ -119,9 +123,9 @@ def view_nodes():
         action = request.form.get('action', '')
         if action == 'DELETE':
             node_name = request.form.get('node_name', '')
-            node = monitor_controller.getNode(node_name)
+            node = MonitorController.monitor_controller.getNode(node_name)
             if node:
-                if monitor_controller.removeNodeFromSector(node):
+                if MonitorController.monitor_controller.removeNodeFromSector(node):
                     return 'Node Deleted !'
                 else:
                     return 'Failed to Delete !'
@@ -137,7 +141,7 @@ def view_nodes():
 
 @app.route("/edit_nodes/", methods=['GET', 'POST'])
 def edit_nodes(node=None):
-    types = monitor_controller.fetchTypes()
+    types = MonitorController.monitor_controller.fetchTypes()
     edit_nodes_form = EditNodeForm()
     edit_nodes_form.type.choices = [(t.name, "Type Name: {}\t\tType Url: {}".
                                      format(t.name, t.repoUrl)) for t in types]
@@ -151,7 +155,7 @@ def edit_nodes(node=None):
             # @todo: implement this !
             # git_url = request.form.get('gitUrl', '')
 
-            # success, message = monitor_controller.validateRepository(git_url=git_url)
+            # success, message = MonitorController.monitor_controller.validateRepository(git_url=git_url)
 
             # return jsonify(success=success, message=message)
             pass
@@ -161,13 +165,13 @@ def edit_nodes(node=None):
         elif action == '':
             # Insert new  node
             if edit_nodes_form.validate_on_submit():
-                type = monitor_controller.findTypeByName(edit_nodes_form.type.data)
+                type = MonitorController.monitor_controller.findTypeByName(edit_nodes_form.type.data)
                 if type:
 
-                    res_1, message_1 = monitor_controller.validateRepository(rc_path=edit_nodes_form.rc_local_path.data,
+                    res_1, message_1 = MonitorController.monitor_controller.validateRepository(rc_path=edit_nodes_form.rc_local_path.data,
                                                                              git_url=type.repoUrl, check_rc_local=True)
 
-                    res_2, message_2 = monitor_controller.checkIpAvailable(ip=edit_nodes_form.ip_address.data,
+                    res_2, message_2 = MonitorController.monitor_controller.checkIpAvailable(ip=edit_nodes_form.ip_address.data,
                                                                            name=edit_nodes_form.name.data)
                     if res_1 and res_2:
                         node = Node(name=edit_nodes_form.name.data,
@@ -176,7 +180,7 @@ def edit_nodes(node=None):
                                     pvPrefix=Node.get_prefix_array(edit_nodes_form.pv_prefix.data),
                                     typeNode=type,
                                     rcLocalPath=edit_nodes_form.rc_local_path.data)
-                        monitor_controller.appendNode(node)
+                        MonitorController.monitor_controller.appendNode(node)
                         flash('Successfully edited node {} !'.format(node), 'success')
                         return redirect(url_for("view_nodes"))
                     else:
@@ -189,7 +193,7 @@ def edit_nodes(node=None):
     if request.method == 'GET':
         print("GET {}".format(request.args))
         node_name = request.args.get('node_name', '')
-        node = monitor_controller.getNode(node_name)
+        node = MonitorController.monitor_controller.getNode(node_name)
         if node:
             edit_nodes_form.set_initial_values(node)
 
@@ -198,7 +202,7 @@ def edit_nodes(node=None):
 
 @app.route('/list_types/', methods=['POST'])
 def list_types():
-    types = monitor_controller.fetchTypes()
+    types = MonitorController.monitor_controller.fetchTypes()
     return render_template("type/refresh_types.html", types=types)
 
 
@@ -211,15 +215,15 @@ def view_types():
             if type_name == '':
                 return 'Invalid type name'
 
-            type_to_delete = monitor_controller.findTypeByName(type_name)
+            type_to_delete = MonitorController.monitor_controller.findTypeByName(type_name)
             if type_to_delete is not None:
                 print('{}'.format(type_to_delete))
-                monitor_controller.removeType(type_to_delete.name)
+                MonitorController.monitor_controller.removeType(type_to_delete.name)
                 return 'Type deleted'
             else:
                 return 'Type not found'
 
-    types = monitor_controller.fetchTypes()
+    types = MonitorController.monitor_controller.fetchTypes()
     refresh_url = url_for('list_types')
     edit_url = url_for('edit_types')
 
@@ -233,7 +237,7 @@ def edit_types(type=None):
     if request.method == 'GET':
         type_name = request.args.get('type_name', '')
         if type_name is not '':
-            type = monitor_controller.findTypeByName(type_name)
+            type = MonitorController.monitor_controller.findTypeByName(type_name)
             edit_types_form.set_initial_values(type)
 
     if request.method == 'POST':
@@ -243,18 +247,18 @@ def edit_types(type=None):
 
             git_url = request.form.get('gitUrl')
 
-            success, message = monitor_controller.validateRepository(git_url=git_url)
+            success, message = MonitorController.monitor_controller.validateRepository(git_url=git_url)
 
             return jsonify(success=success, message=message)
 
         elif action == '':
             if edit_types_form.validate_on_submit():
-                success, message_sha = monitor_controller.cloneRepository(git_url=edit_types_form.repo_url.data)
+                success, message_sha = MonitorController.monitor_controller.cloneRepository(git_url=edit_types_form.repo_url.data)
                 if success:
                     new_type = Type(name=edit_types_form.name.data,
                                     repoUrl=edit_types_form.repo_url.data,
                                     description=edit_types_form.description.data, sha=message_sha)
-                    monitor_controller.appendType(new_type)
+                    MonitorController.monitor_controller.appendType(new_type)
 
                     flash('Successfully edited type {} !'.format(new_type), 'success')
                     return redirect(url_for("view_types"))
@@ -265,11 +269,11 @@ def edit_types(type=None):
 
     return render_template("type/edit_type.html", type=type, form=edit_types_form, url=url_for('edit_types'))
 
-
+'''
 def set_controller(c: MonitorController = None):
-    global monitor_controller
-    monitor_controller = c
-
+    global MonitorController.monitor_controller
+    MonitorController.monitor_controller = c
+'''
 
 def get_wsgi_app():
     return app

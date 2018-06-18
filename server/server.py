@@ -43,21 +43,25 @@ def init_conf():
           "\targ[7]=FTP_HOME_DIR\n"
           "\targ[8]=FTP_SERVER_PORT\n")
 
+    print('\n\t{}\n\n'.format(sys.argv))
+    print("=======================================================\n")
     try:
+        # '10.0.6.70', '6379', '9876', '9877', '6789', '10', '4850', '/root/bbb-daemon/types_repository/', '1026']
+
         REDIS_SERVER_IP = sys.argv[1]
         REDIS_SERVER_PORT = int(sys.argv[2])
         BBB_UDP = int(sys.argv[3])
         BBB_TCP = int(sys.argv[4])
         COM_INTERFACE_TCP = int(sys.argv[5])
         WORKERS_NUM = int(sys.argv[6])
-        FTP_HOME_DIR = sys.argv[7]
-        FTP_SERVER_PORT = int(sys.argv[8])
+        WEB_CLIENT_SERVER_PORT = int(sys.argv[7])
+        FTP_HOME_DIR = sys.argv[8]
+        FTP_SERVER_PORT = int(sys.argv[9])
     except:
         print('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t'.format(REDIS_SERVER_IP, REDIS_SERVER_PORT, BBB_UDP, BBB_TCP,
-                                                        COM_INTERFACE_TCP, WORKERS_NUM, \
-                                                        WEB_CLIENT_SERVER_PORT, FTP_HOME_DIR, FTP_SERVER_PORT))
-    return REDIS_SERVER_IP, REDIS_SERVER_PORT, BBB_UDP, BBB_TCP, COM_INTERFACE_TCP, WORKERS_NUM, \
-           WEB_CLIENT_SERVER_PORT, FTP_HOME_DIR, FTP_SERVER_PORT
+                                                        COM_INTERFACE_TCP, WORKERS_NUM, WEB_CLIENT_SERVER_PORT,
+                                                        FTP_HOME_DIR, FTP_SERVER_PORT))
+    return REDIS_SERVER_IP, REDIS_SERVER_PORT, BBB_UDP, BBB_TCP, COM_INTERFACE_TCP, WORKERS_NUM, WEB_CLIENT_SERVER_PORT, FTP_HOME_DIR, FTP_SERVER_PORT
 
 
 def sighandler(signum, frame):
@@ -78,6 +82,7 @@ def stop_services(c: MonitorController, n: DaemonHostListener, i: CommandInterfa
 if __name__ == '__main__':
     REDIS_SERVER_IP, REDIS_SERVER_PORT, BBB_UDP, BBB_TCP, COM_INTERFACE_TCP, WORKERS_NUM, WEB_CLIENT_SERVER_PORT, FTP_HOME_DIR, FTP_SERVER_PORT = init_conf()
 
+    print('\n\n' + FTP_HOME_DIR)
     running = True
 
     signal.signal(signal.SIGTERM, sighandler)
@@ -89,14 +94,16 @@ if __name__ == '__main__':
     # Start FTP server
     Thread(target=start_ftp_server, args=[FTP_HOME_DIR, FTP_SERVER_PORT]).start()
 
-    c = MonitorController(redis_server_ip=REDIS_SERVER_IP, redis_server_port=REDIS_SERVER_PORT,
-                          sftp_home_dir=FTP_HOME_DIR)
-    n = DaemonHostListener(controller=c, bbbUdpPort=BBB_UDP, bbbTcpPort=BBB_TCP, workers=WORKERS_NUM)
-    i = CommandInterface(controller=c, comInterfacePort=COM_INTERFACE_TCP)
+    MonitorController.monitor_controller = MonitorController(redis_server_ip=REDIS_SERVER_IP,
+                                                             redis_server_port=REDIS_SERVER_PORT,
+                                                             sftp_home_dir=FTP_HOME_DIR)
+    n = DaemonHostListener(controller=MonitorController.monitor_controller, bbbUdpPort=BBB_UDP, bbbTcpPort=BBB_TCP,
+                           workers=WORKERS_NUM)
+    i = CommandInterface(controller=MonitorController.monitor_controller, comInterfacePort=COM_INTERFACE_TCP)
 
-    Thread(target=stop_services, args=[c, n, i]).start()
+    Thread(target=stop_services, args=[MonitorController.monitor_controller, n, i]).start()
 
-    app.set_controller(c=c)
+    # app.set_controller(c=MonitorController.monitor_controller)
 
     serve(app.get_wsgi_app(), host='0.0.0.0', port=WEB_CLIENT_SERVER_PORT)
 

@@ -18,6 +18,8 @@ services:
     image: lnlscon/bbb-daemon-container:latest
     ports:
       -  "1026:1026"
+      -  "1025:1025"
+      -  "60000-65535:60000-65535"
       -  "4850:4850"
       -  "6789:6789/tcp"
       -  "9877:9877/tcp"
