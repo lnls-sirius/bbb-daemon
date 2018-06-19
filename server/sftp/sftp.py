@@ -4,7 +4,7 @@ from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
-PASSIVE_PORT_MIN_DEFAULT, PASSIVE_PORT_MAX_DEFAULT = 60000, 65535
+PASSIVE_PORT_MIN_DEFAULT, PASSIVE_PORT_MAX_DEFAULT = 3000, 3010
 
 
 class BBBHandler(FTPHandler):
@@ -44,8 +44,8 @@ class BBBHandler(FTPHandler):
         os.remove(file)
 
 
-def start_ftp_server(ftp_home_dir='/home/', ftp_port: int = 1026, passive_port_min: int = 60000,
-                     passive_port_max: int = 65535):
+def start_ftp_server(ftp_home_dir='/home/', ftp_port: int = 1026, passive_port_min: int = 3000,
+                     passive_port_max: int = 3010):
     if os.path.exists(ftp_home_dir) and not os.path.isdir(ftp_home_dir):
         print('FTP Server Failed to Start! FTP_HOME Path is not valid !!')
         return
@@ -57,12 +57,13 @@ def start_ftp_server(ftp_home_dir='/home/', ftp_port: int = 1026, passive_port_m
 
     handler = BBBHandler
     handler.authorizer = authorizer
+    handler.masquerade_address = '10.0.6.70'
+    handler.permit_foreign_addresses = True
 
     if passive_port_max < 2000 or passive_port_min < 1999 or passive_port_max <= passive_port_min:
         passive_port_min, passive_port_max = PASSIVE_PORT_MIN_DEFAULT, PASSIVE_PORT_MAX_DEFAULT
 
-    #handler.masquerade_address = '10.0.6.70'
-    #handler.passive_ports = range(passive_port_min, passive_port_max)
+    handler.passive_ports = range(passive_port_min, passive_port_max)
 
     print('FTP server at {} {}'.format(ftp_home_dir, ftp_port))
     server = FTPServer(("0.0.0.0", ftp_port), handler)

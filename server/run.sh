@@ -13,12 +13,11 @@ export PYTHONPATH="$(dirname $PWD)"
 #export COM_INTERFACE_TCP=6789
 
 #export WORKERS_NUM=10
-
 #export FLASK_PORT=4850
 
 # The path must be absolute !
 
-#export FTP_PORT=1026
+#export FTP_PORT=21
 #export FTP_HOME=/root/bbb-daemon/types_repository/
 
 python3 -u /root/bbb-daemon/server/server.py $REDIS_SERVER_IP $REDIS_SERVER_PORT $BBB_UDP $BBB_TCP $COM_INTERFACE_TCP $WORKERS_NUM $FLASK_PORT $FTP_HOME $FTP_PORT

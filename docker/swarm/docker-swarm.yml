@@ -9,10 +9,10 @@ services:
       - 10.0.0.71
       - 10.0.0.72
     volumes:
-      - /storage/network-services/redis/:/data
+      - /storage/epics-services/daemon/db/:/data
     networks:
       - bbb_daemon_network
-
+z
   bbb-server:
     hostname: bbb-server
     image: lnlscon/bbb-daemon-container:latest
