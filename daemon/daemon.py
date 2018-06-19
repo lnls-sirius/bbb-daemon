@@ -16,7 +16,7 @@ FTP_SERVER_PORT = 1026
 
 # This info should contain a '/'
 FTP_DESTINATION_FOLDER = '/root/bbb-daemon-repos/'
-servAddr = "10.0.0.70"
+servAddr = "10.0.6.44"
 pingPort = 9876
 bindPort = 9877
 
@@ -61,6 +61,7 @@ class Daemon():
             message = "{}|{}".format(checksum(info), info)
             ## {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
             pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
+            print('Ping to {}:{}\tMessage {}'.format(self.serverAddress, self.pingPort, message))
             time.sleep(1)
 
     def stop(self):
@@ -116,11 +117,14 @@ class Daemon():
 if __name__ == '__main__':
 
     print("arg[1]=servAddress\targ[2]=pingPort\targ[3]=bindPort\targ[4]=FTP_DESTINATION_FOLDER")
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 5:
         servAddr = sys.argv[1]
         pingPort = int(sys.argv[2])
         bindPort = int(sys.argv[3])
         FTP_DESTINATION_FOLDER = sys.argv[4]
+        print('\n\t{}\n\n'.format(sys.argv))
+    else:
+        print('Error with the parameters. Using default values.')
 
     if not FTP_DESTINATION_FOLDER.endswith('/'):
         FTP_DESTINATION_FOLDER = FTP_DESTINATION_FOLDER + '/'

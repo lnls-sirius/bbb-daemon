@@ -31,7 +31,6 @@ class BBB():
         self.myIp = get_ip_address('eth0')
         info = "{}|{}|{}|{}|{}" \
             .format(Command.PING, self.name, self.type, self.myIp, self.typeSha)
-        print(info)
         return info
 
     def reboot(self):
