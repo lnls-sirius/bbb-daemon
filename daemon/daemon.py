@@ -86,13 +86,11 @@ class Daemon():
 
             if command == Command.SWITCH:
                 print("Command SWITCH")
-                # Type ...
+                # Don't change this order !
                 typeName = NetUtils.recvObject(connection)
                 typeRepoUrl = NetUtils.recvObject(connection)
                 typeRcLocalPath = NetUtils.recvObject(connection)
                 typeSha = NetUtils.recvObject(connection)
-
-                # Node
                 nodeName = NetUtils.recvObject(connection)
 
                 print(typeName + " " + nodeName + " " + typeRepoUrl + " " + typeRcLocalPath)

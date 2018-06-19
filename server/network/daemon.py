@@ -47,6 +47,7 @@ class DaemonHostListener():
                 NetUtils.sendObject(commandSocket, node.type.name)
                 NetUtils.sendObject(commandSocket, node.type.repoUrl)
                 NetUtils.sendObject(commandSocket, node.rcLocalPath)
+                NetUtils.sendObject(commandSocket, node.type.sha)
                 NetUtils.sendObject(commandSocket, node.name)
                 NetUtils.sendObject(commandSocket, node.ipAddress)
 
@@ -58,14 +59,16 @@ class DaemonHostListener():
     def process_worker_udp(self):
         while self.listening:
             try:
-                #  {chk} | {cmd} | {name} | {type} | {ipAddr}
+                #  {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
                 info = self.queueUdp.get(timeout=5, block=True)
                 command = int(info[1])
                 if command == Command.PING:
                     name = info[2]
                     hostType = info[3]
                     bbbIpAddr = info[4]
-                    self.controller.updateHostCounterByAddress(address=bbbIpAddr, name=name, hostType=hostType)
+                    bbbSha = info[5]
+                    self.controller.updateHostCounterByAddress(address=bbbIpAddr, name=name, hostType=hostType,
+                                                               bbbSha=bbbSha)
                 elif command == Command.EXIT:
                     print("Worker ... EXIT")
                     return
@@ -77,7 +80,7 @@ class DaemonHostListener():
         pingSocket = socket.socket(socket.AF_INET,  # Internet
                                    socket.SOCK_DGRAM)  # UDP
         pingSocket.bind(("0.0.0.0", self.bbbUdpPort))
-        print("Listening ....")
+        print("Listening UDP on 0.0.0.0 : {} ....".format(self.bbbUdpPort))
         while self.listening:
             data, ipAddr = pingSocket.recvfrom(1024)  # buffer size is 1024 bytes
             data = str(data.decode('utf-8'))
@@ -85,7 +88,7 @@ class DaemonHostListener():
             if info:
                 self.queueUdp.put(info)
         pingSocket.close()
-        print('ping socket closed ')
+        print('Ping socket closed ')
 
     def stopAll(self):
         """

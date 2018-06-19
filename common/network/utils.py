@@ -34,12 +34,13 @@ def get_ip_address(ifname: str):
 
 def verify_msg(data: str):
     """
-        BBB sends this: {chk} | {cmd} | {name} | {type} | {ipAddr}
+        This method must be update as the data format sent by the bbb is modified
+        BBB sends this: {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
     :param data:
     :return: Array containing the data, [] if error.
     """
     splt = data.split("|")
-    if len(splt) != 5:
+    if len(splt) != 6:
         # Error !
         return []
     message = data[(len(splt[0]) + 1):]

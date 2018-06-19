@@ -4,7 +4,7 @@ import shutil
 from configparser import ConfigParser
 from common.entity.entities import Command
 from common.network.utils import get_ip_address
-from sftp import downloadFiles, connect_to_ftp_server, download_from_ftp
+from sftp import download_from_ftp, download_dir
 
 
 class BBB():

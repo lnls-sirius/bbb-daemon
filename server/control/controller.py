@@ -7,12 +7,9 @@ import time
 from network.db import RedisPersistence
 
 
-
 class MonitorController():
-
     monitor_controller = None
     MAX_LOST_PING = 5
-
 
     def __init__(self, redis_server_ip: str, redis_server_port: int, sftp_home_dir: str = '/root/bbb-daemon-repos/'):
 
@@ -145,7 +142,7 @@ class MonitorController():
                 return node
         return None
 
-    def checkIpAvailable(self,ip=None,
+    def checkIpAvailable(self, ip=None,
                          name=None):
         if ip is None or name is None:
             return False, "Node name/ip is not defined."
@@ -155,9 +152,9 @@ class MonitorController():
             return True, "No node with the ip {} is registered.".format(ip)
         else:
             if node.name == name:
-                return True, "The ip {} is already belong to this node ({})".format(ip,name)
+                return True, "The ip {} is already belong to this node ({})".format(ip, name)
             else:
-                return False, "This ip {} is linked to another node ({})".format(ip,node.name)
+                return False, "This ip {} is linked to another node ({})".format(ip, node.name)
 
     def getNode(self, node_name: str = None):
         return self.db.getNode(node_name)
@@ -200,7 +197,7 @@ class MonitorController():
         self.daemon.sendCommand(command=Command.SWITCH, address=oldNode.ipAddress, node=newNode)
         self.rebootNode(oldNode)
 
-    def updateHostCounterByAddress(self, address, name, hostType):
+    def updateHostCounterByAddress(self, address, name, hostType, bbbSha: str = None):
 
         subnet = int(address.split(".")[2])
         sectorId = int(subnet / 10)
@@ -217,7 +214,7 @@ class MonitorController():
 
                 node.counter = MonitorController.MAX_LOST_PING
 
-                if node.name == name and node.type.name == hostType:
+                if node.name == name and node.type.name == hostType and node.type.sha == bbbSha:
                     node.changeState(NodeState.CONNECTED)
                     print('connected {}'.format(node))
                     isHostConnected = True
