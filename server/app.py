@@ -79,9 +79,9 @@ def refresh_active_nodes():
         c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
         u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
 
-    for i in range(10):
-        c_nodes.append(Node(typeNode=Type(), state=NodeState.CONNECTED))
-        u_nodes.append(Node(name=str(i), typeNode=Type()))
+    #for i in range(10):
+    #    c_nodes.append(Node(typeNode=Type(), state=NodeState.CONNECTED))
+    #    u_nodes.append(Node(name=str(i), typeNode=Type()))
 
     return jsonify(configured_nodes=nodes_schema.dump(c_nodes).data, unconfigured_nodes=nodes_schema.dump(u_nodes).data)
 
