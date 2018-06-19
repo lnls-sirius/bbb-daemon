@@ -135,11 +135,11 @@ class BBB():
                 config = configFile['NODE-CONFIG']
 
                 self.desiredName = config.get('node_name', 'default')
-                self.desiredIp = config.get('node_name', 'node_ip', 'default')
-                self.type = config.get('node_name', 'type_name', 'default')
-                self.typeRepoUrl = config.get('node_name', 'type_url', 'default')
-                self.typeRcLocalPath = config.get('node_name', 'type_path', 'default')
-                self.typeSha = config.get('node_name', 'type_sha', 'default')
+                self.desiredIp = config.get('node_ip', 'default')
+                self.type = config.get('type_name', 'default')
+                self.typeRepoUrl = config.get('type_url', 'default')
+                self.typeRcLocalPath = config.get('type_path', 'default')
+                self.typeSha = config.get('type_sha', 'default')
 
                 self.update(newName=self.desiredName, newType=self.type, newTypeRepoUrl=self.typeRepoUrl,
                             newTypeRcLocalPath=self.typeRcLocalPath, sha=self.typeSha)
