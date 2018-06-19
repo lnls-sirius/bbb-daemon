@@ -2,436 +2,433 @@
 
 
 {% block head %}
-    {{super()}}
+    {{ super() }}
 {% endblock %}
 
 {% block content %}
-{{super()}}
+    {{ super() }}
 
 
 
-<div class="container">
+    <div class="container">
         <div style="float:left;">
             <canvas class="col-4" id="cChart" width="550" height="400"></canvas>
         </div>
         <div style="float:right;">
             <canvas class="col-4" id="uChart" width="550" height="400"></canvas>
         </div>
-</div><br>
+        <br>
 
 
-<div class="container">
-    <div><strong><h3>Current Sector</h3></strong><br></div>
-    <div class="form-group ">
-        <div class="selectContainer">
-            <select class="form-control" name="size" id="current_sector">
-                {% for sector in sectors %}
-                    <option value={{sector}}>{{sector}}</option>
-                {% endfor %}
-            </select>
+        <div><strong><h3>Current Sector</h3></strong><br></div>
+        <div class="form-group ">
+            <div class="selectContainer">
+                <select class="form-control" name="size" id="current_sector">
+                    {% for sector in sectors %}
+                        <option value={{ sector }}>{{ sector }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
-    </div>
-</div><br>
+        <br>
 
-<table class="table table-hover">
-    <h3>Configured</h3>
-    <thead class="thead-dark">
-    <tr class="alert-info">
-        <th scope="col">Name</th>
-        <th scope="col">IP Address</th>
-        <th scope="col">Type Name</th>
-        <th scope="col">Type Repo URL</th>
-        <th scope="col">rc.local Path</th>
-        <th scope="col">Sector</th>
-        <th scope="col">PV Prefix</th>
-        <th scope="col">State</th>
-        <td scope="col"></td>
-    </tr>
-    </thead>
-    <tbody id='confTBody'>
-    </tbody>
-</table>
-<table class="table table-hover">
-    <h3>Not Configured</h3>
-    <thead class="thead-dark">
-    <tr class="alert-danger">
-        <th scope="col">Name</th>
-        <th scope="col">IP Address</th>
-        <th scope="col">Type Name</th>
-        <th scope="col">Type Repo URL</th>
-        <th scope="col">rc.local Path</th>
-        <th scope="col">Sector</th>
-        <th scope="col">PV Prefix</th>
-        <th scope="col">State</th>
-        <th scope="col"></th>
-    </tr>
-    </thead>
-      <tbody id='uconfTBody'>
-      </tbody>
-<br>
+        <table class="table table-hover">
+            <h3>Configured</h3>
+            <thead class="thead-dark">
+            <tr class="alert-info">
+                <th scope="col">Name</th>
+                <th scope="col">IP Address</th>
+                <th scope="col">Type Name</th>
+                <th scope="col">Type Repo URL</th>
+                <th scope="col">rc.local Path</th>
+                <th scope="col">Sector</th>
+                <th scope="col">PV Prefix</th>
+                <th scope="col">State</th>
+                <td scope="col"></td>
+            </tr>
+            </thead>
+            <tbody id='confTBody'>
+            </tbody>
+        </table>
 
-<div class="container">
-    <button id="btn_switch_bbb" type="button" class="btn btn-primary btn-block " disabled>Switch Selected BBBs</button>
-</div><br><br>
+        <table class="table table-hover">
+            <h3>Not Configured</h3>
+            <thead class="thead-dark">
+            <tr class="alert-danger">
+                <th scope="col">Name</th>
+                <th scope="col">IP Address</th>
+                <th scope="col">Type Name</th>
+                <th scope="col">Type Repo URL</th>
+                <th scope="col">rc.local Path</th>
+                <th scope="col">Sector</th>
+                <th scope="col">PV Prefix</th>
+                <th scope="col">State</th>
+                <th scope="col"></th>
+            </tr>
+            </thead>
+            <tbody id='uconfTBody'>
+            </tbody>
+        </table>
+        <br>
+        <button id="btn_switch_bbb" onclick="switch_bbb()" type="button" class="btn btn-success btn-block " disabled>
+            Switch Selected BBBs
+        </button>
+    </div><br><br>
 
-<div class="container">
-<button class="btn btn-primary btn-block " onclick="addTest()" >addd Rowwwww</button>
-  <table class="table table-hover">
-      <h3>Njust a test</h3>
-      <thead class="thead-dark">
-      <tr class="alert-danger">
-          <th scope="col">Name</th>
-          <th scope="col">IP Address</th>
-          <th scope="col">Type Name</th>
-          <th scope="col">Type Repo URL</th>
-          <th scope="col">rc.local Path</th>
-          <th scope="col">Sector</th>
-          <th scope="col">PV Prefix</th>
-          <th scope="col">State</th>
-          <th scope="col"></th>
-      </tr>
-      </thead>
-      <tbody id='tbody_teste'>
-      </tbody>
-  </table>
-  <br>
-</div>
 {% endblock %}
 
 
 {% block scripts %}
-{{super()}}
+    {{ super() }}
+    <script>
 
-<script>
-    function addData(chart, label, data) {
-        chart.data.labels.push(label);
-        chart.data.datasets.forEach((dataset) => {
-            dataset.data = data;
-        });
-
-        chart.update();
-    }
-
-    function removeData(chart) {
-        chart.data.labels.pop();
-        chart.data.datasets.forEach((dataset) => {
-            dataset.data.pop();
-        });
-        chart.update();
-}
-    var ctx_c = document.getElementById("cChart").getContext('2d');
-    var chart_c = new Chart(ctx_c, {
-                    responsive: true,
-                    type: 'bar',
-                    data: {
-                        datasets: [{
-                            label: 'Connected Nodes',
-                            borderWidth: 1,
-                            backgroundColor: 'rgb(144, 238, 144)',
-                            borderColor: 'rgb(50, 205, 50)'
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            yAxes: [{
-                                ticks: {
-                                    beginAtZero:true
-                                }
-                            }],
-                            xAxes: [{
-                                    stacked: false,
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1,
-                                        min: 0,
-                                        autoSkip: false
-                                    }
-                            }]
-                        }
-                }});
-    var ctx_u = document.getElementById("uChart").getContext('2d');
-    var chart_u = new Chart(ctx_u, {
-        responsive: true,
-                    type: 'bar',
-                    data: {
-                        datasets: [{
-                            label: 'Disconnected/Unconfigured Nodes',
-                            borderWidth: 1,
-                            backgroundColor: 'rgb(220, 20, 60)',
-                            borderColor: 'rgb(255, 0, 0)'
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            yAxes: [{
-                                ticks: {
-                                    beginAtZero:true
-                                }
-                            }],
-                            xAxes: [{
-                                    stacked: false,
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1,
-                                        min: 0,
-                                        autoSkip: false
-                                    }
-                            }]
-                        }
-                }});
-
-    var btn_switch = document.getElementById("btn_switch_bbb");
-
-    var bbb_configured_selected = null;
-    var bbb_unconfigured_selected = null;
-
-    var active_sector_val = null;
-
-    /**
-      * Removel all children
-    */
-    function removeChild(node){
-      if(node){
-        while (node.firstChild) {
-            node.removeChild(node.firstChild);
-        }
-      }
-    }
-
-    /**
-      Get a row from node !
-    */
-    function getRow(node){
-      console.log('Get Row !');
-      const tr = document.createElement('tr');
-
-      const td_name = document.createElement('td');
-      td_name.innerText = node['name'];
-
-      const td_ip = document.createElement('td');
-      td_ip.innerText = node['ipAddress'];
-
-      const td_type_name = document.createElement('td');
-      td_type_name.innerText = node['type']['name'];
-
-      const td_repo = document.createElement('td');
-      td_repo.innerText = node['type']['repoUrl'];
-
-      const td_rc = document.createElement('td');
-      td_rc.innerText = node['rcLocalPath'];
-
-      const td_sector = document.createElement('td');
-      td_sector.innerText = node['sector'];
-
-      const td_pref = document.createElement('td');
-      td_pref.innerText = node['pvPrefix'];
-
-      const td_state = document.createElement('td');
-      td_state.innerText = node['state_string'];
-
-      const td_reboot = document.createElement('td');
-      const btn_reboot = document.createElement('button');
-      btn_reboot.setAttribute('type', 'button');
-      btn_reboot.setAttribute('onclick', 'rebootThis(this);');
-      btn_reboot.setAttribute('myName', node['name']);
-      btn_reboot.setAttribute('myIp', node['ipAddress']);
-      btn_reboot.setAttribute('class', 'btn btn-danger');
-      btn_reboot.innerText =  'Reboot BBB';
-
-      switch (node['state']) {
-        case 0: // Disconnected
-          td_state.innerText  =  'Disconnected';
-          btn_reboot.setAttribute('disabled','');
-          break;
-        case 1: // Misconfigured
-          td_state.innerText  =  'Misconfigured';
-          btn_reboot.removeAttribute('disabled');
-          break;
-        case 2: // Connected
-          td_state.innerText  =  'Connected';
-          btn_reboot.removeAttribute('disabled');
-          break;
-        case 3: // Rebooting
-          td_state.innerText  =  'Rebooting';
-          btn_reboot.setAttribute('disabled','');
-          break;
-        default:
-
-      }
-
-      td_reboot.appendChild(btn_reboot);
-
-      tr.appendChild(td_name);
-      tr.appendChild(td_ip);
-      tr.appendChild(td_type_name);
-      tr.appendChild(td_repo);
-      tr.appendChild(td_rc);
-      tr.appendChild(td_sector);
-      tr.appendChild(td_pref);
-      tr.appendChild(td_state);
-      tr.appendChild(td_reboot);
-
-      console.log(tr);
-      return tr;
-    }
-    function addTest(){
-        const tBody = document.getElementById('tbody_teste');
-        console.log(tBody);
-
-        const node = {
-          ipAddress: '120.120.120',
-          name: 'meuName',
-          state: 1,
-          state_string: 'Misconfigured',
-          pvPrefix: 'asd\nasdasd\nas',
-          type: {
-            name: 'type_name mewuasd',
-            repoUrl: 'www.git.com!?'
-          }
-        };
-        const node1 = {
-          ipAddress: '120asdasd20',
-          name: 'meuNddasame',
-          state: 0,
-          state_string: 'Disconnected',
-          pvPrefix: 'asd\nasdasd\nas',
-          type: {
-            name: 'type_name mewuasd',
-            repoUrl: 'www.git.com!?'
-          }
-        };
-        removeChild(tBody);
-        const tr = getRow(node);
-        tBody.appendChild(tr);
-
-        const tr2 = getRow(node1);
-        tBody.appendChild(tr2);
-
-
-    }
-    function rebootThis(me){
-        console.log(me)
-        var myIp = me.getAttribute("myIp");
-            $.post(
-                '{{ reboot_bbb_url }}',
-                { bbb_ip: myIp, bbb_sector:active_sector_val}
-            ).done(function(data){
-                console.log(data);
-        });
-    }
-    function updateBtnStatus(){
-
-        btn_switch.innerHTML =
-        "Switch <strong> <br>Configured: " + (bbb_configured_selected?bbb_configured_selected:"")
-        + "<br>Not Configured: " + (bbb_unconfigured_selected?bbb_unconfigured_selected:"" + "</strong>") ;
-
-        btn_switch.disabled = (bbb_unconfigured_selected == null || bbb_configured_selected == null);
-    }
-
-    $("#btn_switch_bbb").click( function() {
-        console.log("id="+bbb_configured_selected + "id2="+bbb_unconfigured_selected);
-
-        if(bbb_configured_selected != null && bbb_unconfigured_selected != null){
-            $.post(
-                '{{ switch_bbb_url }}',
-                { c_bbb_ip: bbb_configured_selected, c_bbb_sector:active_sector_val,
-                    u_bbb_ip: bbb_unconfigured_selected, u_bbb_sector:active_sector_val}
-            ).done(function(data){
-                console.log(data);
-                bbb_configured_selected = null;
-                bbb_unconfigured_selected = null;
-                console.log('reset selection!');
-                updateBtnStatus();
+        function addData(chart, label, data) {
+            chart.data.labels.push(label);
+            chart.data.datasets.forEach((dataset) => {
+                dataset.data = data;
             });
+
+            chart.update();
         }
-    });
 
-    function refresh_chart(){
-        $.post(
-            '{{ refresh_chart_url }}'
-        ).done(function(data,success){
-            if(success){
-                if (data['lbls'].length == data['c_vals'].length &&  data['lbls'].length == data['u_vals'].length){
-                    chart_c.data.labels = data['lbls'];
-                    chart_c.data.datasets.forEach((dataset) => {
-                        dataset.data = data['c_vals'];
-                    });
-                    chart_c.update();
+        function removeData(chart) {
+            chart.data.labels.pop();
+            chart.data.datasets.forEach((dataset) => {
+                dataset.data.pop();
+            });
+            chart.update();
+        }
 
-                    chart_u.data.labels = data['lbls'];
-                    chart_u.data.datasets.forEach((dataset) => {
-                        dataset.data = data['u_vals'];
-                    });
-                    chart_u.update();
-
+        const ctx_c = document.getElementById("cChart").getContext('2d');
+        const chart_c = new Chart(ctx_c, {
+            responsive: true,
+            type: 'bar',
+            data: {
+                datasets: [{
+                    label: 'Connected Nodes',
+                    borderWidth: 1,
+                    backgroundColor: 'rgb(144, 238, 144)',
+                    borderColor: 'rgb(50, 205, 50)'
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }],
+                    xAxes: [{
+                        stacked: false,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            min: 0,
+                            autoSkip: false
+                        }
+                    }]
                 }
             }
         });
-    }
-    function refresh_bbbs() {
-        var current_sector_val = $('#current_sector').val();
-        if(active_sector_val != current_sector_val ){
-            active_sector_val = current_sector_val;
 
-            bbb_configured_selected = null;
-            bbb_unconfigured_selected = null;
+        const ctx_u = document.getElementById("uChart").getContext('2d');
+        const chart_u = new Chart(ctx_u, {
+            responsive: true,
+            type: 'bar',
+            data: {
+                datasets: [{
+                    label: 'Disconnected/Unconfigured Nodes',
+                    borderWidth: 1,
+                    backgroundColor: 'rgb(220, 20, 60)',
+                    borderColor: 'rgb(255, 0, 0)'
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }],
+                    xAxes: [{
+                        stacked: false,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            min: 0,
+                            autoSkip: false
+                        }
+                    }]
+                }
+            }
+        });
 
-            btn_switch.disabled = true;
+        var btn_switch = document.getElementById("btn_switch_bbb");
+
+        var bbb_configured_selected = null;
+        var bbb_unconfigured_selected = null;
+
+        var active_sector_val = null;
+
+        /**
+         * Removel all children
+         */
+        function removeChild(node) {
+            if (node) {
+                while (node.firstChild) {
+                    node.removeChild(node.firstChild);
+                }
+            }
         }
 
-        $.post( '{{ refresh_url }}',
-         { 'sector': current_sector_val})
+        /**
+         Get a row from node !
+         */
+        function getRow(node, conf) {
+            const tr = document.createElement('tr');
+            if (conf) {
+                tr.setAttribute('onclick', 'selectRowConf(this);');
+            } else {
+                tr.setAttribute('onclick', 'selectRowUconf(this);');
+            }
 
-            .done(function( data ) {
 
-                const confTBody = document.getElementById('confTBody');
-                const uconfTBody = document.getElementById('uconfTBody');
+            const td_name = document.createElement('td');
+            td_name.innerText = node['name'];
 
-                $('#active_bbbs').html(data);
+            const td_ip = document.createElement('td');
+            td_ip.innerText = node['ipAddress'];
 
-                $("#table_configured").on('click', 'tr', function() {
-                    // First column is the status one ...
-                    var row = $(this).find('td:nth-child(3)');
-                    var row_val = row.text();
+            const td_type_name = document.createElement('td');
+            td_type_name.innerText = node['type']['name'];
 
-                    if(row_val == bbb_configured_selected){
-                        bbb_configured_selected = null;
-                    }else{
-                        bbb_configured_selected = row_val;
+            const td_repo = document.createElement('td');
+            td_repo.innerText = node['type']['repoUrl'];
+
+            const td_rc = document.createElement('td');
+            td_rc.innerText = node['rcLocalPath'];
+
+            const td_sector = document.createElement('td');
+            td_sector.innerText = node['sector'];
+
+            const td_pref = document.createElement('td');
+            td_pref.innerText = node['pvPrefix'];
+
+            const td_state = document.createElement('td');
+            td_state.innerText = node['state_string'];
+
+            const td_reboot = document.createElement('td');
+            const btn_reboot = document.createElement('button');
+            btn_reboot.setAttribute('type', 'button');
+            btn_reboot.setAttribute('onclick', 'rebootThis(this);');
+            btn_reboot.setAttribute('myName', node['name']);
+            btn_reboot.setAttribute('myIp', node['ipAddress']);
+            btn_reboot.setAttribute('class', 'btn btn-danger');
+            btn_reboot.innerText = 'Reboot BBB';
+
+            switch (node['state']) {
+                case 0: // Disconnected
+                    td_state.innerText = 'Disconnected';
+                    btn_reboot.setAttribute('disabled', '');
+                    break;
+                case 1: // Misconfigured
+                    td_state.innerText = 'Misconfigured';
+                    btn_reboot.removeAttribute('disabled');
+                    break;
+                case 2: // Connected
+                    td_state.innerText = 'Connected';
+                    btn_reboot.removeAttribute('disabled');
+                    break;
+                case 3: // Rebooting
+                    td_state.innerText = 'Rebooting';
+                    btn_reboot.setAttribute('disabled', '');
+                    break;
+                default:
+
+            }
+
+            td_reboot.appendChild(btn_reboot);
+
+            tr.appendChild(td_name);
+            tr.appendChild(td_ip);
+            tr.appendChild(td_type_name);
+            tr.appendChild(td_repo);
+            tr.appendChild(td_rc);
+            tr.appendChild(td_sector);
+            tr.appendChild(td_pref);
+            tr.appendChild(td_state);
+            tr.appendChild(td_reboot);
+
+            return tr;
+        }
+
+        function rebootThis(me) {
+            console.log(me)
+            var myIp = me.getAttribute("myIp");
+            $.post(
+                '{{ reboot_bbb_url }}',
+                {bbb_ip: myIp, bbb_sector: active_sector_val}
+            ).done(function (data) {
+                console.log(data);
+            });
+        }
+
+        function updateBtnStatus() {
+
+            btn_switch.innerHTML =
+                "Switch <strong> <br>Configured: " + (bbb_configured_selected ? bbb_configured_selected : "")
+                + "<br>Not Configured: " + (bbb_unconfigured_selected ? bbb_unconfigured_selected : "" + "</strong>");
+
+            btn_switch.disabled = (bbb_unconfigured_selected == null || bbb_configured_selected == null);
+        }
+
+        function switch_bbb() {
+            console.log("id=" + bbb_configured_selected + "id2=" + bbb_unconfigured_selected);
+
+            if (bbb_configured_selected != null && bbb_unconfigured_selected != null) {
+                $.post(
+                    '{{ switch_bbb_url }}',
+                    {
+                        c_bbb_ip: bbb_configured_selected, c_bbb_sector: active_sector_val,
+                        u_bbb_ip: bbb_unconfigured_selected, u_bbb_sector: active_sector_val
                     }
-
+                ).done(function (data) {
+                    console.log(data);
+                    bbb_configured_selected = null;
+                    bbb_unconfigured_selected = null;
+                    console.log('reset selection!');
                     updateBtnStatus();
-
                 });
-                // @todo: move this function to the correct place !
-                $("#table_unconfigured").on('click', 'tr', function() {
-                    // First column is the status one ...
-                    var status_row =  $(this).find('td:nth-child(1)');
-                    var row_val = $(this).find('td:nth-child(3)').text()
+            }
+        }
 
-                    if(row_val == bbb_unconfigured_selected){
-                        bbb_unconfigured_selected = null;
-                    }else{
-                        bbb_unconfigured_selected = row_val;
+        function switchBBB() {
+            console.log("id=" + bbb_configured_selected + "id2=" + bbb_unconfigured_selected);
+
+            if (bbb_configured_selected != null && bbb_unconfigured_selected != null) {
+                $.post(
+                    '{\{ switch_bbb_url }\}',
+                    {
+                        c_bbb_ip: bbb_configured_selected, c_bbb_sector: active_sector_val,
+                        u_bbb_ip: bbb_unconfigured_selected, u_bbb_sector: active_sector_val
                     }
+                ).done(function (data) {
+                    console.log(data);
+                    bbb_configured_selected = null;
+                    bbb_unconfigured_selected = null;
+                    console.log('reset selection!');
                     updateBtnStatus();
                 });
-        });
-    }
+            }
+        }
+
+        function refresh_chart() {
+            $.post(
+                '{{ refresh_chart_url }}'
+            ).done(function (data, success) {
+                if (success) {
+                    if (data['lbls'].length === data['c_vals'].length && data['lbls'].length === data['u_vals'].length) {
+                        chart_c.data.labels = data['lbls'];
+                        chart_c.data.datasets.forEach((dataset) => {
+                            dataset.data = data['c_vals'];
+                        });
+                        chart_c.update();
+
+                        chart_u.data.labels = data['lbls'];
+                        chart_u.data.datasets.forEach((dataset) => {
+                            dataset.data = data['u_vals'];
+                        });
+                        chart_u.update();
+
+                    }
+                }
+            });
+        }
+
+        function refresh_bbbs() {
+            var current_sector_val = $('#current_sector').val();
+            if (active_sector_val !== current_sector_val) {
+                active_sector_val = current_sector_val;
+
+                bbb_configured_selected = null;
+                bbb_unconfigured_selected = null;
+
+                btn_switch.disabled = true;
+            }
+
+            $.post('{{ refresh_url }}',
+                {'sector': current_sector_val})
+
+                .done(function (data, success) {
+                    if (success) {
+
+                        const confTBody = document.getElementById('confTBody');
+                        const uconfTBody = document.getElementById('uconfTBody');
+
+                        const cNodes = data['configured_nodes'];
+                        const uNodes = data['unconfigured_nodes'];
+
+                        removeChild(confTBody);
+                        removeChild(uconfTBody);
 
 
+                        for (var i = 0; i < cNodes.length; i++) {
+                            const tr = getRow(cNodes[i], true);
+                            confTBody.appendChild(tr);
+                        }
 
-    refresh_bbbs();
-    refresh_chart();
+                        for (var i = 0; i < uNodes.length; i++) {
+                            const tr = getRow(uNodes[i], false);
+                            uconfTBody.appendChild(tr);
+                        }
 
-    setInterval(function () {
-        refresh_bbbs()
-    }, 2000);
+                    }
+                });
+        }
 
-    setInterval(function () {
-        refresh_chart()
-    }, 2000);
+        function selectRowConf(meRow) {
+            // First column is the status one ...
+            //var status_row =  $(this).find('td:nth-child(1)');
+            //console.log(status_row);
+            const row_val = meRow.childNodes[0].innerText;
 
+            if (row_val === bbb_configured_selected) {
+                bbb_configured_selected = null;
+                //status_row.innerHTML = 'X';
+                //row.className ="alert alert-warning"
+            } else {
+                bbb_configured_selected = row_val;
+                //status_row.innerHTML = 'O';
+                //row.className =""
+            }
 
- </script>
+            updateBtnStatus();
+
+        }
+
+        function selectRowUconf(meRow) {
+            console.log(meRow);
+            // First column is the status one ...
+            const row_val = meRow.childNodes[0].innerText;
+
+            if (row_val === bbb_unconfigured_selected) {
+                bbb_unconfigured_selected = null;
+            } else {
+                bbb_unconfigured_selected = row_val;
+            }
+            updateBtnStatus();
+        }
+
+        refresh_bbbs();
+        refresh_chart();
+
+        setInterval(function () {
+            refresh_bbbs()
+        }, 2000);
+
+        setInterval(function () {
+            refresh_chart()
+        }, 2000);
+
+    </script>
 {% endblock %}

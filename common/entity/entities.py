@@ -7,12 +7,25 @@ class BaseRedisEntity():
     key_prefix_len = len(key_prefix)
 
     def toSet(self):
+        """
+            Object to set used for the redis serialization
+        :return: key, content
+        """
         pass
 
     def fromSet(self, str_dic):
+        """
+            Get the values from a dictionary originated from the deserialization of a redis query
+        :param str_dic:
+        :return:
+        """
         pass
 
     def get_key(self):
+        """
+            Gets the key used on redis.
+        :return: id for redis.
+        """
         pass
 
     @staticmethod

@@ -4,6 +4,7 @@ from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 
 from common.entity.entities import Sector, Type, Node, NodeState
+from common.serialization.models import NodeSchema, TypeSchema
 from control.controller import MonitorController
 from forms import EditNodeForm, EditTypeForm
 
@@ -12,6 +13,12 @@ app.secret_key = "4dbae3052d7e8b16ebcfe8752f70a4efe68d2ae0558b4a1b25c5fd902284e5
 
 Bootstrap(app)
 nav = Nav(app)
+
+node_schema = NodeSchema()
+nodes_schema = NodeSchema(many=True)
+
+type_schema = TypeSchema()
+types_schema = TypeSchema(many=True)
 
 
 @nav.navigation()
@@ -72,8 +79,11 @@ def refresh_active_nodes():
         c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
         u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
 
-    return jsonify(configured_nodes=c_nodes, unconfigured_nodes=u_nodes)
-    # return render_template("refresh_tables.html", configured_nodes=c_nodes, unconfigured_nodes=u_nodes)
+    for i in range(10):
+        c_nodes.append(Node(typeNode=Type(), state=NodeState.CONNECTED))
+        u_nodes.append(Node(name=str(i), typeNode=Type()))
+
+    return jsonify(configured_nodes=nodes_schema.dump(c_nodes).data, unconfigured_nodes=nodes_schema.dump(u_nodes).data)
 
 
 @app.route('/reboot_bbb/', methods=['POST'])
