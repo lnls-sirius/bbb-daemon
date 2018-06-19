@@ -193,8 +193,17 @@ class MonitorController():
 
             self.updateNodesLockList[sector].release()
 
-    def updateNode(self, oldNode, newNode):
-        self.daemon.sendCommand(command=Command.SWITCH, address=oldNode.ipAddress, node=newNode)
+    def updateNode(self, oldNode: Node = None, newNode: Node = None, oldNodeAddr: str = ''):
+        """
+            Update the misconfigured node with the  data of the selected configured node !
+        Pass the oldNode aka the one with wrong info.
+        :param oldNode: The node to be updated and to assume the newNode information.
+        :param newNode: Configured node. The source of information
+        :return:
+        """
+        if oldNode:
+            oldNodeAddr = oldNode.ipAddress
+        self.daemon.sendCommand(command=Command.SWITCH, address=oldNodeAddr, node=newNode)
         self.rebootNode(oldNode)
 
     def updateHostCounterByAddress(self, address, name, hostType, bbbSha: str = None):

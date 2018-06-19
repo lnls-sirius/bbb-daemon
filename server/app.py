@@ -101,10 +101,10 @@ def switch_bbb():
     if c_bbb_ip != '' and c_bbb_sector != '' and u_bbb_ip != '' and u_bbb_sector != '':
 
         c_node = MonitorController.monitor_controller.getConfiguredNode(c_bbb_ip, c_bbb_sector)
-        u_node = MonitorController.monitor_controller.getConfiguredNode(u_bbb_ip, u_bbb_sector)
+        # u_node = MonitorController.monitor_controller.getConfiguredNode(u_bbb_ip, u_bbb_sector)
 
-        if c_node and u_node:
-            MonitorController.monitor_controller.updateNode(c_node, u_node)
+        if c_node and u_bbb_ip:
+            MonitorController.monitor_controller.updateNode(oldNodeAddr=u_bbb_ip, newNode=c_node)
             return 'Node Switched'
 
     return 'Not OK'
@@ -168,11 +168,13 @@ def edit_nodes(node=None):
                 type = MonitorController.monitor_controller.findTypeByName(edit_nodes_form.type.data)
                 if type:
 
-                    res_1, message_1 = MonitorController.monitor_controller.validateRepository(rc_path=edit_nodes_form.rc_local_path.data,
-                                                                             git_url=type.repoUrl, check_rc_local=True)
+                    res_1, message_1 = MonitorController.monitor_controller.validateRepository(
+                        rc_path=edit_nodes_form.rc_local_path.data,
+                        git_url=type.repoUrl, check_rc_local=True)
 
-                    res_2, message_2 = MonitorController.monitor_controller.checkIpAvailable(ip=edit_nodes_form.ip_address.data,
-                                                                           name=edit_nodes_form.name.data)
+                    res_2, message_2 = MonitorController.monitor_controller.checkIpAvailable(
+                        ip=edit_nodes_form.ip_address.data,
+                        name=edit_nodes_form.name.data)
                     if res_1 and res_2:
                         node = Node(name=edit_nodes_form.name.data,
                                     ip=edit_nodes_form.ip_address.data,
@@ -253,7 +255,8 @@ def edit_types(type=None):
 
         elif action == '':
             if edit_types_form.validate_on_submit():
-                success, message_sha = MonitorController.monitor_controller.cloneRepository(git_url=edit_types_form.repo_url.data)
+                success, message_sha = MonitorController.monitor_controller.cloneRepository(
+                    git_url=edit_types_form.repo_url.data)
                 if success:
                     new_type = Type(name=edit_types_form.name.data,
                                     repoUrl=edit_types_form.repo_url.data,
@@ -269,11 +272,13 @@ def edit_types(type=None):
 
     return render_template("type/edit_type.html", type=type, form=edit_types_form, url=url_for('edit_types'))
 
+
 '''
 def set_controller(c: MonitorController = None):
     global MonitorController.monitor_controller
     MonitorController.monitor_controller = c
 '''
+
 
 def get_wsgi_app():
     return app
