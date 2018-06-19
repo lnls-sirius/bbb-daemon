@@ -72,7 +72,8 @@ def refresh_active_nodes():
         c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
         u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
 
-    return render_template("refresh_tables.html", configured_nodes=c_nodes, unconfigured_nodes=u_nodes)
+    return jsonify(configured_nodes=c_nodes, unconfigured_nodes=u_nodes)
+    # return render_template("refresh_tables.html", configured_nodes=c_nodes, unconfigured_nodes=u_nodes)
 
 
 @app.route('/reboot_bbb/', methods=['POST'])
