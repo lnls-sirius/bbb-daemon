@@ -18,8 +18,7 @@ RUN cd /root/bbb-daemon/docker/bbb-server/
 CMD ["sh", "-c", "/root/bbb-daemon/docker/bbb-server/wait.sh"]
 
 EXPOSE \
-    20 \
-    21 \
+    1026 \
     6789 \
     9876 \
     1026 \

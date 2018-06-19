@@ -12,14 +12,12 @@ services:
       - /storage/epics-services/daemon/db/:/data
     networks:
       - bbb_daemon_network
-z
   bbb-server:
     hostname: bbb-server
     image: lnlscon/bbb-daemon-container:latest
     ports:
       -  "1026:1026"
-      -  "1025:1025"
-      -  "60000-65535:60000-65535"
+      -  "3000-3010:3000-3010"
       -  "4850:4850"
       -  "6789:6789/tcp"
       -  "9877:9877/tcp"
@@ -28,7 +26,9 @@ z
       - 10.0.0.71
       - 10.0.0.72
     env_file:
-      -  /home/srv1/repository/bbb-daemon/docker/bbb-server/bbb-server.env
+      -  /home/con-srv/repository/bbb-daemon/docker/bbb-server/bbb-server.env
+    volumes:
+      - /storage/epics-services/daemon/ftp-data/:/root/bbb-daemon/types_repository/
     networks:
       - bbb_daemon_network
     depends_on:

@@ -16,7 +16,6 @@ export PYTHONPATH="$(dirname $PWD)"
 #export FLASK_PORT=4850
 
 # The path must be absolute !
-
 #export FTP_PORT=21
 #export FTP_HOME=/root/bbb-daemon/types_repository/
 
