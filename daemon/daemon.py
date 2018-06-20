@@ -15,7 +15,7 @@ RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
 FTP_SERVER_PORT = 1026
 
 # This info should contain a '/'
-FTP_DESTINATION_FOLDER = '/root/bbb-daemon-repos/'
+FTP_DESTINATION_FOLDER = '/root/'
 servAddr = "10.0.6.44"
 pingPort = 9876
 bindPort = 9877
@@ -93,11 +93,12 @@ class Daemon():
                 typeRcLocalPath = NetUtils.recvObject(connection)
                 typeSha = NetUtils.recvObject(connection)
                 nodeName = NetUtils.recvObject(connection)
+                desiredNodeIp = NetUtils.recvObject(connection)
 
-                print(typeName + " " + nodeName + " " + typeRepoUrl + " " + typeRcLocalPath)
+                print(typeName + " " + nodeName + " " + typeRepoUrl + " " + typeRcLocalPath + ' ' + desiredNodeIp)
 
                 self.bbb.update(newName=nodeName, newType=typeName, newTypeRepoUrl=typeRepoUrl,
-                                newTypeRcLocalPath=typeRcLocalPath, sha=typeSha)
+                                newTypeRcLocalPath=typeRcLocalPath, sha=typeSha, desiredNodeIp=desiredNodeIp)
 
                 print("bbb updated ! Rebooting now !")
                 self.pinging = False

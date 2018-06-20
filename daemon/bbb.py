@@ -5,7 +5,7 @@ from configparser import ConfigParser
 from common.entity.entities import Command
 from common.network.utils import get_ip_address
 from sftp import download_from_ftp, download_dir
-
+from  common.network.utils import changeIp
 
 class BBB():
 
@@ -25,10 +25,11 @@ class BBB():
         self.typeSha = ''
         self.sftp_port = sftp_port
         self.sfp_server_addr = sfp_server_addr
+        self.interfaceName = 'eth0'
         self.readParameters()
 
     def getInfo(self):
-        self.myIp = get_ip_address('eth0')
+        self.myIp = get_ip_address(self.interfaceName)
         info = "{}|{}|{}|{}|{}" \
             .format(Command.PING, self.name, self.type, self.myIp, self.typeSha)
         return info
@@ -72,7 +73,8 @@ class BBB():
             print("{}".format(e))
             return False
 
-    def update(self, newName=None, newType=None, newTypeRepoUrl=None, newTypeRcLocalPath=None, sha: str = ''):
+    def update(self, newName=None, newType=None, newTypeRepoUrl=None, newTypeRcLocalPath=None, sha: str = '',
+               desiredNodeIp: str = None):
         """
             Update the bbb with new data and refresh the project.
         :param newName:
@@ -90,6 +92,12 @@ class BBB():
                                      'type_sha': ''}
         self.typeSha = sha
 
+        if desiredNodeIp is not None:
+            self.desiredIp = desiredNodeIp
+            res, msg = changeIp(interface_name=self.interfaceName, desired_ip=self.desiredIp)
+            print(msg)
+
+
         if newName is not None:
             self.name = newName
             hostnameFile = open("/etc/hostname", "w")
@@ -103,6 +111,8 @@ class BBB():
             self.typeRcLocalPath = newTypeRcLocalPath
             self.typeRepoUrl = newTypeRepoUrl
 
+        self.update_project()
+
         configFile['NODE-CONFIG']['node_name'] = self.name
         configFile['NODE-CONFIG']['node_ip'] = self.myIp
         configFile['NODE-CONFIG']['type_name'] = self.type
@@ -111,8 +121,6 @@ class BBB():
         configFile['NODE-CONFIG']['type_sha'] = self.typeSha
 
         self.writeNodeConfig(configFile=configFile)
-
-        self.update_project()
 
     def readParameters(self):
         self.readNodeConfig()

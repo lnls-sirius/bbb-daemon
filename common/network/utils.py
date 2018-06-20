@@ -1,8 +1,12 @@
 import fcntl
 import pickle
+import re
 import struct
 import socket
 import subprocess
+
+re_ipv4 = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
+re_mask_ipv4 = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
 
 
 def checksum(data_str: str):
@@ -32,20 +36,45 @@ def get_ip_address(ifname: str):
         struct.pack('256s', ifname[:15])
     )[20:24])
 
-def changeIp(desiredIp: str = None, interface_name : str = 'eth0'):
+
+def changeIp(desired_ip: str = None, interface_name: str = 'eth0', net_mask: str = '255.255.255.255',
+             gateway: str = None):
     """
     @todo: now that i know the service i can do whatever i want !
     Using connmanclt to change ip address
-    :param desiredIp:
-    :return:
+    :param desired_ip:
+    :return: (True or False), message
     """
-    if desiredIp:
-        service = getService(interface_name=interface_name)
-        if service:
-            # @todo make the magic happen
-            pass
+    if not desired_ip:
+        return False, 'Desired ip not set !'
+    service = getService(interface_name=interface_name)
+    if not service:
+        return False, 'Service could\'t be found'
 
-def getService( interface_name : str = 'eth0'):
+    # @todo make the magic happen
+    # @todo make two different patterns for mask and ip. Limit them with the correct values.
+    if not re.match(re_mask_ipv4, net_mask):
+        return False, 'The net_mask={} doesn\'t match the mask pattern.'.format(net_mask)
+    if not re.match(re_ipv4, desired_ip):
+        return False, 'The desiredIp={} doesn\'t match the ipv4 pattern.'.format(desired_ip)
+    if gateway:
+        if not re.match(re_ipv4, gateway):
+            return False, 'The gateway={} doesn\'t match the ipv4 pattern.'.format(gateway)
+    else:
+        g_aux = desired_ip.split('.')
+        if len(g_aux) == 4:
+            g_aux[3] = '1'
+            gateway = ''
+            for g in g_aux:
+                gateway += g + '.'
+            gateway = gateway[:-1]
+
+    res = subprocess.check_output(
+        ['connmanctl config {} --ipv4 manual {} {} {}'.format(service, desired_ip, net_mask, gateway)])
+    return True, 'Successfully modified the ipv4 address. {}'.format(res)
+
+
+def getService(interface_name: str = 'eth0'):
     """
     Return the service name from an interface.
     @fixme: services with spaces on their names won't be detected !
@@ -73,6 +102,7 @@ def getService( interface_name : str = 'eth0'):
                                 return s
                     print(data)
     return None
+
 
 def verify_msg(data: str):
     """
