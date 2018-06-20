@@ -322,25 +322,37 @@
             }
         }
 
+        function clearChart(chart){
+            if(chart){
+               chart.data.datasets.forEach((dataset) => {
+                            dataset.data = [];
+               });
+            }
+        }
+
+        function setChartData(chart,lbls ,data){
+            if(chart){
+                chart.data.labels = lbls;
+                chart.data.datasets.forEach((dataset) => {
+                    dataset.data = data;
+                });
+            }
+        }
+
         function refresh_chart() {
             $.post(
                 '{{ refresh_chart_url }}'
             ).done(function (data, success) {
                 if (success) {
-                    if (data['lbls'].length === data['c_vals'].length && data['lbls'].length === data['u_vals'].length) {
-                        chart_c.data.labels = data['lbls'];
-                        chart_c.data.datasets.forEach((dataset) => {
-                            dataset.data = data['c_vals'];
-                        });
-                        chart_c.update();
 
-                        chart_u.data.labels = data['lbls'];
-                        chart_u.data.datasets.forEach((dataset) => {
-                            dataset.data = data['u_vals'];
-                        });
-                        chart_u.update();
+                    clearChart(chart_c);
+                    clearChart(chart_u);
 
-                    }
+                    setChartData(chart_c, data['lbls'],data['c_vals']);
+                    setChartData(chart_u, data['lbls'],data['u_vals']);
+
+                    chart_c.update();
+                    chart_u.update();
                 }
             });
         }
