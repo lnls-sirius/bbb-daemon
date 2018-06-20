@@ -79,11 +79,11 @@ def refresh_active_nodes():
         c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
         u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
 
-    for i in range(10):
-        c_nodes.append(Node(typeNode=Type(), state=NodeState.CONNECTED))
-        u_nodes.append(Node(name=str(i), typeNode=Type()))
+    #for i in range(10):
+    #    c_nodes.append(Node(typeNode=Type(), state=NodeState.CONNECTED))
+    #    u_nodes.append(Node(name=str(i), typeNode=Type()))
 
-    return jsonify(configured_nodes=nodes_schema.dump(c_nodes).data, unconfigured_nodes=nodes_schema.dump(u_nodes).data)
+    return jsonify(configured_nodes=nodes_schema.dump(c_nodes), unconfigured_nodes=nodes_schema.dump(u_nodes))
 
 
 @app.route('/reboot_bbb/', methods=['POST'])
@@ -103,11 +103,9 @@ def reboot_bbb():
 
 @app.route('/switch_bbb/', methods=['POST'])
 def switch_bbb():
-    c_bbb_ip = request.form.get('c_bbb_ip', '')
-    c_bbb_sector = request.form.get('c_bbb_sector', '')
-
-    u_bbb_ip = request.form.get('u_bbb_ip', '')
-    u_bbb_sector = request.form.get('u_bbb_sector', '')
+    c_bbb = request.form.get('c_bbb', '')
+    u_bbb = request.form.get('u_bbb', '')
+    '''
 
     if c_bbb_ip != '' and c_bbb_sector != '' and u_bbb_ip != '' and u_bbb_sector != '':
 
@@ -117,7 +115,7 @@ def switch_bbb():
         if c_node and u_bbb_ip:
             MonitorController.monitor_controller.updateNode(oldNodeAddr=u_bbb_ip, newNode=c_node)
             return 'Node Switched'
-
+    '''
     return 'Not OK'
 
 

@@ -169,7 +169,7 @@ class MonitorController():
             return None
 
         for node_conf in (self.nodes.get(nodeSector, [])).get("configured", []):
-            print('Nconf'.format(node_conf))
+            print('Node conf={}'.format(node_conf))
             if node_conf.ipAddress == nodeIp:
                 return node_conf
 

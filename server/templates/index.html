@@ -165,8 +165,14 @@
 
         var btn_switch = document.getElementById("btn_switch_bbb");
 
-        var bbb_configured_selected = null;
-        var bbb_unconfigured_selected = null;
+        const bbb_configured_selected = {
+                    name: '',
+                    ip: ''
+        };
+        const bbb_unconfigured_selected = {
+                    name: '',
+                    ip: ''
+        };
 
         var active_sector_val = null;
 
@@ -276,46 +282,40 @@
         function updateBtnStatus() {
 
             btn_switch.innerHTML =
-                "Switch <strong> <br>Configured: " + (bbb_configured_selected ? bbb_configured_selected : "")
-                + "<br>Not Configured: " + (bbb_unconfigured_selected ? bbb_unconfigured_selected : "" + "</strong>");
+                "Switch <strong> <br>Configured:\t" +  bbb_configured_selected['name'] + "\t\tIP:" +  bbb_configured_selected['ip']
+                + "<br>Not Configured:\t" +  bbb_unconfigured_selected['name'] + "\t\tIP:" +  bbb_unconfigured_selected['ip']  + "</strong>";
 
-            btn_switch.disabled = (bbb_unconfigured_selected == null || bbb_configured_selected == null);
+            btn_switch.disabled = (bbb_unconfigured_selected['name']=='' || bbb_configured_selected['name']=='');
         }
 
         function switch_bbb() {
-            console.log("id=" + bbb_configured_selected + "id2=" + bbb_unconfigured_selected);
-
-            if (bbb_configured_selected != null && bbb_unconfigured_selected != null) {
+            if (bbb_configured_selected['name'] != '' && bbb_unconfigured_selected['name'] != '') {
+                const objToSend = {
+                    c_bbb:{
+                        name: bbb_configured_selected['name'],
+                        ip:bbb_configured_selected['ip'],
+                        sector: active_sector_val,
+                    },
+                    u_bbb:{
+                        name: bbb_unconfigured_selected['name'],
+                        ip:bbb_unconfigured_selected['ip'],
+                        sector: active_sector_val,
+                    }
+                };
+                console.log(objToSend);
+                const json = JSON.stringify(objToSend);
+                console.log(json)
                 $.post(
                     '{{ switch_bbb_url }}',
-                    {
-                        c_bbb_ip: bbb_configured_selected, c_bbb_sector: active_sector_val,
-                        u_bbb_ip: bbb_unconfigured_selected, u_bbb_sector: active_sector_val
-                    }
+                    objToSend
                 ).done(function (data) {
                     console.log(data);
-                    bbb_configured_selected = null;
-                    bbb_unconfigured_selected = null;
-                    console.log('reset selection!');
-                    updateBtnStatus();
-                });
-            }
-        }
+                    bbb_configured_selected['name'] = '';
+                    bbb_configured_selected['ip'] = '';
 
-        function switchBBB() {
-            console.log("id=" + bbb_configured_selected + "id2=" + bbb_unconfigured_selected);
+                    bbb_unconfigured_selected['name'] = '';
+                    bbb_unconfigured_selected['ip'] = '';
 
-            if (bbb_configured_selected != null && bbb_unconfigured_selected != null) {
-                $.post(
-                    '{\{ switch_bbb_url }\}',
-                    {
-                        c_bbb_ip: bbb_configured_selected, c_bbb_sector: active_sector_val,
-                        u_bbb_ip: bbb_unconfigured_selected, u_bbb_sector: active_sector_val
-                    }
-                ).done(function (data) {
-                    console.log(data);
-                    bbb_configured_selected = null;
-                    bbb_unconfigured_selected = null;
                     console.log('reset selection!');
                     updateBtnStatus();
                 });
@@ -348,8 +348,8 @@
                     clearChart(chart_c);
                     clearChart(chart_u);
 
-                    setChartData(chart_c, data['lbls'],data['c_vals']);
-                    setChartData(chart_u, data['lbls'],data['u_vals']);
+                    setChartData(chart_c, data['lbls'], data['c_vals']);
+                    setChartData(chart_u, data['lbls'], data['u_vals']);
 
                     chart_c.update();
                     chart_u.update();
@@ -362,8 +362,11 @@
             if (active_sector_val !== current_sector_val) {
                 active_sector_val = current_sector_val;
 
-                bbb_configured_selected = null;
-                bbb_unconfigured_selected = null;
+                bbb_configured_selected['name'] = '';
+                bbb_configured_selected['ip'] = '';
+
+                bbb_unconfigured_selected['name'] = '';
+                bbb_unconfigured_selected['ip'] = '';
 
                 btn_switch.disabled = true;
             }
@@ -400,33 +403,37 @@
 
         function selectRowConf(meRow) {
             // First column is the status one ...
-            //var status_row =  $(this).find('td:nth-child(1)');
-            //console.log(status_row);
-            const row_val = meRow.childNodes[0].innerText;
+            const name = meRow.childNodes[0].innerText;
+            const ip = meRow.childNodes[1].innerText;
 
-            if (row_val === bbb_configured_selected) {
-                bbb_configured_selected = null;
-                //status_row.innerHTML = 'X';
-                //row.className ="alert alert-warning"
+            if (name === bbb_configured_selected['name']) {
+
+                bbb_configured_selected['name'] = '';
+                bbb_configured_selected['ip'] = '';
+
             } else {
-                bbb_configured_selected = row_val;
-                //status_row.innerHTML = 'O';
-                //row.className =""
+
+                bbb_configured_selected['name'] = name;
+                bbb_configured_selected['ip'] = ip;
+
             }
-
             updateBtnStatus();
-
         }
 
         function selectRowUconf(meRow) {
-            console.log(meRow);
             // First column is the status one ...
-            const row_val = meRow.childNodes[0].innerText;
+            const name = meRow.childNodes[0].innerText;
+            const ip = meRow.childNodes[1].innerText;
 
-            if (row_val === bbb_unconfigured_selected) {
-                bbb_unconfigured_selected = null;
+            if (name === bbb_unconfigured_selected['name']) {
+
+                bbb_unconfigured_selected['name'] = '';
+                bbb_unconfigured_selected['ip'] = '';
+
             } else {
-                bbb_unconfigured_selected = row_val;
+
+                bbb_unconfigured_selected['name'] = name;
+                bbb_unconfigured_selected['ip'] = ip;
             }
             updateBtnStatus();
         }
