@@ -2,6 +2,7 @@ import fcntl
 import pickle
 import struct
 import socket
+import subprocess
 
 
 def checksum(data_str: str):
@@ -31,6 +32,47 @@ def get_ip_address(ifname: str):
         struct.pack('256s', ifname[:15])
     )[20:24])
 
+def changeIp(desiredIp: str = None, interface_name : str = 'eth0'):
+    """
+    @todo: now that i know the service i can do whatever i want !
+    Using connmanclt to change ip address
+    :param desiredIp:
+    :return:
+    """
+    if desiredIp:
+        service = getService(interface_name=interface_name)
+        if service:
+            # @todo make the magic happen
+            pass
+
+def getService( interface_name : str = 'eth0'):
+    """
+    Return the service name from an interface.
+    @fixme: services with spaces on their names won't be detected !
+    :return: The service name or None !
+    """
+    res = subprocess.check_output(['connmanctl services'], stderr=subprocess.STDOUT, shell=True).decode('utf-8')
+    res = res.split()
+    for s in res:
+        if s.startswith('ethernet_'):
+            res = subprocess.check_output(['connmanctl services --properties ' + s], stderr=subprocess.STDOUT,
+                                          shell=True).decode(
+                'utf-8')
+            print(res)
+            res = res.split('\n')
+            for p in res:
+                if p.strip().startswith('Ethernet'):
+                    print('Found it!' + p)
+                    data = p.split('[')[1].strip()[:-1].split(',')
+                    for d_info in data:
+                        d_info = d_info.strip()
+                        if d_info.startswith('Interface'):
+                            print(d_info)
+                            if d_info == 'Interface={}'.format(interface_name):
+                                print('The service related to {} is {}'.format(interface_name, s))
+                                return s
+                    print(data)
+    return None
 
 def verify_msg(data: str):
     """
