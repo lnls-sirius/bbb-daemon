@@ -137,7 +137,7 @@
             type: 'bar',
             data: {
                 datasets: [{
-                    label: 'Disconnected/Unconfigured Nodes',
+                    label: 'Disconnected/Not Configured Nodes',
                     borderWidth: 1,
                     backgroundColor: 'rgb(220, 20, 60)',
                     borderColor: 'rgb(255, 0, 0)'
@@ -166,12 +166,12 @@
         var btn_switch = document.getElementById("btn_switch_bbb");
 
         const bbb_configured_selected = {
-                    name: '',
-                    ip: ''
+            name: '',
+            ip: ''
         };
         const bbb_unconfigured_selected = {
-                    name: '',
-                    ip: ''
+            name: '',
+            ip: ''
         };
 
         var active_sector_val = null;
@@ -190,14 +190,8 @@
         /**
          Get a row from node !
          */
-        function getRow(node, conf) {
+        function getRow(node) {
             const tr = document.createElement('tr');
-            if (conf) {
-                tr.setAttribute('onclick', 'selectRowConf(this);');
-            } else {
-                tr.setAttribute('onclick', 'selectRowUconf(this);');
-            }
-
 
             const td_name = document.createElement('td');
             td_name.innerText = node['name'];
@@ -269,69 +263,66 @@
         }
 
         function rebootThis(me) {
-            console.log(me)
             var myIp = me.getAttribute("myIp");
             $.post(
                 '{{ reboot_bbb_url }}',
                 {bbb_ip: myIp, bbb_sector: active_sector_val}
             ).done(function (data) {
-                console.log(data);
+                console.log('Reboot' + data);
             });
         }
 
         function updateBtnStatus() {
 
             btn_switch.innerHTML =
-                "Switch <strong> <br>Configured:\t" +  bbb_configured_selected['name'] + "\t\tIP:" +  bbb_configured_selected['ip']
-                + "<br>Not Configured:\t" +  bbb_unconfigured_selected['name'] + "\t\tIP:" +  bbb_unconfigured_selected['ip']  + "</strong>";
+                "Switch <strong> <br>Configured:\t" + bbb_configured_selected['name'] + "\t\tIP:" + bbb_configured_selected['ip']
+                + "<br>Not Configured:\t" + bbb_unconfigured_selected['name'] + "\t\tIP:" + bbb_unconfigured_selected['ip'] + "</strong>";
 
-            btn_switch.disabled = (bbb_unconfigured_selected['name']=='' || bbb_configured_selected['name']=='');
+            btn_switch.disabled = (bbb_unconfigured_selected['name'] === '' || bbb_configured_selected['name'] === '');
         }
 
         function switch_bbb() {
-            if (bbb_configured_selected['name'] != '' && bbb_unconfigured_selected['name'] != '') {
+            if (bbb_configured_selected['name'] !== '' && bbb_unconfigured_selected['name'] !== '') {
                 const objToSend = {
-                    c_bbb:{
+                    c_bbb: {
                         name: bbb_configured_selected['name'],
-                        ip:bbb_configured_selected['ip'],
+                        ip: bbb_configured_selected['ip'],
                         sector: active_sector_val,
                     },
-                    u_bbb:{
+                    u_bbb: {
                         name: bbb_unconfigured_selected['name'],
-                        ip:bbb_unconfigured_selected['ip'],
+                        ip: bbb_unconfigured_selected['ip'],
                         sector: active_sector_val,
                     }
                 };
-                console.log(objToSend);
                 const json = JSON.stringify(objToSend);
-                console.log(json)
-                $.post(
-                    '{{ switch_bbb_url }}',
-                    objToSend
+                $.post('{{ switch_bbb_url }}',
+                    {
+                        data: json
+                    }, null, 'json'
                 ).done(function (data) {
-                    console.log(data);
                     bbb_configured_selected['name'] = '';
                     bbb_configured_selected['ip'] = '';
 
                     bbb_unconfigured_selected['name'] = '';
                     bbb_unconfigured_selected['ip'] = '';
 
-                    console.log('reset selection!');
+                    console.log('reset selection!' + data);
                     updateBtnStatus();
                 });
             }
         }
 
-        function clearChart(chart){
-            if(chart){
-               chart.data.datasets.forEach((dataset) => {
-                            dataset.data = [];
-               });
+        function clearChart(chart) {
+            if (chart) {
+                chart.data.datasets.forEach((dataset) => {
+                    dataset.data = [];
+                });
             }
         }
 
-        function setChartData(chart,lbls ,data){
-            if(chart){
+        function setChartData(chart, lbls, data) {
+            if (chart) {
                 chart.data.labels = lbls;
                 chart.data.datasets.forEach((dataset) => {
                     dataset.data = data;
@@ -377,6 +368,7 @@
                 .done(function (data, success) {
                     if (success) {
 
+                        let i;
                         const confTBody = document.getElementById('confTBody');
                         const uconfTBody = document.getElementById('uconfTBody');
 
@@ -387,16 +379,17 @@
                         removeChild(uconfTBody);
 
 
-                        for (var i = 0; i < cNodes.length; i++) {
-                            const tr = getRow(cNodes[i], true);
+                        for (i = 0; i < cNodes.length; i++) {
+                            const tr = getRow(cNodes[i]);
+                            tr.setAttribute('onclick', 'selectRowConf(this);');
                             confTBody.appendChild(tr);
                         }
 
-                        for (var i = 0; i < uNodes.length; i++) {
-                            const tr = getRow(uNodes[i], false);
+                        for (i = 0; i < uNodes.length; i++) {
+                            const tr = getRow(uNodes[i]);
+                            tr.setAttribute('onclick', 'selectRowUconf(this);');
                             uconfTBody.appendChild(tr);
                         }
-
                     }
                 });
         }

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, flash, redirect, url_for, request, jsonify
+from flask import Flask, render_template, flash, redirect, url_for, request, jsonify, json
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
 from flask_nav.elements import Navbar, View
@@ -79,11 +79,7 @@ def refresh_active_nodes():
         c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
         u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
 
-    #for i in range(10):
-    #    c_nodes.append(Node(typeNode=Type(), state=NodeState.CONNECTED))
-    #    u_nodes.append(Node(name=str(i), typeNode=Type()))
-
-    return jsonify(configured_nodes=nodes_schema.dump(c_nodes), unconfigured_nodes=nodes_schema.dump(u_nodes))
+    return jsonify(configured_nodes=nodes_schema.dump(c_nodes).data, unconfigured_nodes=nodes_schema.dump(u_nodes).data)
 
 
 @app.route('/reboot_bbb/', methods=['POST'])
@@ -91,7 +87,6 @@ def reboot_bbb():
     bbb_ip = request.form.get('bbb_ip', '')
     bbb_sector = request.form.get('bbb_sector', '')
 
-    print('id={} sector={}'.format(bbb_ip, bbb_sector))
     if bbb_ip != '' and bbb_sector != '':
         node = MonitorController.monitor_controller.getConfiguredNode(bbb_ip, bbb_sector)
         if node:
@@ -103,19 +98,22 @@ def reboot_bbb():
 
 @app.route('/switch_bbb/', methods=['POST'])
 def switch_bbb():
-    c_bbb = request.form.get('c_bbb', '')
-    u_bbb = request.form.get('u_bbb', '')
-    '''
+    # @todo: Implement this in a way that is more robust !
+    a = request.form.get('data', '')
+    if a == '':
+        return 'Not OK'
+    a = json.loads(a)
 
-    if c_bbb_ip != '' and c_bbb_sector != '' and u_bbb_ip != '' and u_bbb_sector != '':
+    c_bbb = a['c_bbb']
+    u_bbb = a['u_bbb']
 
-        c_node = MonitorController.monitor_controller.getConfiguredNode(c_bbb_ip, c_bbb_sector)
-        # u_node = MonitorController.monitor_controller.getConfiguredNode(u_bbb_ip, u_bbb_sector)
+    c_node = MonitorController.monitor_controller.getConfiguredNode(c_bbb['ip'], c_bbb['sector'])
+    # u_node = MonitorController.monitor_controller.getConfiguredNode(u_bbb_ip, u_bbb_sector)
 
-        if c_node and u_bbb_ip:
-            MonitorController.monitor_controller.updateNode(oldNodeAddr=u_bbb_ip, newNode=c_node)
-            return 'Node Switched'
-    '''
+    if c_node and u_bbb['ip'] != '':
+        MonitorController.monitor_controller.updateNode(oldNodeAddr=u_bbb['ip'], newNode=c_node)
+        return 'Node Switched'
+
     return 'Not OK'
 
 
@@ -295,4 +293,3 @@ def get_wsgi_app():
 
 def start_webserver(port: int = 5000):
     app.run(debug=False, use_reloader=False, port=port, host="0.0.0.0")
-
