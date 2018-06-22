@@ -10,6 +10,10 @@
     BBB Daemon
 {% endblock %}
 
+{% block styles %}
+    <!-- Bootstrap -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+{% endblock %}
 
 {% block content %}
     {{ super() }}
@@ -33,13 +37,9 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"
-            integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n"
-            crossorigin="anonymous"></script>
-    {{ super() }}
+    <script src="/static/js/jquery.js" charset="utf-8"></script>
+    <script src="/static/js/bootstrap.min.js" charset="utf-8"></script>
     <script src="/static/js/Chart.min.js" charset="utf-8"></script>
-
-
 {% endblock %}
 
 

@@ -11,13 +11,16 @@
 
 
     <div class="container">
-        <div style="float:left;">
-            <canvas class="col-4" id="cChart" width="550" height="400"></canvas>
-        </div>
-        <div style="float:right;">
-            <canvas class="col-4" id="uChart" width="550" height="400"></canvas>
-        </div>
+         <ul class="list-inline ">
+            <li>
+                <canvas class="col-4" id="cChart" width="550" height="400"></canvas>
+            </li>
+            <li>
+                <canvas class="col-4" id="uChart" width="550" height="400"></canvas>
+            </li>
+        </ul>
         <br>
+
 
 
         <div><strong><h3>Current Sector</h3></strong><br></div>
@@ -31,45 +34,46 @@
             </div>
         </div>
         <br>
-
-        <table class="table table-hover">
-            <h3>Configured</h3>
-            <thead class="thead-dark">
-            <tr class="alert-info">
-                <th scope="col">Name</th>
-                <th scope="col">IP Address</th>
-                <th scope="col">Type Name</th>
-                <th scope="col">Type Repo URL</th>
-                <th scope="col">rc.local Path</th>
-                <th scope="col">Sector</th>
-                <th scope="col">PV Prefix</th>
-                <th scope="col">State</th>
-                <td scope="col"></td>
-            </tr>
-            </thead>
-            <tbody id='confTBody'>
-            </tbody>
-        </table>
-
-        <table class="table table-hover">
-            <h3>Not Configured</h3>
-            <thead class="thead-dark">
-            <tr class="alert-danger">
-                <th scope="col">Name</th>
-                <th scope="col">IP Address</th>
-                <th scope="col">Type Name</th>
-                <th scope="col">Type Repo URL</th>
-                <th scope="col">rc.local Path</th>
-                <th scope="col">Sector</th>
-                <th scope="col">PV Prefix</th>
-                <th scope="col">State</th>
-                <th scope="col"></th>
-            </tr>
-            </thead>
-            <tbody id='uconfTBody'>
-            </tbody>
-        </table>
-        <br>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <h3>Configured</h3>
+                <thead class="thead-dark">
+                <tr class="alert-info">
+                    <th scope="col">Name</th>
+                    <th scope="col">IP Address</th>
+                    <th scope="col">Type Name</th>
+                    <th scope="col">Type Repo URL</th>
+                    <th scope="col">rc.local Path</th>
+                    <th scope="col">Sector</th>
+                    <th scope="col">PV Prefix</th>
+                    <th scope="col">State</th>
+                    <td scope="col"></td>
+                </tr>
+                </thead>
+                <tbody id='confTBody'>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <h3>Not Configured</h3>
+                <thead class="thead-dark">
+                <tr class="alert-danger">
+                    <th scope="col">Name</th>
+                    <th scope="col">IP Address</th>
+                    <th scope="col">Type Name</th>
+                    <th scope="col">Type Repo URL</th>
+                    <th scope="col">rc.local Path</th>
+                    <th scope="col">Sector</th>
+                    <th scope="col">PV Prefix</th>
+                    <th scope="col">State</th>
+                    <th scope="col"></th>
+                </tr>
+                </thead>
+                <tbody id='uconfTBody'>
+                </tbody>
+            </table>
+        </div>            <br>
         <button id="btn_switch_bbb" onclick="switch_bbb()" type="button" class="btn btn-success btn-block " disabled>
             Switch Selected BBBs
         </button>
@@ -190,7 +194,7 @@
         /**
          Get a row from node !
          */
-        function getRow(node) {
+        function getRow(node, configured) {
             const tr = document.createElement('tr');
 
             const td_name = document.createElement('td');
@@ -220,6 +224,7 @@
             const td_reboot = document.createElement('td');
             const btn_reboot = document.createElement('button');
             btn_reboot.setAttribute('type', 'button');
+            btn_reboot.setAttribute('configured', configured);
             btn_reboot.setAttribute('onclick', 'rebootThis(this);');
             btn_reboot.setAttribute('myName', node['name']);
             btn_reboot.setAttribute('myIp', node['ipAddress']);
@@ -230,18 +235,22 @@
                 case 0: // Disconnected
                     td_state.innerText = 'Disconnected';
                     btn_reboot.setAttribute('disabled', '');
+                    tr.setAttribute('class', 'bg-danger');
                     break;
                 case 1: // Misconfigured
                     td_state.innerText = 'Misconfigured';
                     btn_reboot.removeAttribute('disabled');
+                    tr.setAttribute('class', 'bg-danger');
                     break;
                 case 2: // Connected
                     td_state.innerText = 'Connected';
                     btn_reboot.removeAttribute('disabled');
+                    tr.setAttribute('class', ' bg-success');
                     break;
                 case 3: // Rebooting
                     td_state.innerText = 'Rebooting';
                     btn_reboot.setAttribute('disabled', '');
+                    tr.setAttribute('class', 'bg-warning');
                     break;
                 default:
 
@@ -263,10 +272,13 @@
         }
 
         function rebootThis(me) {
-            var myIp = me.getAttribute("myIp");
-            $.post(
-                '{{ reboot_bbb_url }}',
-                {bbb_ip: myIp, bbb_sector: active_sector_val}
+            const myIp = me.getAttribute("myIp");
+            const configured = me.getAttribute("configured");
+            $.post('/bbb/',{
+                    action:'reboot',
+                    ip: myIp,
+                    sector: active_sector_val,
+                    configured: configured}
             ).done(function (data) {
                 console.log('Reboot' + data);
             });
@@ -296,8 +308,9 @@
                     }
                 };
                 const json = JSON.stringify(objToSend);
-                $.post('{{ switch_bbb_url }}',
+                $.post('/bbb/',
                     {
+                        action:'switch',
                         data: json
                     }, null, 'json'
                 ).done(function (data) {
@@ -332,7 +345,7 @@
 
         function refresh_chart() {
             $.post(
-                '{{ refresh_chart_url }}'
+                '/node/',{action: 's_c_u'}
             ).done(function (data, success) {
                 if (success) {
 
@@ -362,9 +375,10 @@
                 btn_switch.disabled = true;
             }
 
-            $.post('{{ refresh_url }}',
-                {'sector': current_sector_val})
-
+            $.post('/node/',{
+                    action:'conf_uconf',
+                    sector: current_sector_val
+                })
                 .done(function (data, success) {
                     if (success) {
 
@@ -380,13 +394,13 @@
 
 
                         for (i = 0; i < cNodes.length; i++) {
-                            const tr = getRow(cNodes[i]);
+                            const tr = getRow(cNodes[i], true);
                             tr.setAttribute('onclick', 'selectRowConf(this);');
                             confTBody.appendChild(tr);
                         }
 
                         for (i = 0; i < uNodes.length; i++) {
-                            const tr = getRow(uNodes[i]);
+                            const tr = getRow(uNodes[i], false);
                             tr.setAttribute('onclick', 'selectRowUconf(this);');
                             uconfTBody.appendChild(tr);
                         }
