@@ -175,7 +175,25 @@ class MonitorController():
 
         return None
 
-    def rebootNode(self, registeredNode):
+    def getUnconfiguredNode(self, nodeIp, nodeSector):
+        try:
+            nodeSector = int(nodeSector)
+        except:
+            pass
+
+        if nodeIp is None or nodeSector is None:
+            return None
+
+        for node_uconf in (self.nodes.get(nodeSector, [])).get("unconfigured", []):
+            print('Node conf={}'.format(node_uconf))
+            if node_uconf.ipAddress == nodeIp:
+                return node_uconf
+
+        return None
+
+
+    def rebootNode(self, registeredNode: Node = None, configured=True):
+
         if registeredNode == None:
             pass
         else:
@@ -186,8 +204,12 @@ class MonitorController():
             self.updateNodesLockList[sector].acquire()
 
             try:
-                index = self.nodes[sector]["configured"].index(registeredNode)
-                self.nodes[sector]["configured"][index].changeState(NodeState.REBOOTING)
+                if configured:
+                    index = self.nodes[sector]["configured"].index(registeredNode)
+                    self.nodes[sector]["configured"][index].changeState(NodeState.REBOOTING)
+                else:
+                    index = self.nodes[sector]["unconfigured"].index(registeredNode)
+                    self.nodes[sector]["unconfigured"][index].changeState(NodeState.REBOOTING)
             except:
                 pass
 

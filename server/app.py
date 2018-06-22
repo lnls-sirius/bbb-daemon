@@ -2,23 +2,23 @@ from flask import Flask, render_template, flash, redirect, url_for, request, jso
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
 from flask_nav.elements import Navbar, View
+from flask_restful import Api
 
 from common.entity.entities import Sector, Type, Node, NodeState
 from common.serialization.models import NodeSchema, TypeSchema
 from control.controller import MonitorController
 from forms import EditNodeForm, EditTypeForm
+from restful.resources import RestNode, RestBBB
 
 app = Flask(__name__)
 app.secret_key = "4dbae3052d7e8b16ebcfe8752f70a4efe68d2ae0558b4a1b25c5fd902284e52e"
 
 Bootstrap(app)
 nav = Nav(app)
+api = Api(app)
 
-node_schema = NodeSchema()
-nodes_schema = NodeSchema(many=True)
-
-type_schema = TypeSchema()
-types_schema = TypeSchema(many=True)
+api.add_resource(RestNode, '/node/')
+api.add_resource(RestBBB, '/bbb/')
 
 
 @nav.navigation()
@@ -35,86 +35,7 @@ def my_navbar():
 @app.route("/home/", methods=['GET', 'POST'])
 def home():
     sectors_list = Sector.SECTORS
-    refresh_url = url_for('refresh_active_nodes')
-    reboot_bbb_url = url_for('reboot_bbb')
-    switch_bbb_url = url_for('switch_bbb')
-    refresh_chart_url = url_for('refresh_chart_url')
-
-    return render_template('index.html', refresh_url=refresh_url, switch_bbb_url=switch_bbb_url,
-                           reboot_bbb_url=reboot_bbb_url, sectors=sectors_list, refresh_chart_url=refresh_chart_url)
-
-
-@app.route('/refresh_chart_url/', methods=['POST'])
-def refresh_chart_url():
-    """
-        Json. Gets the Connected nodes in a list and misconfigured/disconnected ones on another.
-    :return: (list with all the sectors), (all connected nodes), (all disconnected/misconfigured nodes)
-    """
-    sectors_lbls = Sector.SECTORS
-    c_vals = []
-    u_vals = []
-
-    for sector in Sector.SECTORS:
-        c = 0
-        u = len(MonitorController.monitor_controller.nodes[sector]['unconfigured'])
-
-        for node in MonitorController.monitor_controller.nodes[sector]['configured']:
-            if node.state == NodeState.CONNECTED:
-                c = c + 1
-            else:
-                u = u + 1
-        c_vals.append(c)
-        u_vals.append(u)
-
-    return jsonify(lbls=sectors_lbls, c_vals=c_vals, u_vals=u_vals)
-
-
-@app.route('/refresh_active_nodes/', methods=['POST', 'GET'])
-def refresh_active_nodes():
-    u_nodes = []
-    c_nodes = []
-
-    if request.method == 'POST':
-        sector = request.form.get('sector', 'Conectividade')
-        c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
-        u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
-
-    return jsonify(configured_nodes=nodes_schema.dump(c_nodes).data, unconfigured_nodes=nodes_schema.dump(u_nodes).data)
-
-
-@app.route('/reboot_bbb/', methods=['POST'])
-def reboot_bbb():
-    bbb_ip = request.form.get('bbb_ip', '')
-    bbb_sector = request.form.get('bbb_sector', '')
-
-    if bbb_ip != '' and bbb_sector != '':
-        node = MonitorController.monitor_controller.getConfiguredNode(bbb_ip, bbb_sector)
-        if node:
-            MonitorController.monitor_controller.rebootNode(node)
-            return 'Node Rebooted'
-
-    return 'Not OK'
-
-
-@app.route('/switch_bbb/', methods=['POST'])
-def switch_bbb():
-    # @todo: Implement this in a way that is more robust !
-    a = request.form.get('data', '')
-    if a == '':
-        return 'Not OK'
-    a = json.loads(a)
-
-    c_bbb = a['c_bbb']
-    u_bbb = a['u_bbb']
-
-    c_node = MonitorController.monitor_controller.getConfiguredNode(c_bbb['ip'], c_bbb['sector'])
-    # u_node = MonitorController.monitor_controller.getConfiguredNode(u_bbb_ip, u_bbb_sector)
-
-    if c_node and u_bbb['ip'] != '':
-        MonitorController.monitor_controller.updateNode(oldNodeAddr=u_bbb['ip'], newNode=c_node)
-        return 'Node Switched'
-
-    return 'Not OK'
+    return render_template('index.html', sectors=sectors_list)
 
 
 @app.route('/list_nodes/', methods=['POST'])
@@ -278,13 +199,6 @@ def edit_types(type=None):
             return 'Invalid Command'
 
     return render_template("type/edit_type.html", type=type, form=edit_types_form, url=url_for('edit_types'))
-
-
-'''
-def set_controller(c: MonitorController = None):
-    global MonitorController.monitor_controller
-    MonitorController.monitor_controller = c
-'''
 
 
 def get_wsgi_app():

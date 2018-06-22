@@ -51,6 +51,8 @@ class DaemonHostListener():
                 NetUtils.sendObject(commandSocket, node.name)
                 NetUtils.sendObject(commandSocket, node.ipAddress)
 
+                # pv prefixes ...
+
             commandSocket.close()
             return True
         except socket.error:
