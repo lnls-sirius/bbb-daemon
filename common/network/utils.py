@@ -37,7 +37,7 @@ def get_ip_address(ifname: str):
     )[20:24])
 
 
-def changeIp(desired_ip: str = None, interface_name: str = 'eth0', net_mask: str = '255.255.255.255',
+def changeIp(desired_ip: str = None, interface_name: str = 'eth0', net_mask: str = '255.255.255.0',
              gateway: str = None):
     """
     @todo: now that i know the service i can do whatever i want !
@@ -70,7 +70,7 @@ def changeIp(desired_ip: str = None, interface_name: str = 'eth0', net_mask: str
             gateway = gateway[:-1]
 
     res = subprocess.check_output(
-        ['connmanctl config {} --ipv4 manual {} {} {}'.format(service, desired_ip, net_mask, gateway)])
+        ['connmanctl config {} ipv4 manual {} {} {}'.format(service, desired_ip, net_mask, gateway)], shell=True)
     return True, 'Successfully modified the ipv4 address. {}'.format(res)
 
 
