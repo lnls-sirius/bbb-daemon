@@ -4,11 +4,13 @@ import ftputil
 import os
 
 
-
 class MySession(ftplib.FTP):
 
     def __init__(self, host, userid, password, port):
-        """Act like ftplib.FTP's constructor but connect to another port."""
+        """
+        Act like ftplib.
+        FTP's constructor but connect to another port.
+        """
         ftplib.FTP.__init__(self)
         self.connect(host, port)
         self.login(userid, password)
@@ -20,6 +22,10 @@ def download_from_ftp(sftp_server_addr: str = '0.0.0.0', sftp_port: int = 22, pa
     print('\n\ndownload_from_ftp\n\npath={}\tdestination={}'.format(path, destination))
     with ftputil.FTPHost(sftp_server_addr, 'anonymous', 'anonymous', port=sftp_port,
                          session_factory=MySession) as host:
+
+        if not os.path.exists(destination):
+            os.mkdir(destination)
+
         host.chdir(path)
         names = host.listdir(host.curdir)
         for name in names:
@@ -34,7 +40,7 @@ def download_from_ftp(sftp_server_addr: str = '0.0.0.0', sftp_port: int = 22, pa
 
 
 def download_dir(host=None, path=None, destination=None):
-    if not os.path.isdir(destination):
+    if not os.path.exists(destination):
         os.mkdir(destination)
     host.chdir(path)
     names = host.listdir(host.curdir)

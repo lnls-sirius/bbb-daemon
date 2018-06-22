@@ -2,10 +2,11 @@ import os
 import time
 import shutil
 from configparser import ConfigParser
-from common.entity.entities import Command
+from common.entity.entities import Command, Type, Node
 from common.network.utils import get_ip_address
 from sftp import download_from_ftp, download_dir
-from  common.network.utils import changeIp
+from common.network.utils import changeIp
+
 
 class BBB():
 
@@ -29,6 +30,7 @@ class BBB():
         self.readParameters()
 
     def getInfo(self):
+
         self.myIp = get_ip_address(self.interfaceName)
         info = "{}|{}|{}|{}|{}" \
             .format(Command.PING, self.name, self.type, self.myIp, self.typeSha)
@@ -96,7 +98,6 @@ class BBB():
             self.desiredIp = desiredNodeIp
             res, msg = changeIp(interface_name=self.interfaceName, desired_ip=self.desiredIp)
             print(msg)
-
 
         if newName is not None:
             self.name = newName

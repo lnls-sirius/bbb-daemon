@@ -46,11 +46,12 @@ class Daemon():
 
     def ping_udp(self):
         """
-                Command.PING,
-                self.bbb.name,
-                self.bbb.type,
-                self.myIp
-
+        Sends the current parameters set on the bbb to the server so it can monitor if it's configured or not.
+        Command.PING,
+        self.bbb.name,
+            self.bbb.type,
+            self.myIp,
+            @todo: rc.config,  pv.prefix
             Under development ...
         :return:
         """
