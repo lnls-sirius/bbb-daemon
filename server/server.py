@@ -25,7 +25,7 @@ def init_conf():
 
     COM_INTERFACE_TCP = 6789
 
-    WORKERS_NUM = 10
+    WORKERS_NUM = 2
 
     FTP_SERVER_PORT = 1026
     FTP_HOME_DIR = '/root/bbb-daemon/types_repository/'

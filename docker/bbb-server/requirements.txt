@@ -1,11 +1,12 @@
 waitress==1.1.0
 marshmallow==2.15.3
-Flask
-Flask-Nav
-Flask-WTF
-flask-bootstrap
-flask-restful
+Flask==1.0.2
+Flask-Bootstrap==3.3.7.1
+flask-nav==0.6
+Flask-RESTful==0.3.6
+Flask-WTF==0.14.2
 pyftpdlib==1.5.4
+ftputil==3.4
 gitdb2==2.0.3
 GitPython==2.1.9
 redis==2.10.6

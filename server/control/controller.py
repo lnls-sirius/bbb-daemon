@@ -247,7 +247,7 @@ class MonitorController():
 
                 if node.name == name and node.type.name == hostType and node.type.sha == bbbSha:
                     node.changeState(NodeState.CONNECTED)
-                    print('connected {}'.format(node))
+                    #print('connected {}'.format(node))
                     isHostConnected = True
                 else:
                     node.changeState(NodeState.MISCONFIGURED)
