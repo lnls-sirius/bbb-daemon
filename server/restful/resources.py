@@ -179,7 +179,6 @@ class RestNode(Resource):
             c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
             u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
             
-        print("{}".format(nodes_schema.dump(c_nodes).data))
         return jsonify(configured_nodes=nodes_schema.dump(c_nodes).data,
                        unconfigured_nodes=nodes_schema.dump(u_nodes).data)
 
