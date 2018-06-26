@@ -150,7 +150,7 @@ class RestNode(Resource):
     def get_node_by_name(n_name: str = None):
         node = MonitorController.monitor_controller.getNode(node_name=n_name)
         if node:
-            return jsonify(node=node_schema.dump(node))
+            return jsonify(node=node_schema.dump(node).data)
         else:
             return {}
 
@@ -158,7 +158,7 @@ class RestNode(Resource):
     def get_node_by_ip(ip: str = None):
         node = MonitorController.monitor_controller.getNodeByAddr(ipAddress=ip)
         if node:
-            return jsonify(node=node_schema.dump(node))
+            return jsonify(node=node_schema.dump(node).data)
         else:
             return {}
 
@@ -179,9 +179,9 @@ class RestNode(Resource):
             c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
             u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
             
-        print("{}".format(nodes_schema.dump(c_nodes)))
-        return jsonify(configured_nodes=nodes_schema.dump(c_nodes),
-                       unconfigured_nodes=nodes_schema.dump(u_nodes))
+        print("{}".format(nodes_schema.dump(c_nodes).data))
+        return jsonify(configured_nodes=nodes_schema.dump(c_nodes).data,
+                       unconfigured_nodes=nodes_schema.dump(u_nodes).data)
 
     @staticmethod
     def get_sectors_connected_faulty():
@@ -217,7 +217,7 @@ class RestNode(Resource):
             return {}
 
         c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
-        return jsonify(configured_nodes=nodes_schema.dump(c_nodes))
+        return jsonify(configured_nodes=nodes_schema.dump(c_nodes).data)
 
     @staticmethod
     def get_uconf_from_sector(sector: str = None):
@@ -229,7 +229,7 @@ class RestNode(Resource):
             return {}
 
         u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
-        return jsonify(unconfigured_nodes=nodes_schema.dump(u_nodes))
+        return jsonify(unconfigured_nodes=nodes_schema.dump(u_nodes).data)
 
     @staticmethod
     def get_nodes_sector(sector=None):
@@ -242,7 +242,7 @@ class RestNode(Resource):
         if not sector:
             return {}
         nodes = MonitorController.monitor_controller.fetchNodesFromSector(sector=sector)
-        return jsonify(nodes=nodes_schema.dump(nodes))
+        return jsonify(nodes=nodes_schema.dump(nodes).data)
 
 
 class RestType(Resource):
