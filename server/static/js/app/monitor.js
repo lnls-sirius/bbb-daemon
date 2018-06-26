@@ -120,7 +120,11 @@
     };
 
     function AppStates(){
+        // Seach the Dom
         this.sectorSelect = document.getElementById('current_sector');
+        this.confTBody = document.getElementById('confTBody');
+        this.uconfTBody = document.getElementById('uconfTBody');
+    
 
         this.getActiveSector = function(){
             return this.sectorSelect.value;
@@ -158,6 +162,7 @@
     const chartC = new NodeChart('cChart', 'Configured Nodes','rgb(144, 238, 144)','rgb(50, 205, 50)');
     const chartU = new NodeChart('uChart', 'Not Configured Nodes','rgb( 238, 144, 144)','rgb(205,50, 50)');
 
+    
     const btnSwitch = new BtnSwitch();
     // @todo: move to appStates obj !
     const bbb_configured_selected = {
@@ -311,34 +316,37 @@
         }
 
         $.post('/node/',{
-                action:'conf_uconf',
-                sector: current_sector_val
+                'action':'conf_uconf',
+                'sector': current_sector_val
             })
             .done(function (data, success) {
                 if (success) {
                     try{
-                        
+                        console.log(data);
+
                         let i;
-                        const confTBody = document.getElementById('confTBody');
-                        const uconfTBody = document.getElementById('uconfTBody');
 
                         const cNodes = data['configured_nodes'];
                         const uNodes = data['unconfigured_nodes'];
-
-                        removeChild(confTBody);
-                        removeChild(uconfTBody);
+                        
+                        removeChild(appStates.confTBody);
+                        removeChild(appStates.uconfTBody);
 
 
                         for (i = 0; i < cNodes.length; i++) {
-                            const tr = getRow(cNodes[i], true);
-                            tr.addEventListener('click', selectRowConf);
-                            confTBody.appendChild(tr);
+                            if(cNodes[i]){
+                                const tr = getRow(cNodes[i], true);
+                                tr.addEventListener('click', selectRowConf);
+                                appStates.confTBody.appendChild(tr);
+                            }
                         }
 
                         for (i = 0; i < uNodes.length; i++) {
-                            const tr = getRow(uNodes[i], false);
-                            tr.addEventListener('click', selectRowUconf);
-                            uconfTBody.appendChild(tr);
+                            if(uNodes[i]){
+                                const tr = getRow(uNodes[i], false);
+                                tr.addEventListener('click', selectRowUconf);
+                                appStates.uconfTBody.appendChild(tr);
+                            }
                         }
                     }catch(err){
                         console.log(err.message);
