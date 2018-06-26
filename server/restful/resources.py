@@ -178,7 +178,8 @@ class RestNode(Resource):
         if request.method == 'POST':
             c_nodes = MonitorController.monitor_controller.nodes[sector]["configured"]
             u_nodes = MonitorController.monitor_controller.nodes[sector]["unconfigured"]
-
+            
+        print("{}".format(nodes_schema.dump(c_nodes)))
         return jsonify(configured_nodes=nodes_schema.dump(c_nodes),
                        unconfigured_nodes=nodes_schema.dump(u_nodes))
 
