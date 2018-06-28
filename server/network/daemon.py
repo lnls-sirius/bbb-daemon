@@ -44,15 +44,8 @@ class DaemonHostListener():
 
             if command == Command.SWITCH:
                 node = kargs["node"]
-                NetUtils.sendObject(commandSocket, node.type.name)
-                NetUtils.sendObject(commandSocket, node.type.repoUrl)
-                NetUtils.sendObject(commandSocket, node.rcLocalPath)
-                NetUtils.sendObject(commandSocket, node.type.sha)
-                NetUtils.sendObject(commandSocket, node.name)
-                NetUtils.sendObject(commandSocket, node.ipAddress)
-
+                NetUtils.sendObject(commandSocket, node)
                 # pv prefixes ...
-
             commandSocket.close()
             return True
         except socket.error:

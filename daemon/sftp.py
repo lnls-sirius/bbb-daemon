@@ -17,7 +17,6 @@ class MySession(ftplib.FTP):
 
 
 # Download some files from the login directory.
-
 def download_from_ftp(sftp_server_addr: str = '0.0.0.0', sftp_port: int = 22, path=None, destination=None):
     print('\n\ndownload_from_ftp\n\npath={}\tdestination={}'.format(path, destination))
     with ftputil.FTPHost(sftp_server_addr, 'anonymous', 'anonymous', port=sftp_port,

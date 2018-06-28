@@ -80,6 +80,64 @@ class NodeState():
         return "Unknown state"
 
 
+class Type(BaseRedisEntity):
+    """ This class provides a wrapper for host types. """
+    key_prefix = 'type_'
+    key_prefix_len = len(key_prefix)
+
+    def __init__(self, name="generic", repoUrl="A generic URL.", color=(255, 255, 255),
+                 description="A generic host.", sha: str = ""):
+        self.name = name
+        self.color = color
+        self.repoUrl = repoUrl
+        self.description = description
+        self.sha = sha
+
+    @staticmethod
+    def get_name_from_key(key: str):
+        if len(key) <= Type.key_prefix_len:
+            return ''
+        return key[Type.key_prefix_len:]
+
+    def toSet(self):
+        key = self.get_key()
+        content = str({k: vars(self)[k] for k in ("description", "color", "repoUrl", "sha")})
+        return key, content
+
+    def get_key(self):
+        return Type.key_prefix + self.name
+
+    def fromSet(self, str_dic):
+        """
+            Load the values from a redis set.
+        :param str_dic:
+        :return:
+        """
+        if str_dic is None:
+            return
+
+        dic_obj = str_dic.decode('utf-8')
+        if type(dic_obj) is str:
+            dic_obj = ast.literal_eval(dic_obj)
+
+        if type(dic_obj) is dict:
+            self.color = dic_obj.get('color', '')
+            self.repoUrl = dic_obj.get('repoUrl', '')
+            self.description = dic_obj.get("description", '')
+            self.sha = dic_obj.get("sha", '')
+
+    def __eq__(self, other):
+        if other is None:
+            return False
+
+        if type(other) == str:
+            return self.name == other
+
+        return self.name == other.name
+
+    def __str__(self):
+        return str(self.__dict__)
+
 class Node(BaseRedisEntity):
     """
         This class represents a Controls group's host.
@@ -88,7 +146,8 @@ class Node(BaseRedisEntity):
     key_prefix = 'node_'
     key_prefix_len = len(key_prefix)
 
-    def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, typeNode=None, sector=1, counter=0,
+    def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, typeNode: Type = None, sector=1,
+                 counter=0,
                  pvPrefix=[], rcLocalPath=''):
 
         self.name = name
@@ -196,61 +255,3 @@ class Node(BaseRedisEntity):
         return "Name: %s, IP Address: %s, Current state: %s" % (
             self.name, self.ipAddress, NodeState.toString(self.state))
 
-
-class Type(BaseRedisEntity):
-    """ This class provides a wrapper for host types. """
-    key_prefix = 'type_'
-    key_prefix_len = len(key_prefix)
-
-    def __init__(self, name="generic", repoUrl="A generic URL.", color=(255, 255, 255),
-                 description="A generic host.", sha: str = ""):
-        self.name = name
-        self.color = color
-        self.repoUrl = repoUrl
-        self.description = description
-        self.sha = sha
-
-    @staticmethod
-    def get_name_from_key(key: str):
-        if len(key) <= Type.key_prefix_len:
-            return ''
-        return key[Type.key_prefix_len:]
-
-    def toSet(self):
-        key = self.get_key()
-        content = str({k: vars(self)[k] for k in ("description", "color", "repoUrl", "sha")})
-        return key, content
-
-    def get_key(self):
-        return Type.key_prefix + self.name
-
-    def fromSet(self, str_dic):
-        """
-            Load the values from a redis set.
-        :param str_dic:
-        :return:
-        """
-        if str_dic is None:
-            return
-
-        dic_obj = str_dic.decode('utf-8')
-        if type(dic_obj) is str:
-            dic_obj = ast.literal_eval(dic_obj)
-
-        if type(dic_obj) is dict:
-            self.color = dic_obj.get('color', '')
-            self.repoUrl = dic_obj.get('repoUrl', '')
-            self.description = dic_obj.get("description", '')
-            self.sha = dic_obj.get("sha", '')
-
-    def __eq__(self, other):
-        if other is None:
-            return False
-
-        if type(other) == str:
-            return self.name == other
-
-        return self.name == other.name
-
-    def __str__(self):
-        return str(self.__dict__)

@@ -1,6 +1,5 @@
 import os
 import socket
-import sys
 import threading
 import time
 
@@ -9,7 +8,7 @@ from common.entity.entities import Command
 from common.network.utils import NetUtils, checksum
 
 ##################################################################
-CONFIG_PATH = "/root/bbb-daemon/bbb.cfg"
+CONFIG_PATH = "/root/bbb-daemon/bbb.bin"
 TYPE_RC_LOCAL_PATH = "init/rc.local"
 RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
 FTP_SERVER_PORT = 1026
@@ -20,7 +19,6 @@ servAddr = "10.0.6.44"
 pingPort = 9876
 bindPort = 9877
 
-
 ##################################################################
 # CLONE_PATH = "../"  # remember to place the forward slash !
 
@@ -30,8 +28,8 @@ class Daemon():
     def __init__(self, serverAddress: str, pingPort: int, bindPort: int, ftpDestinationFolder: str):
         self.ftpDestinationFolder = ftpDestinationFolder
 
-        self.bbb = BBB(path=CONFIG_PATH, rcLocalDestPath=RC_LOCAL_DESTINATION_PATH, sftp_port=FTP_SERVER_PORT,
-                       sfp_server_addr=servAddr, ftpDestinationFolder=self.ftpDestinationFolder)
+        self.bbb = BBB(path=CONFIG_PATH, rc_local_dest_path=RC_LOCAL_DESTINATION_PATH, sftp_port=FTP_SERVER_PORT,
+                       sfp_server_addr=servAddr, ftp_destination_folder=self.ftpDestinationFolder)
         self.serverAddress = serverAddress
         self.pingPort = pingPort
         self.bindPort = bindPort
@@ -89,18 +87,8 @@ class Daemon():
             if command == Command.SWITCH:
                 print("Command SWITCH")
                 # Don't change this order !
-                typeName = NetUtils.recvObject(connection)
-                typeRepoUrl = NetUtils.recvObject(connection)
-                typeRcLocalPath = NetUtils.recvObject(connection)
-                typeSha = NetUtils.recvObject(connection)
-                nodeName = NetUtils.recvObject(connection)
-                desiredNodeIp = NetUtils.recvObject(connection)
-
-                print(typeName + " " + nodeName + " " + typeRepoUrl + " " + typeRcLocalPath + ' ' + desiredNodeIp)
-
-                self.bbb.update(newName=nodeName, newType=typeName, newTypeRepoUrl=typeRepoUrl,
-                                newTypeRcLocalPath=typeRcLocalPath, sha=typeSha, desiredNodeIp=desiredNodeIp)
-
+                node = NetUtils.recvObject(connection)
+                self.bbb.update(node)
                 print("bbb updated ! Rebooting now !")
                 self.pinging = False
                 self.bbb.reboot()
@@ -117,6 +105,7 @@ class Daemon():
 
 
 if __name__ == '__main__':
+    import sys
 
     print("arg[1]=servAddress\targ[2]=pingPort\targ[3]=bindPort\targ[4]=FTP_DESTINATION_FOLDER")
     if len(sys.argv) == 5:
