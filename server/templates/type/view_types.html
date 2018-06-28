@@ -3,19 +3,16 @@
 {% block scripts %}
     {{ super() }}
     <script>
-
-        function edit_type(obj, type_name) {
-            var type_name = obj.value
+        const typesTable = $('#types_table');
+        function edit_type(obj) {
+            const type_name = obj.value;
             console.log("Edit " + type_name);
             console.log("{{ edit_url }}" + "?type_name=" + type_name);
 
             window.location = "{{ edit_url }}" + "?type_name=" + type_name
         }
-
-        function delete_type(obj, type_name) {
-
-            var type_name = obj.value
-
+        function delete_type(obj) {
+            const type_name = obj.value;
             console.log("Delete !" + type_name);
             $.post('', {'action': 'DELETE', 'type_name': type_name})
                 .done(function (data) {
@@ -23,20 +20,16 @@
                     refresh_types();
                 });
         }
-
         function refresh_types() {
             $.post('{{ refresh_url }}')
                 .done(function (data) {
-                    $('#types_table').html(data);
+                    typesTable.html(data);
                 });
         }
-
         setInterval(function () {
             refresh_types()
         }, 2000);
-
         refresh_types();
-
     </script>
 
 {% endblock %}
@@ -57,7 +50,6 @@
             </tr>
             </thead>
             <tbody id="types_table">
-
             </tbody>
         </table>
     </div>
