@@ -66,12 +66,12 @@ class RestBBB(Resource):
             if configured == 'true':
                 node = MonitorController.monitor_controller.getConfiguredNode(ip, sector)
                 if node:
-                    MonitorController.monitor_controller.rebootNode(node, configured=configured)
+                    MonitorController.monitor_controller.rebootNode(node, configured=True)
                     status, message = True, 'Node {} rebooted '.format(node)
-            elif configured == 'true':
+            elif configured == 'false':
                 node = MonitorController.monitor_controller.getUnconfiguredNode(ip, sector)
                 if node:
-                    MonitorController.monitor_controller.rebootNode(node, configured=configured)
+                    MonitorController.monitor_controller.rebootNode(node, configured=False)
                     status, message = True, 'Node {} rebooted '.format(node)
 
         return status, message
