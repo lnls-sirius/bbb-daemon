@@ -73,9 +73,9 @@ def stop_services(c: MonitorController, n: DaemonHostListener, i: CommandInterfa
     while running:
         time.sleep(1)
 
-    c.stopAll()
-    n.stopAll()
-    i.stopAll()
+    c.stop_all()
+    n.stop_all()
+    i.stop_all()
     print("Services Stopped")
 
 

@@ -3,16 +3,17 @@ import struct
 import threading
 
 from common.entity.entities import Command
+from common.entity.metadata import Singleton
 from common.network.utils import NetUtils
-from control.controller import MonitorController
+from server.control.controller import ServerController
 
 
-class CommandInterface():
+class ServerCommandInterface(metaclass=Singleton):
 
-    def __init__(self, comInterfacePort, controller: MonitorController = None):
+    def __init__(self, comm_interface_port):
 
-        self.controller = controller
-        self.port = comInterfacePort
+        self.controller = ServerController.get_instance()
+        self.port = comm_interface_port
 
         self.interfaceSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.interfaceSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -29,64 +30,70 @@ class CommandInterface():
 
             try:
                 # First 4 bytes are the command id
-                command = NetUtils.recvCommand(connection)
+                command = NetUtils.recv_command(connection)
                 # print(command)
 
                 if command == Command.GET_TYPES:
 
-                    types = self.controller.fetchTypes()
+                    types = self.controller.fetch_types()
 
                     for t in types:
-                        NetUtils.sendCommand(connection, Command.TYPE)
-                        NetUtils.sendObject(connection, t)
+                        NetUtils.send_command(connection, Command.TYPE)
+                        NetUtils.send_object(connection, t)
 
-                    NetUtils.sendCommand(connection, Command.END)
+                    NetUtils.send_command(connection, Command.END)
 
                 elif command == Command.APPEND_TYPE:
-                    t = NetUtils.recvCommand(connection)
+                    t = NetUtils.recv_command(connection)
                     print(t)
-                    newType = NetUtils.recvObject(connection)
-                    self.controller.appendType(newType)
+                    newType = NetUtils.recv_object(connection)
+                    self.controller.manage_types(newType)
                     print(newType)
 
                 elif command == Command.REMOVE_TYPE:
-                    typeName = NetUtils.recvObject(connection)
+                    typeName = NetUtils.recv_object(connection)
                     print(typeName)
-                    self.controller.removeType(typeName)
+                    self.controller.remove_type_by_name(typeName)
 
                 elif command == Command.GET_REG_NODES_SECTOR or command == Command.GET_UNREG_NODES_SECTOR:
-                    sector = NetUtils.recvObject(connection)
+                    sector = NetUtils.recv_object(connection)
 
                     if command == Command.GET_REG_NODES_SECTOR:
-                        nodes = self.controller.getRegisteredNodesFromSector(sector)
+                        nodes = self.controller.get_registered_nodes_from_sector(sector)
                     else:
-                        nodes = self.controller.getUnregisteredNodesFromSector(sector)
+                        nodes = self.controller.get_unregistered_nodes_from_sector(sector)
 
                     for node in nodes:
-                        NetUtils.sendCommand(connection, Command.NODE)
-                        NetUtils.sendObject(connection, node)
+                        NetUtils.send_command(connection, Command.NODE)
+                        NetUtils.send_object(connection, node)
 
-                    NetUtils.sendCommand(connection, Command.END)
+                    NetUtils.send_command(connection, Command.END)
+
+                elif command == Command.GET_REG_NODE_BY_IP:
+
+                    ip_addr = NetUtils.recv_object(connection)
+                    node = self.controller.get_node_by_address(ipAddress=ip_addr)
+                    NetUtils.send_command(connection, node)
 
                 elif command == Command.APPEND_NODE:
-                    newNode = NetUtils.recvObject(connection)
-                    self.controller.appendNode(newNode)
+                    newNode = NetUtils.recv_object(connection)
+                    self.controller.manage_nodes(newNode)
                     print('Append Node')
 
                 elif command == Command.REMOVE_NODE:
-                    NetUtils.recvCommand(connection)
-                    self.controller.removeNodeFromSector(NetUtils.recvObject(connection))
+                    NetUtils.recv_command(connection)
+                    self.controller.remove_node_from_sector(NetUtils.recv_object(connection))
                     print('Remove Node')
 
                 elif command == Command.SWITCH:
-                    registeredNode = NetUtils.recvObject(connection)
-                    unRegisteredNode = NetUtils.recvObject(connection)
-                    self.controller.updateNode(unRegisteredNode, registeredNode)
+                    registeredNode = NetUtils.recv_object(connection)
+                    unRegisteredNode = NetUtils.recv_object(connection)
+                    self.controller.update_node(unRegisteredNode, registeredNode)
                     print("Trocar " + str(registeredNode) + " por " + str(unRegisteredNode))
 
                 elif command == Command.REBOOT:
-                    registeredNode = NetUtils.recvObject(connection)
-                    self.controller.rebootNode(registeredNode)
+                    registeredNode = NetUtils.recv_object(connection)
+                    self.controller.reboot_node(registeredNode)
 
                 elif command == Command.EXIT:
                     print("Exiting")

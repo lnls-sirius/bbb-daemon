@@ -48,11 +48,11 @@ class RestBBB(Resource):
         c_bbb = data['c_bbb']
         u_bbb = data['u_bbb']
 
-        c_node = MonitorController.monitor_controller.getConfiguredNode(c_bbb['ip'], c_bbb['sector'])
+        c_node = MonitorController.monitor_controller.get_configured_node(c_bbb['ip'], c_bbb['sector'])
         # u_node = MonitorController.monitor_controller.getConfiguredNode(u_bbb_ip, u_bbb_sector)
 
         if c_node and u_bbb['ip'] != '':
-            MonitorController.monitor_controller.updateNode(oldNodeAddr=u_bbb['ip'], newNode=c_node)
+            MonitorController.monitor_controller.update_node(oldNodeAddr=u_bbb['ip'], newNode=c_node)
             return True, 'Node Switched'
 
         return False, 'Not OK'
@@ -64,14 +64,14 @@ class RestBBB(Resource):
         status, message = False, 'Not Ok!'
         if ip and sector and configured:
             if configured == 'true':
-                node = MonitorController.monitor_controller.getConfiguredNode(ip, sector)
+                node = MonitorController.monitor_controller.get_configured_node(ip, sector)
                 if node:
-                    MonitorController.monitor_controller.rebootNode(node, configured=True)
+                    MonitorController.monitor_controller.reboot_node(node, configured=True)
                     status, message = True, 'Node {} rebooted '.format(node)
             elif configured == 'false':
-                node = MonitorController.monitor_controller.getUnconfiguredNode(ip, sector)
+                node = MonitorController.monitor_controller.get_unconfigured_node(ip, sector)
                 if node:
-                    MonitorController.monitor_controller.rebootNode(node, configured=False)
+                    MonitorController.monitor_controller.reboot_node(node, configured=False)
                     status, message = True, 'Node {} rebooted '.format(node)
 
         return status, message
@@ -148,7 +148,7 @@ class RestNode(Resource):
 
     @staticmethod
     def get_node_by_name(n_name: str = None):
-        node = MonitorController.monitor_controller.getNode(node_name=n_name)
+        node = MonitorController.monitor_controller.get_node_by_name(node_name=n_name)
         if node:
             return jsonify(node=node_schema.dump(node).data)
         else:
@@ -156,7 +156,7 @@ class RestNode(Resource):
 
     @staticmethod
     def get_node_by_ip(ip: str = None):
-        node = MonitorController.monitor_controller.getNodeByAddr(ipAddress=ip)
+        node = MonitorController.monitor_controller.get_node_by_address(ipAddress=ip)
         if node:
             return jsonify(node=node_schema.dump(node).data)
         else:
@@ -240,7 +240,7 @@ class RestNode(Resource):
         """
         if not sector:
             return {}
-        nodes = MonitorController.monitor_controller.fetchNodesFromSector(sector=sector)
+        nodes = MonitorController.monitor_controller.fetch_nodes_from_sector(sector=sector)
         return jsonify(nodes=nodes_schema.dump(nodes).data)
 
 

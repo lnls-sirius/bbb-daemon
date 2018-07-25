@@ -1,22 +1,25 @@
 import socket
 import threading
-from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
 
 from common.entity.entities import Command
-from common.network.utils import NetUtils, verify_msg
-from control.controller import MonitorController
+from common.entity.metadata import Singleton
+from common.network.utils import NetUtils
+from concurrent.futures import ThreadPoolExecutor
+from queue import Queue
+from server.control.controller import ServerController
 
 
-class DaemonHostListener():
+class DaemonHostListener(metaclass=Singleton):
+    """
 
-    def __init__(self, workers: int = 10, bbbUdpPort: int = 9876, bbbTcpPort: int = 9877,
-                 controller: MonitorController = None):
+    """
 
-        self.bbbUdpPort = bbbUdpPort
-        self.bbbTcpPort = bbbTcpPort
+    def __init__(self, workers: int = 10, bbb_udp_port: int = 9876, bbb_tcp_port: int = 9877):
 
-        self.controller = controller
+        self.bbbUdpPort = bbb_udp_port
+        self.bbbTcpPort = bbb_tcp_port
+
+        self.controller = ServerController.get_instance()
         self.controller.daemon = self
 
         self.ipInProcess = {}
@@ -31,22 +34,22 @@ class DaemonHostListener():
         for i in range(workers):
             self.executor.submit(self.process_worker_udp)
 
-    def sendCommand(self, command, address, **kargs):
+    def send_command(self, command, address, **kargs):
 
-        commandSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        commandSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        commandSocket.settimeout(10)
+        command_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        command_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        command_socket.settimeout(10)
 
         try:
-            commandSocket.connect((address, self.bbbTcpPort))
+            command_socket.connect((address, self.bbbTcpPort))
 
-            NetUtils.sendCommand(commandSocket, command)
+            NetUtils.send_command(command_socket, command)
 
             if command == Command.SWITCH:
                 node = kargs["node"]
-                NetUtils.sendObject(commandSocket, node)
+                NetUtils.send_object(command_socket, node)
                 # pv prefixes ...
-            commandSocket.close()
+            command_socket.close()
             return True
         except socket.error:
             return False
@@ -62,8 +65,8 @@ class DaemonHostListener():
                     hostType = info[3]
                     bbbIpAddr = info[4]
                     bbbSha = info[5]
-                    self.controller.updateHostCounterByAddress(address=bbbIpAddr, name=name, hostType=hostType,
-                                                               bbbSha=bbbSha)
+                    self.controller.update_host_counter_by_address(address=bbbIpAddr, name=name, hostType=hostType,
+                                                                   bbbSha=bbbSha)
                 elif command == Command.EXIT:
                     print("Worker ... EXIT")
                     return
@@ -72,20 +75,20 @@ class DaemonHostListener():
         print("Worker ... Finished")
 
     def listen_udp(self):
-        pingSocket = socket.socket(socket.AF_INET,  # Internet
+        ping_socket = socket.socket(socket.AF_INET,  # Internet
                                    socket.SOCK_DGRAM)  # UDP
-        pingSocket.bind(("0.0.0.0", self.bbbUdpPort))
+        ping_socket.bind(("0.0.0.0", self.bbbUdpPort))
         print("Listening UDP on 0.0.0.0 : {} ....".format(self.bbbUdpPort))
         while self.listening:
-            data, ipAddr = pingSocket.recvfrom(1024)  # buffer size is 1024 bytes
+            data, ipAddr = ping_socket.recvfrom(1024)  # buffer size is 1024 bytes
             data = str(data.decode('utf-8'))
-            info = verify_msg(data=data)
+            info = NetUtils.verify_msg(data=data)
             if info:
                 self.queueUdp.put(info)
-        pingSocket.close()
+        ping_socket.close()
         print('Ping socket closed ')
 
-    def stopAll(self):
+    def stop_all(self):
         """
            Stop !
         """
@@ -93,10 +96,10 @@ class DaemonHostListener():
         # In order to close the socket and exit from the accept () function, emulate a new connection
         self.executor.shutdown()
         try:
-            shutdownSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            shutdownSocket.connect(("0.0.0.0", self.bbbTcpPort))
-            NetUtils.sendCommand(shutdownSocket, Command.EXIT)
-            shutdownSocket.close()
+            shutdown_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            shutdown_socket.connect(("0.0.0.0", self.bbbTcpPort))
+            NetUtils.send_command(shutdown_socket, Command.EXIT)
+            shutdown_socket.close()
         except ConnectionRefusedError:
             pass
         print("Services Stopped.")
