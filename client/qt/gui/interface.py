@@ -1,52 +1,56 @@
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
+from PyQt5.QtCore import pyqtSignal, QSize, Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMainWindow, QTabWidget, QVBoxLayout, QWidget
 
+from client.qt.gui.controller import QtInterfaceController
+from client.qt.gui.dialogs import NodeDialog, QtTypeDialog
+from client.qt.gui.tab import QtInterfaceTab
 from common.entity.entities import Sector
-from gui.controller import GUIController
-from gui.nodeDialog import NodeDialog
-from gui.typeDialog import TypeDialog
-from gui.tab import MonitorTab
 
 
-class MonitorInterface(QMainWindow):
+class QtInterface(QMainWindow):
     """
-        Main Interface.
+    The Qt5-based main graphical interface.
     """
     WIDTH = 1600
     HEIGHT = 1200
 
     updateIcon = pyqtSignal(int)
 
-    def __init__(self, server: str = "localhost", servPort: int = 6789):
+    def __init__(self, server: str = "localhost", server_port: int = 6789):
+        """
+        Builds the interface.
+        :param server: the server's IP address.
+        :param server_port: the server's port.
+        """
 
         super().__init__()
 
-        self.controller = GUIController(server=server, servPort=servPort)
+        self.controller = QtInterfaceController(server=server, servPort=server_port)
 
-        self.menubar = self.menuBar()
-        self.editMenu = self.menubar.addMenu('&Edit')
+        self.menu_bar = self.menuBar()
+        self.edit_menu = self.menu_bar.addMenu('&Edit')
 
-        self.addType = self.editMenu.addAction('&Types Management')
-        self.addType.setShortcut("Ctrl+T")
-        self.addType.triggered.connect(self.appendType)
-        self.addType.setShortcutContext(Qt.ApplicationShortcut)
+        self.add_type_action = self.edit_menu.addAction('&Types Management')
+        self.add_type_action.setShortcut("Ctrl+T")
+        self.add_type_action.triggered.connect(self.manage_types)
+        self.add_type_action.setShortcutContext(Qt.ApplicationShortcut)
 
-        self.addNode = self.editMenu.addAction('&Nodes Management')
-        self.addNode.setShortcut("Ctrl+N")
-        self.addNode.triggered.connect(self.appendNode)
-        self.addNode.setShortcutContext(Qt.ApplicationShortcut)
+        self.add_node_action = self.edit_menu.addAction('&Nodes Management')
+        self.add_node_action.setShortcut("Ctrl+N")
+        self.add_node_action.triggered.connect(self.manage_nodes)
+        self.add_node_action.setShortcutContext(Qt.ApplicationShortcut)
 
-        self.exitMenu = self.menubar.addAction('E&xit')
-        self.exitMenu.triggered.connect(self.exit)
-        self.exitMenu.setShortcut("Ctrl+X")
-        self.exitMenu.setShortcutContext(Qt.ApplicationShortcut)
+        self.exit_action = self.menu_bar.addAction('E&xit')
+        self.exit_action.triggered.connect(self.exit)
+        self.exit_action.setShortcut("Ctrl+X")
+        self.exit_action.setShortcutContext(Qt.ApplicationShortcut)
 
-        self.centralwidget = QWidget()
+        self.central_widget = QWidget()
 
-        self.widgetbox = QVBoxLayout()
-        self.widgetbox.setContentsMargins(10, 10, 10, 10)
-        self.widgetbox.setSpacing(10)
+        self.widget_box = QVBoxLayout()
+        self.widget_box.setContentsMargins(10, 10, 10, 10)
+        self.widget_box.setSpacing(10)
 
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.North)
@@ -54,16 +58,16 @@ class MonitorInterface(QMainWindow):
 
         for index, i in enumerate(Sector.sectors()):
             self.tabs.insertTab(index,
-                                MonitorTab(parent=self.tabs, sector=str(i), controller=self.controller, tabIndex=index,
-                                           updateIcon=self.updateIcon), str(i))
+                                QtInterfaceTab(parent=self.tabs, sector=str(i), controller=self.controller, tab_index=index,
+                                               update_icon=self.updateIcon), str(i))
 
-        self.widgetbox.addWidget(self.tabs)
-        self.centralwidget.setLayout(self.widgetbox)
+        self.widget_box.addWidget(self.tabs)
+        self.central_widget.setLayout(self.widget_box)
 
         self.setWindowTitle("Controls Group's Single Board Computer Monitor")
-        self.setCentralWidget(self.centralwidget)
+        self.setCentralWidget(self.central_widget)
 
-        self.setGeometry(500, 500, MonitorInterface.WIDTH, MonitorInterface.HEIGHT)
+        self.setGeometry(500, 500, QtInterface.WIDTH, QtInterface.HEIGHT)
 
         self.icons = QIcon()
         self.icons.addFile('ico/bbb16x16.png', QSize(16, 16))
@@ -77,36 +81,46 @@ class MonitorInterface(QMainWindow):
         self.updateIcon.connect(self.test)
         self.show()
 
-    def test(self, tabIndex):
-        if self.tabs.widget(tabIndex).isInWarningStateState():
-            self.tabs.setTabIcon(tabIndex, QIcon.fromTheme("dialog-warning"))
+    def test(self, tab_index):
+        """
+        Tests if the tab index is in a warning state. In this case, show a warning icon.
+        :param tab_index: tab's index.
+        """
+        if self.tabs.widget(tab_index).is_in_warning_state():
+            self.tabs.setTabIcon(tab_index, QIcon.fromTheme("dialog-warning"))
         else:
-            self.tabs.setTabIcon(tabIndex, QIcon())
+            self.tabs.setTabIcon(tab_index, QIcon())
 
-    def appendType(self):
-        typeDialog = TypeDialog(controller=self.controller)
-        self.centerWindow(typeDialog)
-        typeDialog.show()
+    def manage_types(self):
+        """
+        Launches a new types management dialog.
+        """
+        type_dialog = QtTypeDialog()
+        type_dialog.center()
+        type_dialog.show()
 
-    def appendNode(self):
-        nodeDialog = NodeDialog(controller=self.controller)
-        self.centerWindow(nodeDialog)
-        nodeDialog.show()
+    def manage_nodes(self):
+        """
+        Launches a new nodes management dialog.
+        """
+        node_dialog = NodeDialog()
+        node_dialog.center()
+        node_dialog.show()
 
-    def stopAll(self):
+    def stop_all(self):
+        """
+        Stops all scanning threads of each tab object.
+        """
         for tabIndex in range(self.tabs.count()):
             self.tabs.widget(tabIndex).stop()
 
     def closeEvent(self, evt):
-        self.stopAll()
+        self.stop_all()
         QMainWindow.closeEvent(self, evt)
 
     def exit(self):
-        self.stopAll()
+        """
+        Stops all and exits.
+        """
+        self.stop_all()
         self.close()
-
-    def centerWindow(self, windows_to_center):
-        qtRectangle = windows_to_center.frameGeometry()
-        centerPoint = QDesktopWidget().availableGeometry().center()
-        qtRectangle.moveCenter(centerPoint)
-        windows_to_center.move(qtRectangle.topLeft())
