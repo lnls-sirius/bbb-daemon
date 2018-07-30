@@ -24,7 +24,6 @@ bindPort = 9877
 
 
 class Daemon():
-
     def __init__(self, serverAddress: str, pingPort: int, bindPort: int, ftpDestinationFolder: str):
         self.ftpDestinationFolder = ftpDestinationFolder
 
@@ -58,9 +57,7 @@ class Daemon():
         while self.pinging:
             info = self.bbb.getInfo()
             message = "{}|{}".format(checksum(info), info)
-            ## {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
             pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
-            print('Ping to {}:{}\tMessage {}'.format(self.serverAddress, self.pingPort, message))
             time.sleep(1)
 
     def stop(self):
