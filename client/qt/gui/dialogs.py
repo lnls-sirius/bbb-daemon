@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import QAbstractItemView, QColorDialog, QComboBox, QDesktop
 from common.entity.entities import Node, Type, Sector
 from client.qt.gui.controller import QtInterfaceController
 from client.qt.gui.tableModel import NodeTableModel, TypeTableModel
+from client.qt.comm.commandinterface import CommandFailureReceivedError
+import ipaddress
 import threading
 import time
 
@@ -63,9 +65,6 @@ class QtTypeDialog(QtDialog):
         self.repoUrlLabel = QLabel("Repository URL:")
         self.repoUrl = QLineEdit()
 
-        self.rcLocalPathLabel = QLabel("rc.local Relative Path:")
-        self.rcLocalPath = QLineEdit()
-
         self.buttons = QWidget()
         self.buttonsLayout = QGridLayout()
         self.buttonsLayout.setContentsMargins(0, 0, 0, 0)
@@ -115,8 +114,6 @@ class QtTypeDialog(QtDialog):
         self.input_layout.addWidget(self.name)
         self.input_layout.addWidget(self.repoUrlLabel)
         self.input_layout.addWidget(self.repoUrl)
-        self.input_layout.addWidget(self.rcLocalPathLabel)
-        self.input_layout.addWidget(self.rcLocalPath)
         self.input_layout.addWidget(self.descriptionLabel)
         self.input_layout.addWidget(self.description)
 
@@ -149,16 +146,19 @@ class QtTypeDialog(QtDialog):
             selected_row = self.typeTable.selectedIndexes()[0].row()
             type_name = self.typeTableModel.data(self.typeTableModel.index(selected_row, 0), Qt.DisplayRole)
 
-            self.controller.remove_type_by_name(type_name)
-            self.typeTableModel.setData(self.controller.fetch_types())
-            self.typeTable.clearSelection()
+            try:
+                self.controller.remove_type(type_name)
+                self.typeTableModel.setData(self.controller.fetch_types())
+                self.typeTable.clearSelection()
+
+            except CommandFailureReceivedError as error:
+                QMessageBox(QMessageBox.Warning, "Failed!", str(error), QMessageBox.Ok, self).open()
 
         elif evt.key() == Qt.Key_Escape:
 
             self.name.clear()
             self.description.clear()
             self.repoUrl.clear()
-            self.rcLocalPath.clear()
             self.typeTable.clearSelection()
             self.color_dialog.setCurrentColor(QColor(255, 255, 0))
 
@@ -178,7 +178,6 @@ class QtTypeDialog(QtDialog):
             # Updates input widgets
             self.name.setText(host_type.name)
             self.repoUrl.setText(host_type.repoUrl)
-            self.rcLocalPath.setText(host_type.rcLocalPath)
             self.description.setPlainText(host_type.description)
             self.color_dialog.setCurrentColor(QColor(host_type.color[0], host_type.color[1], host_type.color[2]))
 
@@ -210,13 +209,16 @@ class QtTypeDialog(QtDialog):
         new_type = Type(name=self.name.displayText().strip(),
                         description=self.description.toPlainText().strip(),
                         repo_url=self.repoUrl.displayText().strip(),
-                        rcLocalPath=self.rcLocalPath.displayText().strip(),
                         color=(selected_color.red(), selected_color.green(), selected_color.blue()))
 
-        self.controller.manage_types(new_type)
+        try:
+            self.controller.append_type(new_type)
 
-        self.typeTableModel.setData(self.controller.fetch_types())
-        self.typeTable.clearSelection()
+            self.typeTableModel.setData(self.controller.fetch_types())
+            self.typeTable.clearSelection()
+
+        except CommandFailureReceivedError as error:
+            QMessageBox(QMessageBox.Warning, "Failed!", str(error), QMessageBox.Ok, self).open()
 
     def scan(self):
         """
@@ -262,7 +264,6 @@ class NodeDialog(QtDialog):
 
         self.address_label = QLabel("IP Address:")
         self.address_text = QLineEdit()
-        # self.address_text.setInputMask ("000.000.000.000;_")
 
         self.types_label = QLabel("Registered types:")
         self.types = QComboBox()
@@ -330,10 +331,21 @@ class NodeDialog(QtDialog):
 
         self.setWindowTitle("BBB Hosts Management")
 
+        self.update_ip_address_mask()
+
         self.scanThread = threading.Thread(target=self.scan)
 
         self.scanning = True
         self.scanThread.start()
+
+    def update_ip_address_mask(self):
+
+        subnet = Sector.subnets()[self.sectors.currentIndex()]
+
+        if type(subnet) is list:
+            subnet = subnet[0]
+
+        self.address_text.setText(str(subnet.network_address))
 
     def scan(self):
         """
@@ -374,28 +386,32 @@ class NodeDialog(QtDialog):
         Method called when a new sector is chosen in the combo box.
         :param index: the index of the new sector.
         """
-        self.nodeTableModel.setData(
-            self.controller.get_nodes_from_sector(sector=self.sectors.itemText(index), registered=True))
+        self.update_ip_address_mask()
+
+        nodes = self.controller.get_nodes_from_sector(sector=self.sectors.itemText(index), registered=True)
+        self.nodeTableModel.setData(nodes)
 
     def append_node(self):
         """
         Append a new node to the database. Method called when the button is pressed.
         """
+        try:
 
-        new_node = Node(name=self.id_text.displayText(), ip=self.address_text.displayText(),
-                       type_node=self.types.itemData(self.types.currentIndex()),
-                       sector=self.sectors.itemText(self.sectors.currentIndex()),
-                       pv_prefixes=Node.get_prefix_array(self.prefix.displayText()))
+            new_node = Node(name=self.id_text.displayText(),
+                            ip=ipaddress.IPv4Address(self.address_text.displayText()),
+                            type_node=self.types.itemData(self.types.currentIndex()),
+                            sector=self.sectors.itemText(self.sectors.currentIndex()),
+                            pv_prefixes=Node.get_prefix_array(self.prefix.displayText()))
 
-        appended = self.controller.manage_nodes(new_node)
+            self.controller.append_node(new_node)
 
-        if appended:
             nodes = self.controller.get_nodes_from_sector(sector=self.sectors.itemText(self.sectors.currentIndex()),
                                                           registered=True)
             self.nodeTableModel.setData(nodes)
-        else:
-            QMessageBox(QMessageBox.Warning, "Failed!", "Could not add a new node. Verify if the IP address!",
-                        QMessageBox.Ok, self).open()
+            self.parentWidget().update_tab_data(self.sectors.currentIndex())
+
+        except CommandFailureReceivedError as error:
+            QMessageBox(QMessageBox.Warning, "Failed!", str(error), QMessageBox.Ok, self).open()
 
     def keyPressEvent(self, evt):
         """
@@ -409,16 +425,22 @@ class NodeDialog(QtDialog):
             selected_row = self.nodeTable.selectedIndexes()[0].row()
 
             remove_node = Node(name=self.nodeTableModel.nodes[selected_row].name,
-                              ip=self.nodeTableModel.nodes[selected_row].ipAddress,
+                              ip=ipaddress.IPv4Address(self.nodeTableModel.nodes[selected_row].ip_address),
                               type_node=self.nodeTableModel.nodes[selected_row].type,
                               sector=self.nodeTableModel.nodes[selected_row].sector,
-                              pv_prefixes=Node.get_prefix_array(self.nodeTableModel.nodes[selected_row].pvPrefix))
+                              pv_prefixes=self.nodeTableModel.nodes[selected_row].pvPrefix)
 
-            self.controller.remove_node_from_sector(remove_node)
-            nodes = self.controller.get_nodes_from_sector(sector=self.sectors.itemText(self.sectors.currentIndex()),
-                                                          registered=True)
-            self.nodeTableModel.setData(nodes)
-            self.nodeTable.clearSelection()
+            try:
+
+                self.controller.remove_node_from_sector(remove_node)
+                nodes = self.controller.get_nodes_from_sector(sector=self.sectors.itemText(self.sectors.currentIndex()),
+                                                              registered=True)
+                self.nodeTableModel.setData(nodes)
+                self.nodeTable.clearSelection()
+                self.parentWidget().update_tab_data(self.sectors.currentIndex())
+
+            except CommandFailureReceivedError as error:
+                QMessageBox(QMessageBox.Warning, "Failed!", str(error), QMessageBox.Ok, self).open()
 
         elif evt.key() == Qt.Key_Escape:
 
@@ -440,7 +462,7 @@ class NodeDialog(QtDialog):
             node = self.nodeTableModel.nodes[selected_row]
 
             self.id_text.setText(node.name)
-            self.address_text.setText(node.ipAddress)
+            self.address_text.setText(str(node.ip_address))
             self.prefix.setText(Node.get_prefix_string(node.pvPrefix))
 
             items = [self.types.itemText(i) for i in range(self.types.count())]

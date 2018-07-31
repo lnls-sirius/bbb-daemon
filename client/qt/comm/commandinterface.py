@@ -7,6 +7,13 @@ from common.entity.metadata import Singleton
 from common.network.utils import NetUtils
 
 
+class CommandFailureReceivedError(Exception):
+    """
+    A simple exception to represent command failures.
+    """
+    pass
+
+
 class CommandNetworkInterface(metaclass=Singleton):
 
     """
@@ -26,11 +33,11 @@ class CommandNetworkInterface(metaclass=Singleton):
         self.interface_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.interface_socket.settimeout(10)
 
+        self.logger = logging.getLogger('CommandNetworkInterface')
+
         self.connection_lock = threading.Lock()
         self.connection = False
         self.connection = self.connect()
-
-        self.logger = logging.getLogger('CommandNetworkInterface')
 
     def release_mutex(self):
         """
@@ -69,8 +76,9 @@ class CommandNetworkInterface(metaclass=Singleton):
         :param registered_node: Node object representing the registered node.
         :param unregistered_node: Node object representing the registered node.
         :return: False if a socket.error exception is caught and True, otherwise.
+        :raise CommandFailureReceivedError: a Failure command was returned by the server.
         """
-
+        self.connection = self.connect()
         if not self.connection:
             return False
 
@@ -80,8 +88,17 @@ class CommandNetworkInterface(metaclass=Singleton):
 
         try:
             NetUtils.send_command(self.interface_socket, Command.SWITCH)
+
+            NetUtils.send_command(self.interface_socket, Command.NODE)
             NetUtils.send_object(self.interface_socket, registered_node)
+
+            NetUtils.send_command(self.interface_socket, Command.NODE)
             NetUtils.send_object(self.interface_socket, unregistered_node)
+
+            if NetUtils.recv_command(self.interface_socket) == Command.FAILURE:
+                self.connection_lock.release()
+                raise CommandFailureReceivedError(NetUtils.recv_object(self.interface_socket))
+
         except socket.error:
             self.logger.exception('Error while sending commands to the server.')
             self.connection = False
@@ -96,7 +113,7 @@ class CommandNetworkInterface(metaclass=Singleton):
         :param registered_node: Node object representing a connected and registered node.
         :return: False if a socket.error exception is caught and True, otherwise.
         """
-
+        self.connection = self.connect()
         if not self.connection:
             return False
 
@@ -120,8 +137,10 @@ class CommandNetworkInterface(metaclass=Singleton):
         Appends a new type into the database.
         :param new_type:  the type to be appended.
         :return: True if no exception has been throw. False otherwise.
+        :raise CommandFailureReceivedError: a Failure command was returned by the server.
         """
 
+        self.connection = self.connect()
         if not self.connection:
             return False
 
@@ -133,6 +152,11 @@ class CommandNetworkInterface(metaclass=Singleton):
             NetUtils.send_command(self.interface_socket, Command.APPEND_TYPE)
             NetUtils.send_command(self.interface_socket, Command.TYPE)
             NetUtils.send_object(self.interface_socket, new_type)
+
+            if NetUtils.recv_command(self.interface_socket) == Command.FAILURE:
+                self.connection_lock.release()
+                raise CommandFailureReceivedError(NetUtils.recv_object(self.interface_socket))
+
         except socket.error:
             self.logger.exception('Error while sending commands to the server.')
             self.connection = False
@@ -147,7 +171,10 @@ class CommandNetworkInterface(metaclass=Singleton):
         Removes a type from the database.
         :param type_name: the type to be removed.
         :return: True if no exception has been throw. False otherwise.
+        :raise CommandFailureReceivedError: a Failure command was returned by the server.
         """
+
+        self.connection = self.connect()
         if not self.connection:
             return False
 
@@ -157,7 +184,13 @@ class CommandNetworkInterface(metaclass=Singleton):
 
         try:
             NetUtils.send_command(self.interface_socket, Command.REMOVE_TYPE)
+            NetUtils.send_command(self.interface_socket, Command.TYPE)
             NetUtils.send_object(self.interface_socket, type_name)
+
+            if NetUtils.recv_command(self.interface_socket) == Command.FAILURE:
+                self.connection_lock.release()
+                raise CommandFailureReceivedError(NetUtils.recv_object(self.interface_socket))
+
         except socket.error:
             self.logger.exception('Error while sending commands to the server.')
             self.connection = False
@@ -171,7 +204,9 @@ class CommandNetworkInterface(metaclass=Singleton):
         """
         Fetches all types saved in the database.
         :return: a list of Type objects.
+        :raise CommandFailureReceivedError: a Failure command was returned by the server.
         """
+        self.connection = self.connect()
         if not self.connection:
             return []
 
@@ -182,11 +217,16 @@ class CommandNetworkInterface(metaclass=Singleton):
         try:
             NetUtils.send_command(self.interface_socket, Command.GET_TYPES)
             command = NetUtils.recv_command(self.interface_socket)
-            while command != Command.END:
+            while command != Command.OK and command != Command.FAILURE:
                 if command == Command.TYPE:
                     types.append(NetUtils.recv_object(self.interface_socket))
 
                 command = NetUtils.recv_command(self.interface_socket)
+
+            if command == Command.FAILURE:
+                self.connection_lock.release()
+                raise CommandFailureReceivedError(NetUtils.recv_object(self.interface_socket))
+
         except socket.error:
             self.logger.exception('Error while sending commands to the server.')
             self.connection = False
@@ -202,8 +242,9 @@ class CommandNetworkInterface(metaclass=Singleton):
         :param registered: True if the method must return the nodes that were registered by system managers. False
         for the nodes that were dynamically verified.
         :return: a list of Node objects.
+        :raise CommandFailureReceivedError: a Failure command was returned by the server.
         """
-
+        self.connection = self.connect()
         if not self.connection:
             return []
 
@@ -219,11 +260,16 @@ class CommandNetworkInterface(metaclass=Singleton):
 
             nodes = []
             command = NetUtils.recv_command(self.interface_socket)
-            while command != Command.END:
+            while command != Command.OK and command != Command.FAILURE:
                 if command == Command.NODE:
                     nodes.append(NetUtils.recv_object(self.interface_socket))
 
                 command = NetUtils.recv_command(self.interface_socket)
+
+            if command == Command.FAILURE:
+                self.connection_lock.release()
+                raise CommandFailureReceivedError(NetUtils.recv_object(self.interface_socket))
+
         except socket.error:
             self.logger.exception('Error while sending commands to the server.')
             nodes = []
@@ -237,8 +283,9 @@ class CommandNetworkInterface(metaclass=Singleton):
         Append a new node to the database.
         :param node: the Node object to be appended into the database.
         :return: True if no exception has been throw. False otherwise.
+        :raise CommandFailureReceivedError: a Failure command was returned by the server.
         """
-
+        self.connection = self.connect()
         if not self.connection:
             return False
 
@@ -248,7 +295,13 @@ class CommandNetworkInterface(metaclass=Singleton):
 
         try:
             NetUtils.send_command(self.interface_socket, Command.APPEND_NODE)
+            NetUtils.send_command(self.interface_socket, Command.NODE)
             NetUtils.send_object(self.interface_socket, node)
+
+            if NetUtils.recv_command(self.interface_socket) == Command.FAILURE:
+                self.connection_lock.release()
+                raise CommandFailureReceivedError(NetUtils.recv_object(self.interface_socket))
+
         except socket.error:
             self.logger.exception('Error while sending commands to the server.')
             self.connection = False
@@ -263,8 +316,9 @@ class CommandNetworkInterface(metaclass=Singleton):
         Removes a node from a given sector.
         :param node: the node to be removed.
         :return: True if no exception has been throw. False otherwise.
+        :raise CommandFailureReceivedError: a Failure command was returned by the server.
         """
-
+        self.connection = self.connect()
         if not self.connection:
             return False
 
@@ -276,6 +330,11 @@ class CommandNetworkInterface(metaclass=Singleton):
             NetUtils.send_command(self.interface_socket, Command.REMOVE_NODE)
             NetUtils.send_command(self.interface_socket, Command.NODE)
             NetUtils.send_object(self.interface_socket, node)
+
+            if NetUtils.recv_command(self.interface_socket) == Command.FAILURE:
+                self.connection_lock.release()
+                raise CommandFailureReceivedError(NetUtils.recv_object(self.interface_socket))
+
         except socket.error:
             self.logger.exception('Error while sending commands to the server.')
             success = False

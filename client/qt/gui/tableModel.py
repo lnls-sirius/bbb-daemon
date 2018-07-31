@@ -35,7 +35,7 @@ class MainTableModel(QAbstractTableModel):
         :param data: a list of nodes to be sorted.
         :return: sorted list.
         """
-        return sorted(data, key=lambda x: (x.state, x.ipAddress), reverse=False)
+        return sorted(data, key=lambda x: (x.state, x.ip_address), reverse=False)
 
     def setData(self, data):
         """
@@ -79,7 +79,7 @@ class MainTableModel(QAbstractTableModel):
             if node.state == NodeState.DISCONNECTED:
                 return QBrush(QColor(229, 85, 94))
 
-            if node.state == NodeState.MISCONFIGURED:
+            if node.state == NodeState.MIS_CONFIGURED:
                 if node.misconfiguredColor is None:
                     color = node.misconfiguredColor
                     return QBrush(QColor(color[0], color[1], color[2]))
@@ -99,11 +99,9 @@ class MainTableModel(QAbstractTableModel):
             if col == 0:
                 return node.name
             if col == 1:
-                return node.ipAddress
+                return str(node.ip_address)
             if col == 2:
-                if node.type is None:
-                    return node.type.name
-                return ""
+                return node.type.name
 
             return NodeState.to_string(node.state)
 
@@ -185,7 +183,7 @@ class TypeTableModel(QAbstractTableModel):
         :return: the constant 4, representing the type's name, repository URL, rc.local script path inside the repo
          and description.
         """
-        return 4
+        return 3
 
     def data(self, index, role):
         """
@@ -209,8 +207,6 @@ class TypeTableModel(QAbstractTableModel):
                 return type_node.name
             elif col == 1:
                 return type_node.repoUrl
-            elif col == 2:
-                return type_node.rcLocalPath
             else:
                 return type_node.description
 
@@ -272,7 +268,7 @@ class NodeTableModel(QAbstractTableModel):
         :param data: a list of nodes to be sorted.
         :return: sorted list.
         """
-        return sorted(data, key=lambda x: x.ipAddress, reverse=False)
+        return sorted(data, key=lambda x: x.ip_address, reverse=False)
 
     def setData(self, data):
         """
@@ -280,6 +276,7 @@ class NodeTableModel(QAbstractTableModel):
         :param data: a list of Type objects, representing the new table's content.
         """
         self.nodes = self.sort_by_address(data)
+        self.updateModel.emit()
 
     def rowCount(self, *args, **kwargs):
         """
@@ -324,8 +321,8 @@ class NodeTableModel(QAbstractTableModel):
             if col == 0:
                 return node.name
             if col == 1:
-                return node.ipAddress
-            if col == 2 and node.type is not None:
+                return str(node.ip_address)
+            if col == 2:
                 return node.type.name
             if col == 3:
                 return Node.get_prefix_string(node.pvPrefix)

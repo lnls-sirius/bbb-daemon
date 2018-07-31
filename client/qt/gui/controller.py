@@ -43,13 +43,13 @@ class QtInterfaceController(metaclass=Singleton):
         return self.command_interface.fetch_types()
 
     def append_type(self, new_type):
-        return self.command_interface.manage_types(new_type)
+        return self.command_interface.append_type(new_type)
 
     def remove_type(self, type_name):
-        self.command_interface.remove_type_by_name(type_name)
+        self.command_interface.remove_type(type_name)
 
     def append_node(self, node):
-        return self.command_interface.manage_nodes(node)
+        return self.command_interface.append_node(node)
 
     def remove_node_from_sector(self, node):
         return self.command_interface.remove_node_from_sector(node)

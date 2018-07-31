@@ -158,7 +158,7 @@ class QtInterfaceTab(QWidget):
                 self.rebootButton.setEnabled(False)
 
             if registered_node.ipAddress == dynamic_node.ipAddress:
-                if registered_node.state == dynamic_node.state and registered_node.state == NodeState.MISCONFIGURED:
+                if registered_node.state == dynamic_node.state and registered_node.state == NodeState.MIS_CONFIGURED:
                     self.switchButton.setEnabled(True)
                 else:
                     self.switchButton.setEnabled(False)
@@ -182,16 +182,19 @@ class QtInterfaceTab(QWidget):
         self.update_buttons()
         QTableView.selectionChanged(self.dynamicTable, selected, deselected)
 
+    def update_all(self):
+        self.staticTableModel.setData(self.controller.get_nodes_from_sector(sector=self.sector, registered=True))
+        self.dynamicTableModel.setData(self.controller.get_nodes_from_sector(sector=self.sector, registered=False))
+        self.update_icon_signal.emit(self.tab_index)
+        self.update_buttons()
+
     def scan(self):
         """
         Scans all nodes, registered and unregistered.
         """
 
         while self.scanning:
-            self.staticTableModel.setData(self.controller.get_nodes_from_sector(sector=self.sector, registered=True))
-            self.dynamicTableModel.setData(self.controller.get_nodes_from_sector(sector=self.sector, registered=False))
-            self.update_icon_signal.emit(self.tab_index)
-            self.update_buttons()
+            self.update_all()
             time.sleep(QtInterfaceTab.UPDATE_TIME)
 
     def hideEvent(self, evt):

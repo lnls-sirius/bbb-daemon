@@ -17,7 +17,7 @@ class QtInterface(QMainWindow):
 
     updateIcon = pyqtSignal(int)
 
-    def __init__(self, server: str = "localhost", server_port: int = 6789):
+    def __init__(self):
         """
         Builds the interface.
         :param server: the server's IP address.
@@ -26,7 +26,7 @@ class QtInterface(QMainWindow):
 
         super().__init__()
 
-        self.controller = QtInterfaceController(server=server, servPort=server_port)
+        self.controller = QtInterfaceController.get_instance()
 
         self.menu_bar = self.menuBar()
         self.edit_menu = self.menu_bar.addMenu('&Edit')
@@ -58,7 +58,7 @@ class QtInterface(QMainWindow):
 
         for index, i in enumerate(Sector.sectors()):
             self.tabs.insertTab(index,
-                                QtInterfaceTab(parent=self.tabs, sector=str(i), controller=self.controller, tab_index=index,
+                                QtInterfaceTab(parent=self.tabs, sector=str(i), tab_index=index,
                                                update_icon=self.updateIcon), str(i))
 
         self.widget_box.addWidget(self.tabs)
@@ -81,6 +81,13 @@ class QtInterface(QMainWindow):
         self.updateIcon.connect(self.test)
         self.show()
 
+    def update_tab_data(self, tab_index):
+        """
+        update all elements of a given tab.
+        :param tab_index: the tab's index.
+        """
+        self.tabs.widget(tab_index).update_all()
+
     def test(self, tab_index):
         """
         Tests if the tab index is in a warning state. In this case, show a warning icon.
@@ -95,7 +102,7 @@ class QtInterface(QMainWindow):
         """
         Launches a new types management dialog.
         """
-        type_dialog = QtTypeDialog()
+        type_dialog = QtTypeDialog(parent=self)
         type_dialog.center()
         type_dialog.show()
 
@@ -103,7 +110,7 @@ class QtInterface(QMainWindow):
         """
         Launches a new nodes management dialog.
         """
-        node_dialog = NodeDialog()
+        node_dialog = NodeDialog(parent=self)
         node_dialog.center()
         node_dialog.show()
 
