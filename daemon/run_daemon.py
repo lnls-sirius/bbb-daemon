@@ -1,5 +1,6 @@
 import argparse
 import os
+from daemon.daemon import Daemon
 
 CONFIG_PATH = "/root/bbb-daemon/bbb.bin"
 TYPE_RC_LOCAL_PATH = "init/rc.local"
