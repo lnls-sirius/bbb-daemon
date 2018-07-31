@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import time
 from common.entity.entities import Command, Node, Sector, Type
-from daemon.sftp import download_from_ftp
+from host.sftp import download_from_ftp
 
 
 class BBB:
@@ -14,8 +14,8 @@ class BBB:
     A class to represent a Beaglebone host.
     """
 
-    def __init__(self, path, rc_local_destination_path, sftp_server_address, sftp_port: int = 22,
-                 ftp_destination_folder: str = None, interface='eth0'):
+    def __init__(self, path, rc_local_destination_path, sftp_server_address, sftp_port=22,
+                 ftp_destination_folder = None, interface='eth0'):
         """
         Creates a new object instance.
         :param path: the configuration file's location
@@ -39,7 +39,8 @@ class BBB:
         # Creates the objects that wrap the host's settings.
         self.node = Node()
         self.node.type = Type()
-        self.node.ip_address = ipaddress.ip_address(self.get_ip_address(self.interface_name))
+        print(self.get_ip_address()[0])
+        self.node.ip_address = ipaddress.ip_address(self.get_ip_address()[0])
 
         self.logger = logging.getLogger('BBB')
 
@@ -93,7 +94,7 @@ class BBB:
             print("{}".format(e))
             return False
 
-    def update(self, new_config_node: Node = None):
+    def update(self, new_config_node=None):
         """
         @todo : NODE! Update Code !!!!
         Updates the bbb with new data and refreshes the project.
@@ -107,7 +108,7 @@ class BBB:
 
             self.change_ip_address(new_ip_address=new_config_node.ip_address)
 
-            self.node.ip_address = self.get_ip_address()
+            self.node.ip_address = self.get_ip_address()[0]
 
             with open("/etc/hostname", "w") as hostnameFile:
                 hostnameFile.write(new_config_node.name.replace(":", "-"))
@@ -188,7 +189,7 @@ class BBB:
             raise TypeError("The provided sub-network's address is neither a "
                             "string nor a ipaddress.IPv4Address object.")
 
-        self.logger.info('Changing current IP address from {} to {}'.format(self.get_ip_address(), new_ip_address))
+        self.logger.info('Changing current IP address from {} to {}'.format(self.get_ip_address()[0], new_ip_address))
 
         service = self.get_connman_service_name()
         self.logger.debug("Service for interface {} is {}.".format(self.interface_name, service))
@@ -201,7 +202,7 @@ class BBB:
                                                                 default_gateway_address)],
             shell=True)
 
-        self.logger.debug('IP address after update is {}'.format(self.get_ip_address()))
+        self.logger.debug('IP address after update is {}'.format(self.get_ip_address()[0]))
 
     def get_connman_service_name(self):
         """

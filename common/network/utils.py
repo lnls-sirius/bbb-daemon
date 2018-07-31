@@ -75,7 +75,7 @@ class NetUtils:
         NetUtils.send_data(connection, pickle.dumps(obj))
 
     @staticmethod
-    def checksum(data_str: str):
+    def checksum(data_str):
         packet = data_str.strip().encode('utf-8')
         total = 0
         # Add up 16-bit words
@@ -85,7 +85,7 @@ class NetUtils:
 
         # Add any left over byte
         if len(packet) % 2:
-            total += ord(chr(packet[-1])) << 8
+            total += ord(packet[-1]) << 8
 
         # Fold 32-bits into 16-bits
         total = (total >> 16) + (total & 0xffff)
@@ -93,7 +93,7 @@ class NetUtils:
         return ~total + 0x10000 & 0xffff
 
     @staticmethod
-    def compare_checksum(data: str):
+    def compare_checksum(data):
         """
         Compares the received message's and the object checksum fields. This method must be updated
         as the data format sent by the bbb is modified.

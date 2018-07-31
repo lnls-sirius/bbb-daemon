@@ -3,14 +3,14 @@ import socket
 import threading
 import time
 
-from daemon.bbb import BBB
+from host.bbb import BBB
+from common.entity.definition import PING_INTERVAL
 from common.entity.entities import Command
 from common.entity.metadata import Singleton
 from common.network.utils import NetUtils
-from server.control.controller import ServerController
 
 
-class Daemon(metaclass=Singleton):
+class Daemon():
     """
     A class to monitor and update.
     """
@@ -82,12 +82,13 @@ class Daemon(metaclass=Singleton):
 
         while self.pinging:
             info = self.bbb.get_current_config()
+            print(info)
             # {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
             message = "{}|{}".format(NetUtils.checksum(info), info)
 
             ping_socket.sendto(message.encode('utf-8'), (self.server_address, self.ping_port))
 
-            time.sleep(ServerController.PING_INTERVAL)
+            time.sleep(PING_INTERVAL)
 
         ping_socket.close()
 

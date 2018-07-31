@@ -48,18 +48,18 @@ class Sector:
     """
     A static class providing helper functions to manage sectors.
     """
-    SECTORS = [str(i) for i in range(1, 21)] + ["Conectividade", "LINAC", "RF", "Fontes"]
+    SECTORS = [str(i) for i in range(1, 21)] + ["Conectividade", "LINAC", "RF", "Fontes", "Outros"]
     # See https://wiki-sirius.lnls.br/mediawiki/index.php/CON:Sirius_control_system_network#Subnetwork_Division
-    SUBNETS = [[ipaddress.ip_network('10.128.10.0/25'), ipaddress.ip_network('10.128.10.128/25')]] + \
-              [ipaddress.ip_network('10.128.{}.0/24'.format(i * 10)) for i in range(2, 20)] + \
-              [[ipaddress.ip_network('10.128.200.0/25'), ipaddress.ip_network('10.128.200.128/25')]] + \
-              [ipaddress.ip_network('10.128.0.0/24'),
-               [ipaddress.ip_network('10.128.1.0/25'), ipaddress.ip_network('10.128.1.128/25')],
-               [ipaddress.ip_network('10.128.25.0/26'), ipaddress.ip_network('10.128.25.64/26'),
-                ipaddress.ip_network('10.128.25.128/25')],
-               [ipaddress.ip_network('10.128.75.0/27'), ipaddress.ip_network('10.128.75.32/27'),
-                ipaddress.ip_network('10.128.75.64/27'), ipaddress.ip_network('10.128.75.128/27'),
-                ipaddress.ip_network('10.128.75.160/27')]]
+    SUBNETS = [[ipaddress.ip_network(u'10.128.10.0/25'), ipaddress.ip_network(u'10.128.10.128/25')]] + \
+              [ipaddress.ip_network(u'10.128.{}.0/24'.format(i * 10)) for i in range(2, 20)] + \
+              [[ipaddress.ip_network(u'10.128.200.0/25'), ipaddress.ip_network(u'10.128.200.128/25')]] + \
+              [ipaddress.ip_network(u'10.128.0.0/24'),
+               [ipaddress.ip_network(u'10.128.1.0/25'), ipaddress.ip_network(u'10.128.1.128/25')],
+               [ipaddress.ip_network(u'10.128.25.0/26'), ipaddress.ip_network(u'10.128.25.64/26'),
+                ipaddress.ip_network(u'10.128.25.128/25')],
+               [ipaddress.ip_network(u'10.128.75.0/27'), ipaddress.ip_network(u'10.128.75.32/27'),
+                ipaddress.ip_network(u'10.128.75.64/27'), ipaddress.ip_network(u'10.128.75.128/27'),
+                ipaddress.ip_network(u'10.128.75.160/27')], ipaddress.ip_network(u'0.0.0.0/0')]
 
     @staticmethod
     def subnets():
@@ -85,7 +85,7 @@ class Sector:
             elif ip_address in subnet.hosts():
                 return Sector.SECTORS[idx]
 
-        raise SectorNotFoundError("Sector not found for address {}.".format(ip_address))
+        return Sector.SECTORS[-1]
 
     @staticmethod
     def get_default_gateway_of_address(ip_address=None):
@@ -103,7 +103,7 @@ class Sector:
             elif ip_address in subnet.hosts():
                 return subnet.network_address + 1
 
-        raise SectorNotFoundError("Sector not found for address {}.".format(ip_address))
+        return Sector.SUBNETS[-1].network_address + 1
 
 
 class NodeState:
@@ -168,7 +168,7 @@ class BaseRedisEntity:
         raise NotImplementedError("Provide an implementation for BaseRedisEntity class")
 
     @staticmethod
-    def get_name_from_key(key: str):
+    def get_name_from_key(key):
         """
         Removes the prefix from the key.
         :param key: A Redis key.
@@ -189,7 +189,7 @@ class Type(BaseRedisEntity):
     key_prefix_len = len(key_prefix)
 
     def __init__(self, name="generic", repo_url="A generic URL.", color=(255, 255, 255),
-                 description="A generic host.", sha: str = ""):
+                 description="A generic host.", sha=""):
         """
         Initializes a type instance.
         :param name: a type's name.
@@ -205,7 +205,7 @@ class Type(BaseRedisEntity):
         self.sha = sha
 
     @staticmethod
-    def get_name_from_key(key: str):
+    def get_name_from_key(key):
         """
         Returns the prefix from a type's name.
         :param key: a type's id key.
@@ -278,7 +278,7 @@ class Node(BaseRedisEntity):
 
     REBOOT_COUNTER_PERIOD = -90
 
-    def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, type_node: Type = None, sector=1,
+    def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, type_node=None, sector=1,
                  counter=0, pv_prefixes=[], rc_local_path=''):
         """
         Initializes a node instance.
@@ -303,7 +303,7 @@ class Node(BaseRedisEntity):
         self.rcLocalPath = rc_local_path
 
     @staticmethod
-    def get_prefix_string(pref: []):
+    def get_prefix_string(pref):
         """
         Array to String !
         :return:
@@ -320,7 +320,7 @@ class Node(BaseRedisEntity):
         return pref_str
 
     @staticmethod
-    def get_prefix_array(pref: str):
+    def get_prefix_array(pref):
         """
         String to array!
         :param pref:
@@ -335,7 +335,7 @@ class Node(BaseRedisEntity):
         return set(pref_array)
 
     @staticmethod
-    def get_name_from_key(key: str):
+    def get_name_from_key(key):
         """
         Removes prefix from key and returns the name.
         :param key:

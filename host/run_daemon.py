@@ -1,6 +1,7 @@
 import argparse
+import logging
 import os
-from daemon.daemon import Daemon
+from host.daemon import Daemon
 
 CONFIG_PATH = "/root/bbb-daemon/bbb.bin"
 TYPE_RC_LOCAL_PATH = "init/rc.local"
@@ -52,7 +53,14 @@ if __name__ == '__main__':
     parser.add_argument("--node-rc-local", "-R", nargs='?', default=RC_LOCAL_DESTINATION_PATH,
                         help="A node's RC.local path.", dest="node_rc_local")
 
+    parser.add_argument('--log-path', '-l', nargs='?', default='./daemon.log',
+                        help="Daemon's log file location.", dest='log_path')
+
     args = vars(parser.parse_args())
+
+    logging.basicConfig(filename=args['log_path'], level=logging.INFO,
+                        format='%(asctime)-15s %(message)s',
+                        datefmt='%d/%m/%Y %H:%M:%S')
 
     if not args['ftp_destination'].endswith('/'):
         args['ftp_destination'] = args['ftp_destination'] + '/'
@@ -66,4 +74,6 @@ if __name__ == '__main__':
            boot_port=args['boot_port'],
            path=args['configuration_path'],
            rc_local_dest_path=args['node_rc_local'],
-           ftp_destination_folder=args['ftp_destination'])
+           ftp_destination_folder=args['ftp_destination'],
+           sftp_port=args['ftp_port'])
+

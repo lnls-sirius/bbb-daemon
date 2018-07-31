@@ -1,3 +1,4 @@
+from commom.entity.definition import MAX_LOST_PING, PING_INTERVAL
 from common.entity.entities import Command, NodeState, Sector, Node, Type
 from common.entity.metadata import Singleton
 from common.util.git import cloneRepository, checkUrlFunc
@@ -12,11 +13,6 @@ class ServerController(metaclass=Singleton):
     """
     The main class of the server. It controls the server state and the client requests.
     """
-
-    # A host is considered disconnected if the server has not received a ping from it within 5 time intervals.
-    MAX_LOST_PING = 5
-    # in seconds
-    PING_INTERVAL = 5
 
     def __init__(self, sftp_home_dir: str = '/root/bbb-daemon-repos/'):
         """
@@ -106,7 +102,7 @@ class ServerController(metaclass=Singleton):
 
                 self.updateNodesLockList[sector].release()
 
-            time.sleep(ServerController.PING_INTERVAL)
+            time.sleep(PING_INTERVAL)
 
         self.logger.info("Closing node scanning thread.")
 
@@ -123,7 +119,7 @@ class ServerController(metaclass=Singleton):
             sector = new_node.sector
             self.updateNodesLockList[sector].acquire()
 
-            new_node.counter = ServerController.MAX_LOST_PING
+            new_node.counter = MAX_LOST_PING
 
             if new_node in self.nodes[sector]["configured"]:
                 # Updates the current instance if the node is already in the db.
@@ -252,7 +248,7 @@ class ServerController(metaclass=Singleton):
         if address in self.nodes[sector]["configured"]:
 
             node = self.nodes[sector]["configured"][self.nodes[sector]["configured"].index(address)]
-            node.counter = ServerController.MAX_LOST_PING
+            node.counter = MAX_LOST_PING
 
             if node.name == name and node.type.name == host_type and node.type.sha == bbb_sha:
                 node.update_state(NodeState.CONNECTED)
@@ -271,7 +267,7 @@ class ServerController(metaclass=Singleton):
             if address in self.nodes[sector]["unconfigured"]:
 
                 un_configured_node = self.nodes[sector]["unconfigured"][self.nodes[sector]["unconfigured"].index(address)]
-                un_configured_node.counter = ServerController.MAX_LOST_PING
+                un_configured_node.counter = MAX_LOST_PING
                 un_configured_node.name = name
                 un_configured_node.type = available_type
 
@@ -282,7 +278,7 @@ class ServerController(metaclass=Singleton):
 
             else:
                 new_unconfigured_node = Node(name=name, ip=address, state=NodeState.CONNECTED, type_node=available_type,
-                                             sector=sector, counter=ServerController.MAX_LOST_PING)
+                                             sector=sector, counter=MAX_LOST_PING)
                 if conflicted_host:
                     new_unconfigured_node.update_state(NodeState.MIS_CONFIGURED)
 
