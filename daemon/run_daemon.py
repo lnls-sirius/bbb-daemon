@@ -5,7 +5,7 @@ import time
 
 from bbb import BBB
 from common.entity.entities import Command
-from common.network.utils import NetUtils, checksum
+from common.network.utils import NetUtils
 
 ##################################################################
 CONFIG_PATH = "/root/bbb-daemon/bbb.bin"
@@ -23,15 +23,16 @@ bindPort = 9877
 # CLONE_PATH = "../"  # remember to place the forward slash !
 
 
-class Daemon():
+class Daemon:
 
-    def __init__(self, serverAddress: str, pingPort: int, bindPort: int, ftpDestinationFolder: str):
+    def __init__(self, serverAddress: str, pingPort: int, commandPort : int, bindPort: int, ftpDestinationFolder: str):
         self.ftpDestinationFolder = ftpDestinationFolder
 
         self.bbb = BBB(path=CONFIG_PATH, rc_local_dest_path=RC_LOCAL_DESTINATION_PATH, sftp_port=FTP_SERVER_PORT,
                        sfp_server_addr=servAddr, ftp_destination_folder=self.ftpDestinationFolder)
         self.serverAddress = serverAddress
         self.pingPort = pingPort
+        self.commandPort = commandPort
         self.bindPort = bindPort
 
         self.pingThread = threading.Thread(target=self.ping_udp)
@@ -41,6 +42,23 @@ class Daemon():
         self.commandThread = threading.Thread(target=self.listen)
         self.listening = True
         self.commandThread.start()
+
+    def requestInfo(self):
+
+        command_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        command_socket.settimeout(10)
+
+        command_socket.connect((self.serverAddress, self.commandPort))
+
+        NetUtils.send_command(command_socket, Command.GET_REG_NODE_BY_IP)
+        NetUtils.send_data(command_socket, self.bbb.node.ipAddress)
+
+        node_from_server = NetUtils.recv_data(command_socket)
+
+        if node_from_server != self.bbb.node:
+            self.bbb.update(node_from_server)
+
+        command_socket.close()
 
     def ping_udp(self):
         """
@@ -56,9 +74,9 @@ class Daemon():
         pingSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         while self.pinging:
-            info = self.bbb.getInfo()
-            message = "{}|{}".format(checksum(info), info)
-            ## {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
+            info = self.bbb.get_current_config()
+            # {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
+            message = "{}|{}".format(NetUtils.checksum(info), info)
             pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
             print('Ping to {}:{}\tMessage {}'.format(self.serverAddress, self.pingPort, message))
             time.sleep(1)
@@ -82,12 +100,12 @@ class Daemon():
 
             connection, addr = commandSocket.accept()
 
-            command = NetUtils.recvCommand(connection)
+            command = NetUtils.recv_command(connection)
 
             if command == Command.SWITCH:
                 print("Command SWITCH")
                 # Don't change this order !
-                node = NetUtils.recvObject(connection)
+                node = NetUtils.recv_object(connection)
                 self.bbb.update(node)
                 print("bbb updated ! Rebooting now !")
                 self.pinging = False
@@ -107,12 +125,13 @@ class Daemon():
 if __name__ == '__main__':
     import sys
 
-    print("arg[1]=servAddress\targ[2]=pingPort\targ[3]=bindPort\targ[4]=FTP_DESTINATION_FOLDER")
-    if len(sys.argv) == 5:
+    print("arg[1]=servAddress\targ[2]=pingPort\targ[3]=commandPort\targ[4]=bindPort\targ[5]=FTP_DESTINATION_FOLDER")
+    if len(sys.argv) == 6:
         servAddr = sys.argv[1]
         pingPort = int(sys.argv[2])
-        bindPort = int(sys.argv[3])
-        FTP_DESTINATION_FOLDER = sys.argv[4]
+        commandPort = int(sys.argv[3])
+        bindPort = int(sys.argv[4])
+        FTP_DESTINATION_FOLDER = sys.argv[5]
         print('\n\t{}\n\n'.format(sys.argv))
     else:
         print('Error with the parameters. Using default values.')
@@ -123,5 +142,5 @@ if __name__ == '__main__':
     if not os.path.exists(FTP_DESTINATION_FOLDER):
         os.makedirs(FTP_DESTINATION_FOLDER)
 
-    print("arg[1]={}\targ[2]={}\targ[3]={}\t".format(servAddr, pingPort, bindPort))
-    Daemon(serverAddress=servAddr, pingPort=pingPort, bindPort=bindPort, ftpDestinationFolder=FTP_DESTINATION_FOLDER)
+    print("arg[1]={}\targ[2]={}\targ[3]={}\targ[4]={}".format(servAddr, pingPort, commandPort, bindPort))
+    Daemon(serverAddress=servAddr, pingPort=pingPort, commandPort=commandPort, bindPort=bindPort, ftpDestinationFolder=FTP_DESTINATION_FOLDER)

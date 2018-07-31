@@ -6,10 +6,16 @@ import redis
 import threading
 
 
-class DifferentSectorNodeException(Exception):
+class DifferentSectorNodeError(Exception):
     """
     Exception raised when the user attemps to add a node in sector Y that is already
     included in the database in another sector.
+    """
+    pass
+
+class DataNotFoundError(Exception):
+    """
+    Exception raised when the user attempts to fetch a node or a type that does not exist.
     """
     pass
 
@@ -55,11 +61,11 @@ class RedisPersistence(metaclass=Singleton):
         Append a new type to the database, updating its value if it already exists.
         :param new_type: the type to be appended.
         :return: True if the type was successfully added. False, otherwise.
+        :raise: Type given as parameter is None or its name is not valid.
         """
 
         if new_type is None or new_type.name is None or new_type.name == "":
-            print("Type object isn't fit to be persisted. {}".format(new_type))
-            return False
+            raise TypeError("Type given as parameter is None or its name is not valid.")
 
         self.typesListMutex.acquire()
         if not self.db.exists(new_type.get_key()):
@@ -77,27 +83,30 @@ class RedisPersistence(metaclass=Singleton):
         Append a new node to the database, adding it to sector list accordingly.
         :param new_node: the node to be added.
         :return: True if the node was successfully added. False, otherwise.
+        :raise DifferentSectorNodeError: the user tries to append a node that is already in another sector.
+        :raise TypeError: node given as parameter is None or its name is not valid.
         """
         if new_node is None or new_node.name is None or new_node.name == "":
-            print("Node Invalid  {}".format(new_node))
-            return False
+            raise TypeError("Node given as parameter is None or its name is not valid.")
 
         self.nodesListMutex.acquire()
 
         # Trying to add a node that exists in other sector
-        old_node = self.get_node_by_name(new_node.name)
-
-        if old_node is not None:
+        try:
+            old_node = self.get_node_by_name(new_node.name)
             # node already exists
             if old_node.sector != new_node.sector:
-                # node was initially added on another sector. Abort !
+                # node was initially added on another sector.
                 self.nodesListMutex.release()
-                raise DifferentSectorNodeException("Cannot append node to sector {} if it already belongs to {}"
-                                                   .format(new_node.sector, old_node.sector))
+                raise DifferentSectorNodeError("Cannot append node to sector {} if it already belongs to {}"
+                                               .format(new_node.sector, old_node.sector))
 
             # Remove old node
             self.db.delete(old_node.get_key())
             self.db.lrem(name=new_node.sector, value=old_node.get_key(), count=0)
+
+        except DataNotFoundError:
+            pass
 
         if not self.db.exists(new_node.get_key()):
             self.db.lpush(new_node.sector, new_node.get_key())
@@ -105,39 +114,45 @@ class RedisPersistence(metaclass=Singleton):
         node_key, node_value = new_node.to_set()
 
         self.db.set(node_key, node_value)
-        success = self.db.set(new_node.ipAddress, new_node.get_key())
+        success = self.db.set(str(new_node.ip_address), new_node.get_key())
 
         self.nodesListMutex.release()
 
         return success
 
-    def get_node_by_address(self, node_address: str = None):
+    def get_node_by_address(self, node_address=None):
         """
         Searches a node by its IP address.
         :param node_address: the node's ip address.
         :return: None if node was not found or the Node instance, otherwise.
+        :raise TypeError: Node given as parameter is None.
+        :raise DataNotFoundError: Node instance has not been found.
         """
 
         if node_address is None:
-            return None
+            raise TypeError("Node given as parameter is None.")
 
-        node_name = self.db.get(node_address).decode('utf-8')
+        node_name = self.db.get(str(node_address)).decode('utf-8')
 
         if node_name is not None:
             if str(node_name).startswith(Node.key_prefix):
                 node_name = node_name[Node.key_prefix_len:]
                 return self.get_node_by_name(node_name)
 
-        return None
+        raise DataNotFoundError("Node whose IP address is {} hasn't been found in the db.".format(node_address))
 
     def get_node_by_name(self, node_name: str):
         """
         Search a node instance by its name.
         :param node_name: the node's name to search.
-        :return: None if node was not found or the Node instance, otherwise.
+        :return: Node instance whose name is node_name.
+        :raise TypeError: Node name given as parameter is None.
+        :raise DataNotFoundError: Node instance has not been found.
         """
 
-        ret_node = None
+        if node_name is None:
+            raise TypeError("Node given as parameter is None.")
+
         content_as_string = self.db.get(Node.key_prefix + node_name)
 
         if content_as_string is not None:
@@ -147,13 +162,16 @@ class RedisPersistence(metaclass=Singleton):
             ret_node = Node(type_node=node_type, name=node_name)
             ret_node.from_set(content_as_string)
 
-        return ret_node
+            return ret_node
+
+        raise DataNotFoundError("Node whose name is {} hasn't been found in the db.".format(node_name))
 
     def get_type_by_name(self, type_name: str):
         """
         Search a type by name.
         :param type_name:  the type's name to search.
         :return: None if the type was not found or the Type object, otherwise.
+        :raise DataNotFoundError: Type instance has not been found.
         """
 
         if self.db.exists(Type.key_prefix + type_name):
@@ -161,12 +179,13 @@ class RedisPersistence(metaclass=Singleton):
             ret_type.from_set(str_dic=self.db.get(Type.key_prefix + type_name))
             return ret_type
 
-        return None
+        raise DataNotFoundError("Type whose name is {} hasn't been found in the db.".format(type_name))
 
     def fetch_types(self):
         """
         Returns all types registered in the database so far.
         :return: A list containing all types in the database.
+        :raise DataNotFoundError: the db query returns None instead of a list.
         """
 
         self.typesListMutex.acquire()
@@ -174,25 +193,35 @@ class RedisPersistence(metaclass=Singleton):
         ret_list = []
 
         type_list = self.db.lrange("types", 0, -1)
-        if type_list is not None:
-            for type_key in type_list:
-                type_name = Type.get_name_from_key(type_key)
-                if type_name != '':
-                    ret_list.append(self.get_type_by_name(type_name.decode("utf-8")))
+
+        if type_list is None:
+            self.typesListMutex.release()
+            raise DataNotFoundError("An error occurred while fetching the types from the database.")
+
+        for type_key in type_list:
+            type_name = Type.get_name_from_key(type_key)
+            if type_name != '':
+                ret_list.append(self.get_type_by_name(type_name.decode("utf-8")))
 
         self.typesListMutex.release()
+
         return ret_list
 
     def fetch_nodes_from_sector(self, sector="1"):
         """
-        Returns all node from sector registered in the database so far.
+        Returns all nodes from a given sector saved in the database so far.
         :param sector: the sector to select the nodes
-        :return: A list containing all nodes in the sector passed as parameter'.
+        :return: A list containing all nodes in the sector passed as parameter.
+        :raise DataNotFoundError: the db query returns None instead of a list.
         """
         self.nodesListMutex.acquire()
         ret_nodes = []
 
         nodes_db = self.db.lrange(sector, 0, -1)
+
+        if nodes_db is None:
+            self.nodesListMutex.release()
+            raise DataNotFoundError("An error occurred while fetching the nodes from the database.")
 
         for node_key in nodes_db:
             node_name = Node.get_name_from_key(node_key.decode("utf-8"))
@@ -208,10 +237,10 @@ class RedisPersistence(metaclass=Singleton):
         Removes a type from the database.
         :param type_name: the type's name.
         """
-
         count = 0
 
         self.typesListMutex.acquire()
+
         type_name = Type.key_prefix + type_name
         if self.db.exists(type_name):
             self.db.delete(type_name)
@@ -236,12 +265,12 @@ class RedisPersistence(metaclass=Singleton):
 
         if self.db.exists(node.get_key()):
             self.db.delete(node.get_key())
-            self.db.delete(node.ipAddress)
+            self.db.delete(str(node.ip_address))
             count = self.db.lrem(name=node.sector, value=node.get_key(), count=0)
-        elif self.db.exists(node.ipAddress):
+        elif self.db.exists(str(node.ip_address)):
             # Remove defunct entries
-            self.db.delete(node.ipAddress)
-            count = self.db.lrem(name=node.sector, value=node.ipAddress, count=0)
+            self.db.delete(str(node.ip_address))
+            count = self.db.lrem(name=node.sector, value=str(node.ip_address), count=0)
 
         self.nodesListMutex.release()
 

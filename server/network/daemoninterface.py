@@ -1,3 +1,4 @@
+import logging
 import socket
 import threading
 
@@ -5,16 +6,16 @@ from common.entity.entities import Command
 from common.entity.metadata import Singleton
 from common.network.utils import NetUtils
 from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
-from server.control.controller import ServerController
+from queue import Empty, Queue
 
 
 class DaemonHostListener(metaclass=Singleton):
     """
-
+    This class interfaces the BBB hosts and the serves.
     """
 
     def __init__(self, workers: int = 10, bbb_udp_port: int = 9876, bbb_tcp_port: int = 9877):
+        from server.control.controller import ServerController
 
         self.bbbUdpPort = bbb_udp_port
         self.bbbTcpPort = bbb_tcp_port
@@ -24,7 +25,13 @@ class DaemonHostListener(metaclass=Singleton):
 
         self.ipInProcess = {}
 
+        # UDP Ethernet socket
+        self.ping_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.ping_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
         self.queueUdp = Queue()
+
+        self.logger = logging.getLogger('DaemonHostListener')
 
         self.listening = True
         self.listenThread = threading.Thread(target=self.listen_udp)
@@ -55,51 +62,68 @@ class DaemonHostListener(metaclass=Singleton):
             return False
 
     def process_worker_udp(self):
+        """
+        A worker's thread. It dequeues an element and updates the respective node's paramenters.
+        """
+
         while self.listening:
+
             try:
                 #  {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
                 info = self.queueUdp.get(timeout=5, block=True)
                 command = int(info[1])
+
                 if command == Command.PING:
                     name = info[2]
-                    hostType = info[3]
-                    bbbIpAddr = info[4]
-                    bbbSha = info[5]
-                    self.controller.update_host_counter_by_address(address=bbbIpAddr, name=name, hostType=hostType,
-                                                                   bbbSha=bbbSha)
+                    host_type = info[3]
+                    bbb_ip_address = info[4]
+                    bbb_project_sha = info[5]
+                    self.controller.update_host_counter_by_address(address=bbb_ip_address, name=name,
+                                                                   host_type=host_type, bbb_sha=bbb_project_sha)
                 elif command == Command.EXIT:
-                    print("Worker ... EXIT")
+                    self.logger.info("Worker received a EXIT command. Finishing its thread.")
                     return
-            except Exception as e:
+
+            except Empty:
+                # Queue is empty, wait again
                 pass
-        print("Worker ... Finished")
+
+        self.logger.info("Worker's thread closed.")
 
     def listen_udp(self):
-        ping_socket = socket.socket(socket.AF_INET,  # Internet
-                                   socket.SOCK_DGRAM)  # UDP
-        ping_socket.bind(("0.0.0.0", self.bbbUdpPort))
-        print("Listening UDP on 0.0.0.0 : {} ....".format(self.bbbUdpPort))
+        """
+        Listens for host pings via UDP datagrams.
+        """
+        self.logger.info("Creating ping listening thread.")
+        self.ping_socket.bind(("0.0.0.0", self.bbbUdpPort))
+        self.logger.info("Listening UDP on 0.0.0.0:{}.".format(self.bbbUdpPort))
+
         while self.listening:
-            data, ipAddr = ping_socket.recvfrom(1024)  # buffer size is 1024 bytes
+            data, ip_address = self.ping_socket.recvfrom(1024)  # buffer size is 1024 bytes
             data = str(data.decode('utf-8'))
-            info = NetUtils.verify_msg(data=data)
+
+            if len(data) == 1 and int(data) == Command.EXIT:
+                self.logger.info("Stopping pinging thread's inner loop")
+                break
+
+            info = NetUtils.compare_checksum(data=data)
             if info:
                 self.queueUdp.put(info)
-        ping_socket.close()
-        print('Ping socket closed ')
+
+        self.ping_socket.close()
+        self.logger.info("Ping listening thread closed.")
 
     def stop_all(self):
         """
-           Stop !
+        Stop all threads and workers.
         """
         self.listening = False
-        # In order to close the socket and exit from the accept () function, emulate a new connection
         self.executor.shutdown()
+
+        # In order to close the socket and exit from the accept () function, emulate a new connection
         try:
-            shutdown_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            shutdown_socket.connect(("0.0.0.0", self.bbbTcpPort))
-            NetUtils.send_command(shutdown_socket, Command.EXIT)
+            shutdown_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            shutdown_socket.sendto('{}'.format(Command.EXIT).encode('utf-8'), ("localhost", self.bbbUdpPort))
             shutdown_socket.close()
-        except ConnectionRefusedError:
-            pass
-        print("Services Stopped.")
+        except socket.error:
+            self.logger.exception("Error while closing threads.")
