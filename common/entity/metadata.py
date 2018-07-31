@@ -1,3 +1,9 @@
+class SingletonInstanceError(Exception):
+    """
+    A simple wrapper for singleton errors
+    """
+    pass
+
 
 class Singleton(type):
     """
@@ -14,6 +20,10 @@ class Singleton(type):
     def get_instance(cls):
         """
         Returns the saved instance.
+        :raise SingletonInstanceError: class has not been created before this call.
         :return: The single copy of the object instance. A new object is created if it has not been instantiated yet.
         """
-        return cls._instances[cls] if cls in cls._instances.keys() else cls()
+        if cls in cls._instances.keys():
+            return cls._instances[cls]
+
+        raise SingletonInstanceError("{} class hasn't been created yet".format(cls))

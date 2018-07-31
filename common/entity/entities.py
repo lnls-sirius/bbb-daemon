@@ -11,8 +11,37 @@ class Command:
     A simple class to wrap command codes.
     """
 
-    PING, REBOOT, EXIT, END, TYPE, GET_TYPES, APPEND_TYPE, REMOVE_TYPE, NODE, GET_REG_NODES_SECTOR, \
-        GET_REG_NODE_BY_IP, GET_UNREG_NODES_SECTOR, APPEND_NODE, REMOVE_NODE, SWITCH = range(15)
+    PING, REBOOT, EXIT, END, TYPE, APPEND_TYPE, REMOVE_TYPE, NODE, APPEND_NODE, REMOVE_NODE, SWITCH, \
+    GET_TYPES, GET_UNREG_NODES_SECTOR, GET_REG_NODES_SECTOR, GET_REG_NODE_BY_IP, OK, FAILURE = range(17)
+
+    @staticmethod
+    def command_name(command):
+        """
+        Returns the name of a command.
+        :param command: a command id.
+        :return: a given command's name.
+        """
+        for key in Command.__dict__.keys():
+            if Command.__dict__[key] == command:
+                return key
+
+    @staticmethod
+    def is_loggable(command):
+        """
+        Checks if a given command should appear in logs.
+        :param command: a command id.
+        :return: True if command should be appear in logs and False, otherwise.
+        """
+        return command not in [Command.GET_TYPES, Command.GET_UNREG_NODES_SECTOR,
+                               Command.GET_REG_NODES_SECTOR, Command.GET_REG_NODE_BY_IP,
+                               Command.OK, Command.FAILURE]
+
+
+class SectorNotFoundError(Exception):
+    """
+    A simple exception class to represent sector errors.
+    """
+    pass
 
 
 class Sector:
@@ -20,9 +49,21 @@ class Sector:
     A static class providing helper functions to manage sectors.
     """
     SECTORS = [str(i) for i in range(1, 21)] + ["Conectividade", "LINAC", "RF", "Fontes"]
-    SUBNETS = [ipaddress.ip_network('10.128.{}.0/24'.format(i * 10)) for i in range(1, 21)] + \
-                [ipaddress.ip_network('10.128.0.0/24'), ipaddress.ip_network('10.128.1.0/24'),
-                 ipaddress.ip_network('10.128.25.0/24'), ipaddress.ip_network('10.128.75.0/24')]
+    # See https://wiki-sirius.lnls.br/mediawiki/index.php/CON:Sirius_control_system_network#Subnetwork_Division
+    SUBNETS = [[ipaddress.ip_network('10.128.10.0/25'), ipaddress.ip_network('10.128.10.128/25')]] + \
+              [ipaddress.ip_network('10.128.{}.0/24'.format(i * 10)) for i in range(2, 20)] + \
+              [[ipaddress.ip_network('10.128.200.0/25'), ipaddress.ip_network('10.128.200.128/25')]] + \
+              [ipaddress.ip_network('10.128.0.0/24'),
+               [ipaddress.ip_network('10.128.1.0/25'), ipaddress.ip_network('10.128.1.128/25')],
+               [ipaddress.ip_network('10.128.25.0/26'), ipaddress.ip_network('10.128.25.64/26'),
+                ipaddress.ip_network('10.128.25.128/25')],
+               [ipaddress.ip_network('10.128.75.0/27'), ipaddress.ip_network('10.128.75.32/27'),
+                ipaddress.ip_network('10.128.75.64/27'), ipaddress.ip_network('10.128.75.128/27'),
+                ipaddress.ip_network('10.128.75.160/27')]]
+
+    @staticmethod
+    def subnets():
+        return Sector.SUBNETS
 
     @staticmethod
     def sectors():
@@ -31,16 +72,38 @@ class Sector:
     @staticmethod
     def get_sector_by_ip_address(ip_address=None):
         """
-        @todo use ipaddress module to save subnet addresses of each sector.
+        Returns the sector of a node based on its IP address.
         :param ip_address: the IP address of a host.
         :return: the sector that contains the given IP address.
+        :raise SectorNotFoundError: IP address is not contained in any sub-network.
         """
-
         for idx, subnet in enumerate(Sector.SUBNETS):
-            if ip_address in subnet.hosts():
+            if type(subnet) is list:
+                for s in subnet:
+                    if ip_address in s.hosts():
+                        return Sector.SECTORS[idx]
+            elif ip_address in subnet.hosts():
                 return Sector.SECTORS[idx]
 
-        return -1
+        raise SectorNotFoundError("Sector not found for address {}.".format(ip_address))
+
+    @staticmethod
+    def get_default_gateway_of_address(ip_address=None):
+        """
+        Returns the default gateway of a node based on its IP address.
+        :param ip_address: the IP address of a host.
+        :return: the default gateway of that host. An ipaddress.IPv4Address object.
+        :raise SectorNotFoundError: IP address is not contained in any sub-network.
+        """
+        for subnet in Sector.SUBNETS:
+            if type(subnet) is list:
+                for s in subnet:
+                    if ip_address in s.hosts():
+                        return s.network_address + 1
+            elif ip_address in subnet.hosts():
+                return subnet.network_address + 1
+
+        raise SectorNotFoundError("Sector not found for address {}.".format(ip_address))
 
 
 class NodeState:
@@ -48,7 +111,7 @@ class NodeState:
     Valid states for any host in the Controls Group network.
     """
 
-    DISCONNECTED, MISCONFIGURED, CONNECTED, REBOOTING = range(4)
+    DISCONNECTED, MIS_CONFIGURED, CONNECTED, REBOOTING = range(4)
 
     @staticmethod
     def to_string(state):
@@ -63,8 +126,8 @@ class NodeState:
         elif state == NodeState.CONNECTED:
             return "Connected"
 
-        elif state == NodeState.MISCONFIGURED:
-            return "Misconfigured"
+        elif state == NodeState.MIS_CONFIGURED:
+            return "Mis-configured"
 
         elif state == NodeState.REBOOTING:
             return "Rebooting"
@@ -84,22 +147,25 @@ class BaseRedisEntity:
     def to_set(self):
         """
         Returns a set representation of the object.
+        :raise NotImplementedError: empty method.
         """
-        pass
+        raise NotImplementedError("Provide an implementation for BaseRedisEntity class")
 
     def from_set(self, str_dic):
         """
         Returns a BaseRedisEntity object from a string representation of dictionary queried from the Redis db.
         :param str_dic: python's string representation of the dictionary.
+        :raise NotImplementedError: empty method.
         """
-        pass
+        raise NotImplementedError("Provide an implementation for BaseRedisEntity class")
 
     def get_key(self):
         """
         Gets the key used on redis.
         :return: id for redis.
+        :raise NotImplementedError: empty method.
         """
-        pass
+        raise NotImplementedError("Provide an implementation for BaseRedisEntity class")
 
     @staticmethod
     def get_name_from_key(key: str):
@@ -169,9 +235,10 @@ class Type(BaseRedisEntity):
         """
         Load values from a redis set.
         :param str_dic: python's string representation of the dictionary.
+        :raise TypeError: the dictionary provided is None.
         """
         if str_dic is None:
-            return
+            raise TypeError("The provided set is None")
 
         dic_obj = str_dic.decode('utf-8')
         if type(dic_obj) is str:
@@ -214,19 +281,19 @@ class Node(BaseRedisEntity):
     def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, type_node: Type = None, sector=1,
                  counter=0, pv_prefixes=[], rc_local_path=''):
         """
-        Initializes a node instance
-        :param name: a node's name
-        :param ip: string representation of a node's ip address
-        :param state: current node's state
-        :param type_node: current node's type
-        :param sector: current node's sector
-        :param counter: heart beat count
-        :param pv_prefixes: deprecated - a BBB will not provide PVs
-        :param rc_local_path: rc.local location in the project
+        Initializes a node instance.
+        :param name: a node's name.
+        :param ip: string representation of a node's ip address.
+        :param state: current node's state.
+        :param type_node: current node's type.
+        :param sector: current node's sector.
+        :param counter: heart beat count.
+        :param pv_prefixes: deprecated - a BBB will not provide PVs.
+        :param rc_local_path: rc.local location in the project.
         """
 
         self.name = name
-        self.ipAddress = ip
+        self.ip_address = ip
         self.state = state
         self.state_string = NodeState.to_string(state)
         self.type = type_node
@@ -255,7 +322,7 @@ class Node(BaseRedisEntity):
     @staticmethod
     def get_prefix_array(pref: str):
         """
-        String to array !
+        String to array!
         :param pref:
         :return:
         """
@@ -284,7 +351,7 @@ class Node(BaseRedisEntity):
         :return: node's key with prefix and the node's dictionary representation.
         """
 
-        node_info = {"ipAddress": self.ipAddress, "sector": self.sector, "prefix": self.pvPrefix,
+        node_info = {"ip_address": str(self.ip_address), "sector": self.sector, "prefix": self.pvPrefix,
                      "rcLocalPath": self.rcLocalPath}
 
         if self.type is None:
@@ -304,9 +371,10 @@ class Node(BaseRedisEntity):
         """
         Load the values from a redis set.
         :param str_dic: python's string representation of the dictionary.
+        :raise TypeError: the dictionary provided is None.
         """
         if str_dic is None:
-            return
+            raise TypeError("The provided set is None")
 
         dic_obj = str_dic.decode('utf-8')
         if type(dic_obj) is str:
@@ -314,7 +382,7 @@ class Node(BaseRedisEntity):
 
         if type(dic_obj) is dict:
             self.rcLocalPath = dic_obj.get('rcLocalPath', '')
-            self.ipAddress = dic_obj.get("ipAddress", '')
+            self.ip_address = ipaddress.ip_address(dic_obj.get("ip_address", ''))
             self.pvPrefix = dic_obj.get("prefix", [])
             self.sector = dic_obj.get("sector", self.sector)
 
@@ -337,17 +405,36 @@ class Node(BaseRedisEntity):
         """
         Overrides == operator. Compares two Node objects.
         :param other: a other node instance.
-        :return: True if the other instance has the same name and IP address.
+        :return: True if the other instance has the same name or IP address.
         """
-        if other is None:
+        if type(other) is not Node:
+
+            if type(other) is ipaddress.IPv4Address:
+                return self.ip_address == other
+
+            if type(other) is str:
+                return self.name == other
+
             return False
 
-        return self.name == other.name or self.ipAddress == other.ipAddress
+        return self.name == other.name or self.ip_address == other.ip_address
+
+    def is_strictly_equal(self, other):
+        """
+        Checks if both name and IP address are equal on both object.
+        :param other: a other node instance.
+        :return: True if the other instance has the same name and IP address.
+        """
+
+        if type(other) is not Node.__class__:
+            return False
+
+        return self.name == other.name and self.ip_address == other.ipAddress
 
     def __str__(self):
         """
         :return: the string representation of the object
         """
         return "Name: %s, IP Address: %s, Current state: %s" % (
-            self.name, self.ipAddress, NodeState.to_string(self.state))
+            self.name, self.ip_address, NodeState.to_string(self.state))
 
