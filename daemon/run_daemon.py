@@ -1,13 +1,6 @@
+import argparse
 import os
-import socket
-import threading
-import time
 
-from bbb import BBB
-from common.entity.entities import Command
-from common.network.utils import NetUtils
-
-##################################################################
 CONFIG_PATH = "/root/bbb-daemon/bbb.bin"
 TYPE_RC_LOCAL_PATH = "init/rc.local"
 RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
@@ -15,132 +8,61 @@ FTP_SERVER_PORT = 1026
 
 # This info should contain a '/'
 FTP_DESTINATION_FOLDER = '/root/'
-servAddr = "10.0.6.44"
-pingPort = 9876
-bindPort = 9877
+SERVER_ADDR = "10.0.6.44"
+PING_PORT = 9876
+BIND_PORT = 9877
+BOOT_PORT = 9878
 
-##################################################################
 # CLONE_PATH = "../"  # remember to place the forward slash !
 
-
-class Daemon:
-
-    def __init__(self, serverAddress: str, pingPort: int, commandPort : int, bindPort: int, ftpDestinationFolder: str):
-        self.ftpDestinationFolder = ftpDestinationFolder
-
-        self.bbb = BBB(path=CONFIG_PATH, rc_local_dest_path=RC_LOCAL_DESTINATION_PATH, sftp_port=FTP_SERVER_PORT,
-                       sfp_server_addr=servAddr, ftp_destination_folder=self.ftpDestinationFolder)
-        self.serverAddress = serverAddress
-        self.pingPort = pingPort
-        self.commandPort = commandPort
-        self.bindPort = bindPort
-
-        self.pingThread = threading.Thread(target=self.ping_udp)
-        self.pinging = True
-        self.pingThread.start()
-
-        self.commandThread = threading.Thread(target=self.listen)
-        self.listening = True
-        self.commandThread.start()
-
-    def requestInfo(self):
-
-        command_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        command_socket.settimeout(10)
-
-        command_socket.connect((self.serverAddress, self.commandPort))
-
-        NetUtils.send_command(command_socket, Command.GET_REG_NODE_BY_IP)
-        NetUtils.send_data(command_socket, self.bbb.node.ipAddress)
-
-        node_from_server = NetUtils.recv_data(command_socket)
-
-        if node_from_server != self.bbb.node:
-            self.bbb.update(node_from_server)
-
-        command_socket.close()
-
-    def ping_udp(self):
-        """
-        Sends the current parameters set on the bbb to the server so it can monitor if it's configured or not.
-        Command.PING,
-        self.bbb.name,
-            self.bbb.type,
-            self.myIp,
-            @todo: rc.config,  pv.prefix
-            Under development ...
-        :return:
-        """
-        pingSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-        while self.pinging:
-            info = self.bbb.get_current_config()
-            # {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
-            message = "{}|{}".format(NetUtils.checksum(info), info)
-            pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
-            print('Ping to {}:{}\tMessage {}'.format(self.serverAddress, self.pingPort, message))
-            time.sleep(1)
-
-    def stop(self):
-        self.pinging = False
-        self.listening = False
-
-    def listen(self):
-        """
-            Listen to commands from the server.
-        :return:
-        """
-        commandSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        commandSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        commandSocket.bind(("0.0.0.0", self.bindPort))
-        commandSocket.listen(1)
-
-        while self.listening:
-
-            connection, addr = commandSocket.accept()
-
-            command = NetUtils.recv_command(connection)
-
-            if command == Command.SWITCH:
-                print("Command SWITCH")
-                # Don't change this order !
-                node = NetUtils.recv_object(connection)
-                self.bbb.update(node)
-                print("bbb updated ! Rebooting now !")
-                self.pinging = False
-                self.bbb.reboot()
-
-            if command == Command.REBOOT:
-                self.pinging = False
-                self.bbb.reboot()
-
-        commandSocket.close()
-
-    def stop(self):
-        self.pinging = False
-        self.listening = False
-
-
 if __name__ == '__main__':
-    import sys
 
-    print("arg[1]=servAddress\targ[2]=pingPort\targ[3]=commandPort\targ[4]=bindPort\targ[5]=FTP_DESTINATION_FOLDER")
-    if len(sys.argv) == 6:
-        servAddr = sys.argv[1]
-        pingPort = int(sys.argv[2])
-        commandPort = int(sys.argv[3])
-        bindPort = int(sys.argv[4])
-        FTP_DESTINATION_FOLDER = sys.argv[5]
-        print('\n\t{}\n\n'.format(sys.argv))
-    else:
-        print('Error with the parameters. Using default values.')
+    parser = argparse.ArgumentParser("A program to manage and monitor each "
+                                     "Beaglebone host in the Controls Group's network")
 
-    if not FTP_DESTINATION_FOLDER.endswith('/'):
-        FTP_DESTINATION_FOLDER = FTP_DESTINATION_FOLDER + '/'
+    parser.add_argument("--server-addr", "-s", nargs='?', default=SERVER_ADDR,
+                        help="The server's IP address.", dest="server_address")
 
-    if not os.path.exists(FTP_DESTINATION_FOLDER):
-        os.makedirs(FTP_DESTINATION_FOLDER)
+    parser.add_argument("--command-port", "-c", nargs='?', default=BIND_PORT,
+                        help="The port from which command requests are received.", dest="command_port")
 
-    print("arg[1]={}\targ[2]={}\targ[3]={}\targ[4]={}".format(servAddr, pingPort, commandPort, bindPort))
-    Daemon(serverAddress=servAddr, pingPort=pingPort, commandPort=commandPort, bindPort=bindPort, ftpDestinationFolder=FTP_DESTINATION_FOLDER)
+    parser.add_argument("--ping-port", "-p", nargs='?', default=PING_PORT,
+                        help='The port to which ping request are sent.', dest="ping_port")
+
+    parser.add_argument("--boot-port", "-b", nargs='?', default=BOOT_PORT,
+                        help='The port that a BBB used when it booted to load the project it must run',
+                        dest="boot_port")
+
+    parser.add_argument("--ftp-server-addr", "-S", nargs='?', default=SERVER_ADDR,
+                        help="The FTP server's IP address", dest="ftp_server")
+
+    parser.add_argument("--ftp-server-port", "-P", nargs='?', default=FTP_SERVER_PORT,
+                        help="The FTP server's listening port", dest="ftp_port")
+
+    parser.add_argument("--ftp-destination-folder", '-F', nargs='?', default=FTP_DESTINATION_FOLDER,
+                        help="The path which the project will be copied to", dest="ftp_destination")
+
+    parser.add_argument("--configuration-path", "-C", nargs='?', default=CONFIG_PATH,
+                        help="The configuration file's location", dest="configuration_path")
+
+    parser.add_argument("--project-rc-local", "-r", nargs='?', default=TYPE_RC_LOCAL_PATH,
+                        help="RC.local path inside the project repository.", dest="project_rc_local")
+
+    parser.add_argument("--node-rc-local", "-R", nargs='?', default=RC_LOCAL_DESTINATION_PATH,
+                        help="A node's RC.local path.", dest="node_rc_local")
+
+    args = vars(parser.parse_args())
+
+    if not args['ftp_destination'].endswith('/'):
+        args['ftp_destination'] = args['ftp_destination'] + '/'
+
+    if not os.path.exists(args['ftp_destination']):
+        os.makedirs(args['ftp_destination'])
+
+    Daemon(server_address=args['server_address'],
+           ping_port=args['ping_port'],
+           bind_port=args['command_port'],
+           boot_port=args['boot_port'],
+           path=args['configuration_path'],
+           rc_local_dest_path=args['node_rc_local'],
+           ftp_destination_folder=args['ftp_destination'])
