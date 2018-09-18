@@ -1,23 +1,38 @@
 #!/bin/bash
+export FLASK_PORT=4850
 export PYTHONPATH="$(dirname $PWD)"
 
+function finish {
+    if [ -f gunicorn.pid ]; then
+        kill $(cat gunicorn.pid)
+    fi 
+    echo Bye !
+}
+trap finish EXIT
 
-#The enviroment variables bellow are debug only. The production ones are to be set on the .env file to be used on swarm
+DEV=false
 
-#export REDIS_SERVER_IP=10.0.6.70
-#export REDIS_SERVER_PORT=6379
+if [ $DEV = true ];then
+    export FTP_HOME="${PWD}/../ftp_dev" 
+    mkdir -p ${FTP_HOME}
+else
+    rm -rdf ${PWD}/../ftp_dev
+fi
 
-#export BBB_UDP=9876
-#export BBB_TCP=9877
+if [ -z "$REDIS_SERVER_IP" || -z "$REDIS_SERVER_PORT"]; then
+    echo Using default Redis env
+    export REDIS_SERVER_IP='0.0.0.0'
+    export REDIS_SERVER_PORT=6379
+fi  
 
-#export COM_INTERFACE_TCP=6789
+# python3 -u /root/bbb-daemon/server/server.py
+pushd ../
+git clone https://github.com/vishnubob/wait-for-it.git
+pushd wait-for-it
+./wait-for-it.sh -t 0 $REDIS_SERVER_IP:$REDIS_SERVER_PORT
+popd
+popd
 
-#export WORKERS_NUM=10
-#export FLASK_PORT=4850
+# openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
 
-# The path must be absolute !
-#export FTP_PORT=21
-#export FTP_HOME=/root/bbb-daemon/types_repository/
-
-python3 -u /root/bbb-daemon/server/server.py $REDIS_SERVER_IP $REDIS_SERVER_PORT $BBB_UDP $BBB_TCP $COM_INTERFACE_TCP $WORKERS_NUM $FLASK_PORT $FTP_HOME $FTP_PORT
-
+gunicorn --bind 0.0.0.0:${FLASK_PORT} server:app -p gunicorn.pid #-certfile cert.pem --keyfile key.pem

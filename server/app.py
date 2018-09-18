@@ -20,7 +20,6 @@ api = Api(app)
 api.add_resource(RestNode, '/node/')
 api.add_resource(RestBBB, '/bbb/')
 
-
 @nav.navigation()
 def my_navbar():
     return Navbar('BBB Daemon System',
