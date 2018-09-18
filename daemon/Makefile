@@ -12,7 +12,7 @@ all:
 install:
 	apt-get install python3
 	apt-get install python3-pip
-    pip3 install --no-cache-dir -r requirements.txt
+	pip3 install --no-cache-dir -r requirements.txt
 	cp --preserve=mode ${SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
 	systemctl daemon-reload
 	systemctl stop ${SERVICE_NAME}
