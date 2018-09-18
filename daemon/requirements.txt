@@ -1,1 +1,1 @@
-ftputil=3.4
+ftputil==3.4
