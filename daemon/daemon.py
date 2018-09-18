@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 import os
 import socket
 import threading
@@ -18,6 +21,8 @@ FTP_DESTINATION_FOLDER = '/root/'
 servAddr = "10.0.6.44"
 pingPort = 9876
 bindPort = 9877
+
+PING_CANDIDATES = ['10.0.6.44', '10.0.6.48', '10.0.6.51']
 
 ##################################################################
 # CLONE_PATH = "../"  # remember to place the forward slash !
@@ -55,10 +60,15 @@ class Daemon():
         pingSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         while self.pinging:
-            info = self.bbb.getInfo()
-            message = "{}|{}".format(checksum(info), info)
-            pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
-            time.sleep(1)
+            try:
+                info = self.bbb.getInfo()
+                message = "{}|{}".format(checksum(info), info)
+                pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
+                time.sleep(1)
+            except :
+                pass
+
+            
 
     def stop(self):
         self.pinging = False
