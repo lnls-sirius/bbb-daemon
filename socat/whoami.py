@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 from os import environ
 from serial import Serial 
-from devices.MBTemp import communicate
 import Adafruit_BBIO.GPIO as GPIO
 import sys
 
@@ -20,8 +19,6 @@ if GPIO.input("P8_11") == 1 and GPIO.input("P8_12") == 1:
     exit()
 
 port = '/dev/ttyUSB0'
-baudrates = Serial.BAUDRATES
-exit()
 ''' 
     Iterar pelos possíveis baudrates testando todas as possibilidades
     de comandos. Isso deverá ser repetido até alguém responder.
@@ -47,7 +44,7 @@ cmds = [
     },
     {
         'baud':115200,
-        'msg':[0x01, 0x10, 0x00, 0x01, 0x1], #?
+        'msg':[0x10, 0x00, 0x01, 0x1], #?
         'device':'mbtemp'
     },
     {
@@ -66,22 +63,11 @@ while True:
             ser = Serial(port, cmd.get('baud'), timout=0.5)
 
             if cmd.get('device') == 'mbtemp':
+                for i in range(1,32):
+                    pass
+            elif cmd.get('device') == 'agilent4uhv':
                 pass
-            elif cmd.get('device') == 'mbtemp':
-                pass
-                # for addr in range(1,32):
-                #     message_to_send = ''
-                #     cs = 0
-                #     for i in msg:
-                #         message_to_send += chr(i)
-                #         cs += i
-                #     message_to_send += chr((0x100 - (cs % 0x100)) & 0xFF)                    
-                #     ser.write()
-
-                res = ser.read()
-                if res:
-                    print(res)
-                    die = True
+                
         except:
             pass
         finally:
