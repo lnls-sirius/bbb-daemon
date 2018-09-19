@@ -1,16 +1,21 @@
 #!/bin/bash
 export FLASK_PORT=4850
-export PYTHONPATH="$(dirname $PWD)"
+export PYTHONPATH="$(dirname $PWD)" 
+
+DEV=true
 
 function finish {
     if [ -f gunicorn.pid ]; then
         kill $(cat gunicorn.pid)
     fi 
+    if [ $DEV = true ];then
+        if [ -d ${PWD}/../ftp_dev ]; then
+            rm -rd ${PWD}/../ftp_dev
+        fi 
+    fi 
     echo Bye !
 }
 trap finish EXIT
-
-DEV=false
 
 if [ $DEV = true ];then
     export FTP_HOME="${PWD}/../ftp_dev" 

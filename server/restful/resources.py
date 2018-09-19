@@ -59,8 +59,6 @@ class RestBBB(Resource):
 
     @staticmethod
     def reboot_bbb(ip=None, sector=None, configured=None):
-        # @todo: implement the right way !
-        # json.loads(a)
         status, message = False, 'Not Ok!'
         if ip and sector and configured:
             if configured == 'true':
@@ -193,7 +191,7 @@ class RestNode(Resource):
         u_vals = []
 
         for sector in Sector.SECTORS:
-            c = 0
+            c = 0 
             u = len(MonitorController.monitor_controller.nodes[sector]['unconfigured'])
 
             for node in MonitorController.monitor_controller.nodes[sector]['configured']:

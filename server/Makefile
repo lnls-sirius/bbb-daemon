@@ -10,3 +10,7 @@ install:
 cert:
 	sudo apt-get install openssl
 	openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+
+install-docker:
+	sudo mkdir -p /opt/redis-data
+	sudo docker run --network host -v /opt/redis-data:/data --name bbb-redis -d redis redis-server --appendonly yes 
