@@ -2,9 +2,10 @@
 Description=Initialize the serial port bind.
 
 [Service]
-Restart=on-failure
+Restart=always
 RestartSec=5
 Type=simple
+WorkingDirectory=/root/bbb-daemon/socat
 ExecStart=/bin/bash /root/bbb-daemon/socat/init.sh
 StandardOutput=syslog
 StandardError=syslog

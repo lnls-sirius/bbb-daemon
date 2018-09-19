@@ -1,18 +1,27 @@
-#!/usr/bin/python3.6
+#!/usr/bin/python3
 from os import environ
 from serial import Serial 
 from devices.MBTemp import communicate
 import Adafruit_BBIO.GPIO as GPIO
+import sys
 
-CODE = environ.get('CODE')
+CODE = sys.argv[1]
+print(CODE)
 
-if GPIO.input("P8_11") and GPIO.input("P8_12"):
+GPIO.setup("P8_11", GPIO.IN)
+GPIO.setup("P8_12", GPIO.IN)
+
+print(GPIO.input("P8_11"))
+print(GPIO.input("P8_12"))
+
+
+if GPIO.input("P8_11") == 1 and GPIO.input("P8_12") == 1:
     print('PRU_FONTES' + CODE)
     exit()
 
 port = '/dev/ttyUSB0'
 baudrates = Serial.BAUDRATES
-
+exit()
 ''' 
     Iterar pelos possíveis baudrates testando todas as possibilidades
     de comandos. Isso deverá ser repetido até alguém responder.
