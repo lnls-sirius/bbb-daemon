@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from flask import Flask, render_template, flash, redirect, url_for, request, jsonify, json
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
