@@ -1,0 +1,13 @@
+[Unit]
+Description=Initialize the serial port bind.
+
+[Service]
+Restart=on-failure
+RestartSec=5
+Type=simple
+ExecStart=/bin/bash /root/bbb-daemon/socat/init.sh
+StandardOutput=syslog
+StandardError=syslog
+ 
+[Install]
+WantedBy=multi-user.target
