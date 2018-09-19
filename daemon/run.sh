@@ -1,11 +1,10 @@
 #!/bin/bash
-#export PYTHONPATH="$(dirname $PWD)"
+export PYTHONPATH="$(dirname $PWD)"
 
-export SERVER_APP_IP='10.0.6.44'
-export BBB_UDP_PORT=9876
-export BBB_TCP_PORT=9877
+export SERVER_APP_IP="10.0.6.44"
 
-# This info should contain a '/'
-export FTP_DESTINATION_FOLDER='/root/'
+pushd ${PWD}/../
+git pull
+popd
 
-python3  /root/bbb-daemon/daemon/daemon.py $SERVER_APP_IP $BBB_UDP_PORT $BBB_TCP_PORT $FTP_DESTINATION_FOLDER
+python3  /root/bbb-daemon/daemon/daemon.py

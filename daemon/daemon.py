@@ -6,26 +6,33 @@ import socket
 import threading
 import time
 
+from os import environ
+
 from bbb import BBB
 from common.entity.entities import Command
 from common.network.utils import NetUtils, checksum
 
-##################################################################
-CONFIG_PATH = "/root/bbb-daemon/bbb.bin"
-TYPE_RC_LOCAL_PATH = "init/rc.local"
-RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
-FTP_SERVER_PORT = 1026
-
-# This info should contain a '/'
-FTP_DESTINATION_FOLDER = '/root/'
-servAddr = "10.0.6.44"
-pingPort = 9876
-bindPort = 9877
+CONFIG_PATH = environ.get('CONFIG_PATH', '/root/bbb-daemon/bbb.bin')
+TYPE_RC_LOCAL_PATH = environ.get('TYPE_RC_LOCAL_PATH', 'init/rc.local')
+RC_LOCAL_DESTINATION_PATH = environ.get('RC_LOCAL_DESTINATION_PATH', '/etc/rc.local')
+FTP_SERVER_PORT = int(environ.get('FTP_SERVER_PORT',1026))
+ 
+FTP_DESTINATION_FOLDER = environ.get('FTP_DESTINATION_FOLDER', '/root')
+servAddr = environ.get('SERVER_APP_IP','10.0.6.44')
+pingPort = environ.get('BBB_UDP_PORT', 9876)
+bindPort = environ.get('BBB_TCP_PORT', 9877)
 
 PING_CANDIDATES = ['10.0.6.44', '10.0.6.48', '10.0.6.51']
 
-##################################################################
-# CLONE_PATH = "../"  # remember to place the forward slash !
+print('CONFIG_PATH',CONFIG_PATH)
+print('TYPE_RC_LOCAL_PATH',TYPE_RC_LOCAL_PATH)
+print('RC_LOCAL_DESTINATION_PATH',RC_LOCAL_DESTINATION_PATH)
+print('FTP_SERVER_PORT',FTP_SERVER_PORT)
+print('FTP_DESTINATION_FOLDER',FTP_DESTINATION_FOLDER)
+print('SERVER_APP_IP',servAddr)
+print('BBB_UDP_PORT',pingPort)
+print('BBB_TCP_PORT',bindPort)
+print('PING_CANDIDATES',PING_CANDIDATES)
 
 
 class Daemon():
@@ -68,8 +75,6 @@ class Daemon():
             except :
                 pass
 
-            
-
     def stop(self):
         self.pinging = False
         self.listening = False
@@ -106,29 +111,12 @@ class Daemon():
 
         commandSocket.close()
 
-    def stop(self):
-        self.pinging = False
-        self.listening = False
-
-
 if __name__ == '__main__':
-    import sys
-
-    print("arg[1]=servAddress\targ[2]=pingPort\targ[3]=bindPort\targ[4]=FTP_DESTINATION_FOLDER")
-    if len(sys.argv) == 5:
-        servAddr = sys.argv[1]
-        pingPort = int(sys.argv[2])
-        bindPort = int(sys.argv[3])
-        FTP_DESTINATION_FOLDER = sys.argv[4]
-        print('\n\t{}\n\n'.format(sys.argv))
-    else:
-        print('Error with the parameters. Using default values.')
-
+    
     if not FTP_DESTINATION_FOLDER.endswith('/'):
         FTP_DESTINATION_FOLDER = FTP_DESTINATION_FOLDER + '/'
 
     if not os.path.exists(FTP_DESTINATION_FOLDER):
         os.makedirs(FTP_DESTINATION_FOLDER)
 
-    print("arg[1]={}\targ[2]={}\targ[3]={}\t".format(servAddr, pingPort, bindPort))
     Daemon(serverAddress=servAddr, pingPort=pingPort, bindPort=bindPort, ftpDestinationFolder=FTP_DESTINATION_FOLDER)
