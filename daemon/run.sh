@@ -1,6 +1,4 @@
 #!/bin/bash
-export PYTHONPATH="$(dirname $PWD)"
-
 export SERVER_APP_IP="10.0.6.44"
 
 pushd ${PWD}/../

@@ -24,6 +24,9 @@ bindPort = environ.get('BBB_TCP_PORT', 9877)
 
 PING_CANDIDATES = ['10.0.6.44', '10.0.6.48', '10.0.6.51']
 
+if not servAddr in PING_CANDIDATES:
+    PING_CANDIDATES.append(servAddr)
+
 print('CONFIG_PATH',CONFIG_PATH)
 print('TYPE_RC_LOCAL_PATH',TYPE_RC_LOCAL_PATH)
 print('RC_LOCAL_DESTINATION_PATH',RC_LOCAL_DESTINATION_PATH)
@@ -69,8 +72,9 @@ class Daemon():
         while self.pinging:
             try:
                 info = self.bbb.getInfo()
-                message = "{}|{}".format(checksum(info), info)
-                pingSocket.sendto(message.encode('utf-8'), (self.serverAddress, self.pingPort))
+                for addr in PING_CANDIDATES:
+                    message = "{}|{}".format(checksum(info), info)
+                    pingSocket.sendto(message.encode('utf-8'), (addr, self.pingPort))
                 time.sleep(1)
             except :
                 pass
