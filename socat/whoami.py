@@ -1,36 +1,60 @@
 #!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+# modules
 from os import environ
 from serial import Serial 
 import Adafruit_BBIO.GPIO as GPIO
 import sys
 
 CODE = sys.argv[1]
-print(CODE)
 
+# port for serial interface
+port = '/dev/ttyUSB0'
+
+# PRU unit
 GPIO.setup("P8_11", GPIO.IN)
 GPIO.setup("P8_12", GPIO.IN)
-
-print(GPIO.input("P8_11"))
-print(GPIO.input("P8_12"))
-
-
 if GPIO.input("P8_11") == 1 and GPIO.input("P8_12") == 1:
     print('PRU_FONTES' + CODE)
+    file.open('device.conf', 'w')
+    file.writelines('PRU_FONTES\nPRU')
+    file.close()
     exit()
 
-port = '/dev/ttyUSB0'
-''' 
-    Iterar pelos possíveis baudrates testando todas as possibilidades
-    de comandos. Isso deverá ser repetido até alguém responder.
+# Thermo probes
+def incluirChecksum(entrada):
+    soma = 0
+    for elemento in entrada:
+        soma += ord(elemento)
+    soma = soma % 256
+    return(entrada + "{0:02X}".format(soma) + "\x03")
+thermo_interface = serial.Serial(port = "{}".format(port),
+                                 baudrate = 19200,
+                                 bytesize = serial.SEVENBITS,
+                                 parity = serial.PARITY_EVEN,
+                                 stopbits = serial.STOPBITS_TWO,
+                                 timeout = 0.5
+                                )
+thermo = incluirChecksum("\x07" + "01RM1")
+thermo_interface.write(thermo)
+datathermo = thermo_interface.read(50)
+if len(datathermo) != 0:
+    print('SERIAL_THERMO' + CODE)
+    file.open('device.conf', 'w')
+    file.writelines('Thermo_Probe\n19200')
+    file.close()
+    exit()
 
-    Com isso saberemos o baudrate da aplicação e com quem estamos lidando.
-    
-    Por enquanto isso irá funcionar apenas para FTDI, não dando suporte a aplaicações 
-    que fazem uso da interface PRU.
-    
-    
-'''
+# MBTemp Checksum
+def mbtempChecksum(entrada):
+    soma = 0
+    for elemento in entrada:
+        soma += ord(elemento)
+    soma = 256 - soma % 256
+    return(entrada + "{0:02X}".format(soma))
 
+# commands for serial interface
 cmds = [
     {
         'baud' : 115200,
@@ -44,7 +68,7 @@ cmds = [
     },
     {
         'baud':115200,
-        'msg':[0x10, 0x00, 0x01, 0x1], #?
+        'msg':'\x10\x00\x01\x00', 
         'device':'mbtemp'
     },
     {
@@ -55,6 +79,8 @@ cmds = [
 ]
 
 die = False
+
+# main loop
 while True:
     for cmd in cmds:
         ser = None
@@ -62,9 +88,25 @@ while True:
             res = None
             ser = Serial(port, cmd.get('baud'), timout=0.5)
 
+	    # mbtemp check
             if cmd.get('device') == 'mbtemp':
                 for i in range(1,32):
+                    if i < 10:
+		        msgm=mbtempChecksum('\x0{}'.format(i) + cmd.get('msg'))
+                        ser.write(msgm)
+                    elif i > 9:
+		        msgm=mbtempChecksum('\x{}'.format(i) + cmd.get('msg'))
+                        ser.write(msgm)
+                    if len(ser.read()) != 0:
+			# É ISSO !!!!!
+                        print('MBTemp')
+                        file.open('device.conf', 'w')
+                        file.writelines(cmd.get('device') + '\n' + cmd.get('baud'))
+                        file.close()
+                        exit()
                     pass
+
+            #agilent 4uhv check
             elif cmd.get('device') == 'agilent4uhv':
                 pass
                 

@@ -10,7 +10,7 @@ export BAUDRATE=115200
 export DEVICE=/dev/ttyUSB0
 
 RE=$( ./whoami.py ${CODE} | grep PRU_FONTES)
-if [[ ! ${RE} =~ "PRU_FONTES${COD}" ]];then
+if [[ ! ${RE} =~ "PRU_FONTES${COD}"|"SERIAL_THERMO${COD}" ]];then
 	# Bind using TCP
 	socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR}:${SERVER_MASK} FILE:${DEVICE},b${BAUDRATE},rawer
 else
