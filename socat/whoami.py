@@ -92,10 +92,10 @@ while True:
             if cmd.get('device') == 'mbtemp':
                 for i in range(1,32):
                     if i < 10:
-		        msgm=mbtempChecksum('\x0{}'.format(i) + cmd.get('msg'))
+		        msgm=mbtempChecksum(r'\x0{}'.format(i) + cmd.get('msg'))
                         ser.write(msgm)
                     elif i > 9:
-		        msgm=mbtempChecksum('\x{}'.format(i) + cmd.get('msg'))
+		        msgm=mbtempChecksum(r'\x{}'.format(i) + cmd.get('msg'))
                         ser.write(msgm)
                     if len(ser.read()) != 0:
 			# É ISSO !!!!!
