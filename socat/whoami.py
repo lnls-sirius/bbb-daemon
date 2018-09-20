@@ -11,14 +11,13 @@ CODE = sys.argv[1]
 
 # port for serial interface
 port = '/dev/ttyUSB0'
-file = None
 
 # PRU unit
 GPIO.setup("P8_11", GPIO.IN)
 GPIO.setup("P8_12", GPIO.IN)
 if GPIO.input("P8_11") == 1 and GPIO.input("P8_12") == 1:
     print('PRU_FONTES' + CODE)
-    file.open('device.conf', 'w')
+    file = open('device.conf', 'w')
     file.writelines('PRU_FONTES\nPRU')
     file.close()
     exit()
@@ -43,7 +42,7 @@ thermo_interface.write(thermo)
 datathermo = thermo_interface.read(50)
 if len(datathermo) != 0:
     print('SERIAL_THERMO' + CODE)
-    file.open('device.conf', 'w')
+    file = open('device.conf', 'w')
     file.writelines('Thermo_Probe\n19200')
     file.close()
     exit()
@@ -102,7 +101,7 @@ while True:
                     if len(ser.read()) != 0:
 			            # É ISSO !!!!!
                         print('MBTemp')
-                        file.open('device.conf', 'w')
+                        file = open('device.conf', 'w')
                         file.writelines(cmd.get('device') + '\n' + cmd.get('baud'))
                         file.close()
                         exit()
