@@ -3,7 +3,7 @@
 
 # modules
 from os import environ
-from serial import Serial 
+from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
 import Adafruit_BBIO.GPIO as GPIO
 import sys
 
@@ -11,6 +11,7 @@ CODE = sys.argv[1]
 
 # port for serial interface
 port = '/dev/ttyUSB0'
+file = None
 
 # PRU unit
 GPIO.setup("P8_11", GPIO.IN)
@@ -29,11 +30,12 @@ def incluirChecksum(entrada):
         soma += ord(elemento)
     soma = soma % 256
     return(entrada + "{0:02X}".format(soma) + "\x03")
-thermo_interface = serial.Serial(port = "{}".format(port),
+
+thermo_interface = Serial(port = "{}".format(port),
                                  baudrate = 19200,
-                                 bytesize = serial.SEVENBITS,
-                                 parity = serial.PARITY_EVEN,
-                                 stopbits = serial.STOPBITS_TWO,
+                                 bytesize = SEVENBITS,
+                                 parity = PARITY_EVEN,
+                                 stopbits = STOPBITS_TWO,
                                  timeout = 0.5
                                 )
 thermo = incluirChecksum("\x07" + "01RM1")
@@ -92,13 +94,13 @@ while True:
             if cmd.get('device') == 'mbtemp':
                 for i in range(1,32):
                     if i < 10:
-		        msgm=mbtempChecksum(r'\x0{}'.format(i) + cmd.get('msg'))
+                        msgm=mbtempChecksum(r'\x0{}'.format(i) + cmd.get('msg'))
                         ser.write(msgm)
                     elif i > 9:
-		        msgm=mbtempChecksum(r'\x{}'.format(i) + cmd.get('msg'))
+                        msgm=mbtempChecksum(r'\x{}'.format(i) + cmd.get('msg'))
                         ser.write(msgm)
                     if len(ser.read()) != 0:
-			# É ISSO !!!!!
+			            # É ISSO !!!!!
                         print('MBTemp')
                         file.open('device.conf', 'w')
                         file.writelines(cmd.get('device') + '\n' + cmd.get('baud'))
@@ -108,6 +110,9 @@ while True:
 
             #agilent 4uhv check
             elif cmd.get('device') == 'agilent4uhv':
+                pass
+            # mks 937 b
+            elif cmd.get('device') == 'mks937b':
                 pass
                 
         except:
