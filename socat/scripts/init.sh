@@ -33,35 +33,36 @@ RE=$(awk NR==1 res)
 BAUDRATE=$(awk NR==1 baudrate)
 
 if [[ ${RE} = "${NOTTY}" ]]; then
-	echo  Socat not started. No ttyUSB0 has been found.
+	echo No matching device has been found. ttyUSB0 is disconnected.
 	exit 1
 fi
 
 if [[ ${RE} = "${SPIXCON}" ]]; then
-	echo  Socat not started. SPIxCON detected.
+	echo SPIxCON detected.
 	overlay_SPIxCONV
 	# @todo: SPIxCONV ...
 fi
 
 if [[ ${RE} = "${PRU_FONTES}" ]]; then
-	echo  Socat not started. Rs-485 and PRU switches are on.
+	echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
 	overlay_PRUserial485
 	# @todo: Fontes ...
 	exit 1
 fi
 
-if [[ ${RE} = "${PRU_CONTADORA}" ]]; then
+if [[ ${RE} = "${PRU_CONTADORA}" ]]; then 
+	echo  PRUserial485 address != 21 and ttyUSB0 is disconnected. Assuming PRU Counter.
 	overlay_PRUserial485
 	pru_contadora
 fi
 
 if [[ ${RE} = "${SERIAL_THERMO}" ]]; then
-	echo  Socat not started. Serial Thermo probe detected.
+	echo  Serial Thermo probe detected.
 	overlay_PRUserial485
 	# @todo: Thermo ...
 fi
 
-if [[ ${RE} =~ "${MBTEMP}"|"${AGILENT4UHV}"|"${MKS937}" ]]; then
+if [ ! -z ${RE} ] && { [ ${RE} == "${MBTEMP}" ] || [ $RE == "${AGILENT4UHV}" ] || [ $RE == "${MKS937}" ]; }; then
 	overlay_PRUserial485
 	echo  Starting socat with ${BAUDRATE} baudrate on port ${SOCAT_PORT} and range=${SERVER_IP_ADDR}:${SERVER_MASK}.
 	socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR}:${SERVER_MASK} FILE:${DEVICE},b${BAUDRATE},rawer

@@ -13,7 +13,7 @@ def counter_pru():
     Counter PRU
     """
     if PRUserial485_address() != 21 and not path.isfile(PORT):
-        persist_info('PRU_CONTADORA', '115200', PRU_CONTADORA )
+        persist_info('PRU_CONTADORA', 115200, PRU_CONTADORA )
 
 def no_tty():
     """
@@ -30,7 +30,7 @@ def power_suppply_pru():
     GPIO.setup("P8_12", GPIO.IN)
 
     if GPIO.input("P8_11") == 1 and GPIO.input("P8_12") == 1:
-        persist_info('PRU_FONTES', 'PRU', PRU_FONTES )
+        persist_info('PRU_FONTES', 115200, PRU_FONTES )
 
 
 
