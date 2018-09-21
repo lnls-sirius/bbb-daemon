@@ -29,6 +29,11 @@ export DEVICE=/dev/ttyUSB0
 RE=$(awk NR==1 res) 
 BAUDRATE=$(awk NR==1 baudrate)
 
+if [[ ${RE} = "${NOTTY}" ]]; then
+	echo  Socat not started. No ttyUSB0 has been found.
+	exit 1
+fi
+
 if [[ ${RE} = "${PRU_FONTES}" ]]; then
 	echo  Socat not started. Rs-485 and PRU switches are on.
 	# @todo: Overlay Placa serial
@@ -44,11 +49,6 @@ fi
 if [[ ${RE} = "${SERIAL_THERMO}" ]]; then
 	# @todo: Overlay Placa serial
 	echo  Socat not started. Serial Thermo probe detected.
-	exit 1
-fi
-
-if [[ ${RE} = "${NOTTY}" ]]; then
-	echo  Socat not started. No ttyUSB0 has been found.
 	exit 1
 fi
 
