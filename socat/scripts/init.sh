@@ -1,5 +1,7 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
+source functions.sh
+
 function cleanup {      
         if [ -f res ]; then
                 rm -rf res
@@ -18,6 +20,7 @@ export SERIAL_THERMO=$(echo -n SERIAL_THERMO | md5sum | awk '{ print $1 }')
 export MBTEMP=$(echo -n MBTEMP | md5sum | awk '{ print $1 }')
 export AGILENT4UHV=$(echo -n AGILENT4UHV | md5sum | awk '{ print $1 }')
 export MKS937B=$(echo -n MKS937B | md5sum | awk '{ print $1 }')
+export SPIXCON=$(echo -n SPIXCON | md5sum | awk '{ print $1 }')
 export NOTTY=$(echo -n NOTTY | md5sum | awk '{ print $1 }')
 
 export SOCAT_PORT=4161
@@ -34,27 +37,32 @@ if [[ ${RE} = "${NOTTY}" ]]; then
 	exit 1
 fi
 
+if [[ ${RE} = "${SPIXCON}" ]]; then
+	echo  Socat not started. SPIxCON detected.
+	overlay_SPIxCONV
+	# @todo: SPIxCONV ...
+fi
+
 if [[ ${RE} = "${PRU_FONTES}" ]]; then
 	echo  Socat not started. Rs-485 and PRU switches are on.
-	# @todo: Overlay Placa serial
+	overlay_PRUserial485
+	# @todo: Fontes ...
 	exit 1
 fi
 
 if [[ ${RE} = "${PRU_CONTADORA}" ]]; then
-	# todo: Overlay e Lançar  SI-CountingPRU_Socket.py 
-	echo  Socat not started. No ttyUSB0 detected and PRUserial485_address isn\'t 21.
-	exit 1
+	overlay_PRUserial485
+	pru_contadora
 fi
 
 if [[ ${RE} = "${SERIAL_THERMO}" ]]; then
-	# @todo: Overlay Placa serial
 	echo  Socat not started. Serial Thermo probe detected.
-	exit 1
+	overlay_PRUserial485
+	# @todo: Thermo ...
 fi
 
 if [[ ${RE} =~ "${MBTEMP}"|"${AGILENT4UHV}"|"${MKS937}" ]]; then
-	# Bind using socat 
-	# @todo: Overlay Placa serial
+	overlay_PRUserial485
 	echo  Starting socat with ${BAUDRATE} baudrate on port ${SOCAT_PORT} and range=${SERVER_IP_ADDR}:${SERVER_MASK}.
 	socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR}:${SERVER_MASK} FILE:${DEVICE},b${BAUDRATE},rawer
 else

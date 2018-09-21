@@ -7,7 +7,7 @@ from persist import persist_info
 from consts import *
 
 from devices import  mbtemp, counter_pru, no_tty,\
-    power_suppply_pru, thermo_probe, mks9376b, agilent4uhv
+    power_suppply_pru, thermo_probe, mks9376b, agilent4uhv, spixcon
 
 
 no_tty()
@@ -17,3 +17,4 @@ thermo_probe()
 mbtemp()
 mks9376b()
 agilent4uhv()
+spixcon()

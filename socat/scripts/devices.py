@@ -104,3 +104,9 @@ def agilent4uhv():
     AGILENT 4UHV
     """
     pass
+
+def spixcon():
+    """
+    SPIxCON
+    """
+    pass
