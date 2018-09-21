@@ -2,6 +2,7 @@ import os
 import time
 import shutil
 import pickle
+import json
 
 from common.entity.entities import Command, Node, Type
 from common.network.utils import get_ip_address
@@ -9,11 +10,13 @@ from common.network.utils import changeIp
 from sftp import download_from_ftp
 
 
+DEVICE_INFO_FILE = '/opt/device.json'
+        
 class BBB():
 
     def __init__(self, path, rc_local_dest_path, sfp_server_addr, sftp_port: int = 22,
                  ftp_destination_folder: str = None):
-
+        
         #  Parameters that define absolute locations inside the Beaglebone
         self.ftpDestinationFolder = ftp_destination_folder
         self.rcLocalDestPath = rc_local_dest_path
@@ -32,10 +35,27 @@ class BBB():
         # Load the data from the cfg file.
         self.readParameters()
 
+    def get_device_info(self):
+        if os.path.exists(DEVICE_INFO_FILE): 
+            with open(DEVICE_INFO_FILE, 'r') as f:
+                datastore = json.load(f)
+                self.node.details = datastore['details']
+                self.node.configTime = datastore['time']
+                self.node.device = datastore['device']
+
     def getInfo(self):
-        info = "{}|{}|{}|{}|{}" \
-            .format(Command.PING, self.node.name, self.node.type.name, self.node.ipAddress, self.node.type.sha)
-        return info
+        self.get_device_info()
+        info = {
+            'command':Command.PING,
+            'name':self.node.name,
+            'type.name':self.node.type.name,
+            'ipAddress':self.node.ipAddress,
+            'device':self.node.device,
+            'details':self.node.details,
+            'configTime':self.node.configTime,
+            'type.sha':self.node.type.sha
+        } 
+        return json.dumps(info) 
 
     def reboot(self):
         os.system('reboot')

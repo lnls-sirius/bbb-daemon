@@ -72,8 +72,8 @@ class Daemon():
         while self.pinging:
             try:
                 info = self.bbb.getInfo()
+                message = "{}|{}".format(checksum(info), info)
                 for addr in PING_CANDIDATES:
-                    message = "{}|{}".format(checksum(info), info)
                     pingSocket.sendto(message.encode('utf-8'), (addr, self.pingPort))
                 time.sleep(1)
             except :
