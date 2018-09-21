@@ -1,67 +1,59 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 from serial import Serial
 from os import environ
-
-from devices import mbtempChecksum
 from persist import persist_info
 
-CODE = environ.get('CODE')
-TIMEOUT = 1.
-PORT = '/dev/ttyUSB0'
+from consts import *
+
+from devices import  mbtemp
+
 # commands for serial interface
 cmds = [
     {
         'device':'mbtemp',
-        'baud':115200,
-        'msg':'\x10\x00\x01\x00'
+        'baud':115200 
     },
     {
         'device': 'agilent4uhv',
-        'baud':9600,
-        'msg': '?'
+        'baud':9600 
     },
     {
         'device':'mks937b',
-        'baud':115200,
-        'msg':'?'
+        'baud':115200 
     }
 ]
 
-die = False
+for cmd in cmds:
+    ser = None 
+    try:
+        # mbtemp check
+        if cmd.get('device') == 'mbtemp':
+            ser = Serial(PORT, cmd.get('baud'), timeout=TIMEOUT)
+            try: 
+                mbtemp(cmd, ser)
+            except Exception as e:
+                print('{}'.format(e))
+            ser.close()
 
-# main loop
-while True:
-    for cmd in cmds:
-        ser = None
-        try:
-            ser = Serial(PORT, cmd.get('baud'), timout=TIMEOUT)
-	        # mbtemp check
-            if cmd.get('device') == 'mbtemp':
-                for i in range(1,32):
-                    if i < 10:
-                        msgm = mbtempChecksum(r'\x0{}'.format(i) + cmd.get('msg'))
-                        ser.write(msgm)
-                    elif i > 9:
-                        msgm = mbtempChecksum(r'\x{}'.format(i) + cmd.get('msg'))
-                        ser.write(msgm)
-
-                    if len(ser.read()) != 0:
-                        persist_info(cmd.get('device'), cmd.get('baud'))
-
-            #agilent 4uhv check
-            elif cmd.get('device') == 'agilent4uhv':
-                pass
-            # mks 937 b
-            elif cmd.get('device') == 'mks937b':
-                pass
-                
-        except:
+        #agilent 4uhv check
+        elif cmd.get('device') == 'agilent4uhv':
             pass
-        finally:
-            if ser:
-                ser.close()
-        if die:
-            exit()
-    pass
+
+        # mks 937 b
+        elif cmd.get('device') == 'mks937b':
+            ser = Serial(port=PORT, baudrate=cmd.get('baud'), timeout=TIMEOUT)
+            for i in range (1, 254):
+                try:
+                    msgm = '\@{0:03d}'.format(i) + "PR1?;FF"
+                    ser.write(msgm)
+                    res = ser.read()
+                    if len(res) != 0:  
+                        persist_info(cmd.get('device'), cmd.get('baud'), MKS937B, 'First MKS937b at addr {}'.format(i))
+                except Exception as e:
+                    print('{}'.format(e))
+            ser.close()
+            
+    except Exception as e:
+        print('{}'.format(e))
 

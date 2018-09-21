@@ -7,9 +7,10 @@ SERVICE_FILE_DEST = /etc/systemd/system
 .PHONY: all install uninstall
 
 all:
+clean:
 
 install:
-        pip3 install Adafruit_BBIO
+	pip3 install Adafruit_BBIO
 	apt-get install socat
 	cp --preserve=mode ${SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
 	systemctl daemon-reload
