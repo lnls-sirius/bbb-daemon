@@ -146,9 +146,10 @@ class Node(BaseRedisEntity):
     key_prefix = 'node_'
     key_prefix_len = len(key_prefix)
 
-    def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, typeNode: Type = None, sector=1,
-                 counter=0,
-                 pvPrefix=[], rcLocalPath=''):
+    def __init__(self, name="r0n0", ip="10.128.0.0", 
+                    state=NodeState.DISCONNECTED, typeNode: Type = None, sector=1,
+                 counter=0, pvPrefix=[], rcLocalPath='', details='', configTime='',
+                 device=''):
 
         self.name = name
         self.ipAddress = ip
@@ -160,6 +161,11 @@ class Node(BaseRedisEntity):
         self.pvPrefix = pvPrefix
         self.counter = counter
         self.rcLocalPath = rcLocalPath
+
+        self.details = details
+        self.configTime = configTime
+        self.device = device
+
 
     @staticmethod
     def get_prefix_string(pref: []):
@@ -204,8 +210,15 @@ class Node(BaseRedisEntity):
 
     def toSet(self):
         key = self.get_key()
-        nodeInfo = {"ipAddress": self.ipAddress, "sector": self.sector, "prefix": self.pvPrefix,
-                    "rcLocalPath": self.rcLocalPath}
+        nodeInfo = {
+            "ipAddress": self.ipAddress, 
+            "sector": self.sector,
+            "prefix": self.pvPrefix,
+            "rcLocalPath": self.rcLocalPath,
+            'details' : self.details,
+            'configTime' : self.configTime,
+            'device' : self.device
+        }
         if self.type is None:
             nodeInfo["type"] = None
         else:
@@ -233,7 +246,11 @@ class Node(BaseRedisEntity):
             self.rcLocalPath = dic_obj.get('rcLocalPath', '')
             self.ipAddress = dic_obj.get("ipAddress", '')
             self.pvPrefix = dic_obj.get("prefix", [])
-            self.sector = dic_obj.get("sector", self.sector)
+            self.sector = dic_obj.get("sector", self.sector) 
+            
+            self.details = dic_obj.get("details", '')
+            self.configTime = dic_obj.get("configTime", '')
+            self.device = dic_obj.get("device", '') 
 
     # Change the current state of the object. Refer to the Control_Node_State class
     def changeState(self, state):

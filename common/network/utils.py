@@ -107,14 +107,11 @@ def getService(interface_name: str = 'eth0'):
 def verify_msg(data: str):
     """
         This method must be update as the data format sent by the bbb is modified
-        BBB sends this: {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
+        BBB sends this: {chk} | {cmd} | {name} | {type} | {device} | {details} | {configTime} | {ipAddr} | {sha}
     :param data:
     :return: Array containing the data, [] if error.
     """
     splt = data.split("|")
-    if len(splt) != 6:
-        # Error !
-        return []
     message = data[(len(splt[0]) + 1):]
     res = checksum(message)
     if int(res) == int(splt[0]):
