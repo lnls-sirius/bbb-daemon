@@ -192,12 +192,23 @@
     */
     function getRow(node, configured) {
         const tr = document.createElement('tr');
-
+        // self.details = details
+        // self.configTime = configTime
+        // self.device = device
         const td_name = document.createElement('td');
         td_name.innerText = node['name'];
 
         const td_ip = document.createElement('td');
         td_ip.innerText = node['ipAddress'];
+
+        const td_details = document.createElement('td');
+        td_details.innerText = node['details'];
+
+        const td_device = document.createElement('td');
+        td_device.innerText = node['device'];
+
+        const td_configTime = document.createElement('td');
+        td_configTime.innerText = node['configTime'];
 
         const td_type_name = document.createElement('td');
         td_type_name.innerText = (node['type'])?(node['type']['name']):('Type not set !');
@@ -256,6 +267,9 @@
 
         tr.appendChild(td_name);
         tr.appendChild(td_ip);
+        tr.appendChild(td_details);
+        tr.appendChild(td_device);
+        tr.appendChild(td_configTime);
         tr.appendChild(td_type_name);
         tr.appendChild(td_repo);
         tr.appendChild(td_rc);
@@ -279,8 +293,6 @@
             console.log('Reboot' + data);
         });
     }
-
-    
 
     function refresh_chart() {
         $.post(

@@ -2,6 +2,8 @@
 export FLASK_PORT=4850
 export PYTHONPATH="$(dirname $PWD)" 
 
+source bbb-daemon-virtualenv/bin/activate
+
 DEV=true
 
 function finish {
@@ -13,13 +15,16 @@ function finish {
             rm -rd ${PWD}/../ftp_dev
         fi 
     fi 
+    source bbb-daemon-virtualenv/bin/deactivate
     echo Bye !
 }
 trap finish EXIT
 
 if [ $DEV = true ];then
     export FTP_HOME="${PWD}/../ftp_dev" 
+    export WORKERS_NUM=2
     mkdir -p ${FTP_HOME}
+    # ./dummy_daemon.py &
 else
     rm -rdf ${PWD}/../ftp_dev
 fi

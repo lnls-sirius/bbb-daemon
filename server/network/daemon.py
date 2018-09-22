@@ -1,5 +1,7 @@
 import socket
 import threading
+import json
+
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
 
@@ -53,29 +55,25 @@ class DaemonHostListener():
 
     def process_worker_udp(self):
         while self.listening:
-            try:
-                #  {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
+            try: 
+                
                 info = self.queueUdp.get(timeout=5, block=True)
-                command = int(info[1])
-                if command == Command.PING:
-                    name = info[2]
-                    hostType = info[3]
-                    bbbIpAddr = info[4]
-                    bbbSha = info[5]
-                    self.controller.updateHostCounterByAddress(address=bbbIpAddr, name=name, hostType=hostType,
-                                                               bbbSha=bbbSha)
-                elif command == Command.EXIT:
-                    print("Worker ... EXIT")
-                    return
+                payload = json.loads(info[1])
+                command = payload['command']  
+                
+                if command == Command.PING:  
+                    self.controller.updateHostCounterByAddress(payload) 
+
             except Exception as e:
                 pass
         print("Worker ... Finished")
 
     def listen_udp(self):
-        pingSocket = socket.socket(socket.AF_INET,  # Internet
-                                   socket.SOCK_DGRAM)  # UDP
+        pingSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         pingSocket.bind(("0.0.0.0", self.bbbUdpPort))
+
         print("Listening UDP on 0.0.0.0 : {} ....".format(self.bbbUdpPort))
+        
         while self.listening:
             data, ipAddr = pingSocket.recvfrom(1024)  # buffer size is 1024 bytes
             data = str(data.decode('utf-8'))
@@ -83,7 +81,8 @@ class DaemonHostListener():
             if info:
                 self.queueUdp.put(info)
         pingSocket.close()
-        print('Ping socket closed ')
+        
+        print('UDP: Ping socket closed ')
 
     def stopAll(self):
         """

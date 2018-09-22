@@ -228,7 +228,14 @@ class MonitorController():
         self.daemon.sendCommand(command=Command.SWITCH, address=oldNodeAddr, node=newNode)
         self.rebootNode(oldNode)
 
-    def updateHostCounterByAddress(self, address, name, hostType, bbbSha: str = None):
+    def updateHostCounterByAddress(self, **kwargs):
+        address = kwargs['address']
+        hostType = kwargs['hostType']
+        name = kwargs['name']
+        bbbSha = kwargs['bbbSha']
+        device = kwargs['device']
+        details = kwargs['details']
+        configTime = kwargs['configTime']
 
         subnet = int(address.split(".")[2])
         sectorId = int(subnet / 10)
@@ -269,6 +276,10 @@ class MonitorController():
                     unconfigNode.counter = MonitorController.MAX_LOST_PING
                     unconfigNode.name = name
                     unconfigNode.type = availableType
+                    unconfigNode.type = availableType
+                    unconfigNode.device = device
+                    unconfigNode.details = details
+                    unconfigNode.configTime = configTime
 
                     if misconfiguredHost:
                         unconfigNode.changeState(NodeState.MISCONFIGURED)
@@ -280,7 +291,7 @@ class MonitorController():
 
             if not acknowlegedNode:
                 newUnconfigNode = Node(name=name, ip=address, state=NodeState.CONNECTED, typeNode=availableType,
-                                       sector=sector, counter=MonitorController.MAX_LOST_PING)
+                                       sector=sector, counter=MonitorController.MAX_LOST_PING,device=device,details=details, configTime=configTime)
                 if misconfiguredHost:
                     newUnconfigNode.changeState(NodeState.MISCONFIGURED)
 
