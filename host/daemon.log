@@ -1,0 +1,36 @@
+31/07/2018 09:08:26 Configuration file not found. Adopting default values.
+Traceback (most recent call last):
+  File "/root/bbb-daemon/host/bbb.py", line 130, in read_node_parameters
+    self.read_node_configuration()
+  File "/root/bbb-daemon/host/bbb.py", line 146, in read_node_configuration
+    with open(self.configuration_file_path, 'rb') as file:
+IOError: [Errno 2] No such file or directory: '/root/bbb-daemon/bbb.bin'
+31/07/2018 09:08:26 Ping thread started.
+31/07/2018 09:08:26 Command listening thread started.
+31/07/2018 09:09:38 Configuration file not found. Adopting default values.
+Traceback (most recent call last):
+  File "/root/bbb-daemon/host/bbb.py", line 130, in read_node_parameters
+    self.read_node_configuration()
+  File "/root/bbb-daemon/host/bbb.py", line 146, in read_node_configuration
+    with open(self.configuration_file_path, 'rb') as file:
+IOError: [Errno 2] No such file or directory: '/root/bbb-daemon/bbb.bin'
+31/07/2018 09:09:38 Ping thread started.
+31/07/2018 09:09:38 Command listening thread started.
+31/07/2018 09:12:38 Configuration file not found. Adopting default values.
+Traceback (most recent call last):
+  File "/root/bbb-daemon/host/bbb.py", line 130, in read_node_parameters
+    self.read_node_configuration()
+  File "/root/bbb-daemon/host/bbb.py", line 146, in read_node_configuration
+    with open(self.configuration_file_path, 'rb') as file:
+IOError: [Errno 2] No such file or directory: '/root/bbb-daemon/bbb.bin'
+31/07/2018 09:12:38 Ping thread started.
+31/07/2018 09:12:38 Command listening thread started.
+31/07/2018 09:13:07 Configuration file not found. Adopting default values.
+Traceback (most recent call last):
+  File "/root/bbb-daemon/host/bbb.py", line 130, in read_node_parameters
+    self.read_node_configuration()
+  File "/root/bbb-daemon/host/bbb.py", line 146, in read_node_configuration
+    with open(self.configuration_file_path, 'rb') as file:
+IOError: [Errno 2] No such file or directory: '/root/bbb-daemon/bbb.bin'
+31/07/2018 09:13:07 Ping thread started.
+31/07/2018 09:13:07 Command listening thread started.

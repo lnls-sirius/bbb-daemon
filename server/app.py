@@ -7,9 +7,11 @@ from flask_restful import Api
 
 from common.entity.entities import Sector, Type, Node, NodeState
 from common.serialization.models import NodeSchema, TypeSchema
-from control.controller import MonitorController
+from server.control.controller import ServerController
 from forms import EditNodeForm, EditTypeForm
 from restful.resources import RestNode, RestBBB
+
+controller = ServerController.get_instance()
 
 app = Flask(__name__)
 app.secret_key = "4dbae3052d7e8b16ebcfe8752f70a4efe68d2ae0558b4a1b25c5fd902284e52e"
@@ -41,7 +43,7 @@ def home():
 @app.route('/list_nodes/', methods=['POST'])
 def list_nodes():
     sector = request.form.get('sector', 'Conectividade')
-    nodes = MonitorController.monitor_controller.fetchNodesFromSector(sector)
+    nodes = controller.fetch_nodes_from_sector(sector)
     return render_template("node/refresh_nodes.html", nodes=nodes)
 
 
@@ -51,9 +53,9 @@ def view_nodes():
         action = request.form.get('action', '')
         if action == 'DELETE':
             node_name = request.form.get('node_name', '')
-            node = MonitorController.monitor_controller.getNode(node_name)
+            node = controller.get_node_by_name(node_name)
             if node:
-                if MonitorController.monitor_controller.removeNodeFromSector(node):
+                if controller.remove_node_from_sector(node):
                     return 'Node Deleted !'
                 else:
                     return 'Failed to Delete !'
@@ -69,7 +71,7 @@ def view_nodes():
 
 @app.route("/edit_nodes/", methods=['GET', 'POST'])
 def edit_nodes(node=None):
-    types = MonitorController.monitor_controller.fetchTypes()
+    types = controller.fetch_types()
     edit_nodes_form = EditNodeForm()
     edit_nodes_form.type.choices = [(t.name, "Type Name: {}\t\tType Url: {}".
                                      format(t.name, t.repoUrl)) for t in types]
@@ -83,7 +85,7 @@ def edit_nodes(node=None):
             # @todo: implement this !
             # git_url = request.form.get('gitUrl', '')
 
-            # success, message = MonitorController.monitor_controller.validateRepository(git_url=git_url)
+            # success, message = controller.validateRepository(git_url=git_url)
 
             # return jsonify(success=success, message=message)
             pass
@@ -93,24 +95,24 @@ def edit_nodes(node=None):
         elif action == '':
             # Insert new  node
             if edit_nodes_form.validate_on_submit():
-                type = MonitorController.monitor_controller.findTypeByName(edit_nodes_form.type.data)
+                type = controller.find_type_by_name(edit_nodes_form.type.data)
                 if type:
 
-                    res_1, message_1 = MonitorController.monitor_controller.validateRepository(
+                    res_1, message_1 = controller.validate_repository(
                         rc_path=edit_nodes_form.rc_local_path.data,
                         git_url=type.repoUrl, check_rc_local=True)
 
-                    res_2, message_2 = MonitorController.monitor_controller.checkIpAvailable(
+                    res_2, message_2 = controller.check_ip_available(
                         ip=edit_nodes_form.ip_address.data,
                         name=edit_nodes_form.name.data)
                     if res_1 and res_2:
                         node = Node(name=edit_nodes_form.name.data,
                                     ip=edit_nodes_form.ip_address.data,
                                     sector=edit_nodes_form.sector.data,
-                                    pvPrefix=Node.get_prefix_array(edit_nodes_form.pv_prefix.data),
-                                    typeNode=type,
-                                    rcLocalPath=edit_nodes_form.rc_local_path.data)
-                        MonitorController.monitor_controller.appendNode(node)
+                                    pv_prefixes=Node.get_prefix_array(edit_nodes_form.pv_prefix.data),
+                                    type_node=type,
+                                    rc_local_path=edit_nodes_form.rc_local_path.data)
+                        controller.manage_nodes(node)
                         flash('Successfully edited node {} !'.format(node), 'success')
                         return redirect(url_for("view_nodes"))
                     else:
@@ -123,7 +125,7 @@ def edit_nodes(node=None):
     if request.method == 'GET':
         print("GET {}".format(request.args))
         node_name = request.args.get('node_name', '')
-        node = MonitorController.monitor_controller.getNode(node_name)
+        node = controller.get_node_by_name(node_name)
         if node:
             edit_nodes_form.set_initial_values(node)
 
@@ -132,7 +134,7 @@ def edit_nodes(node=None):
 
 @app.route('/list_types/', methods=['POST'])
 def list_types():
-    types = MonitorController.monitor_controller.fetchTypes()
+    types = controller.fetch_types()
     return render_template("type/refresh_types.html", types=types)
 
 
@@ -145,15 +147,15 @@ def view_types():
             if type_name == '':
                 return 'Invalid type name'
 
-            type_to_delete = MonitorController.monitor_controller.findTypeByName(type_name)
+            type_to_delete = controller.find_type_by_name(type_name)
             if type_to_delete is not None:
                 print('{}'.format(type_to_delete))
-                MonitorController.monitor_controller.removeType(type_to_delete.name)
+                controller.remove_type_by_name(type_to_delete.name)
                 return 'Type deleted'
             else:
                 return 'Type not found'
 
-    types = MonitorController.monitor_controller.fetchTypes()
+    types = controller.fetch_types()
     refresh_url = url_for('list_types')
     edit_url = url_for('edit_types')
 
@@ -167,7 +169,7 @@ def edit_types(type=None):
     if request.method == 'GET':
         type_name = request.args.get('type_name', '')
         if type_name is not '':
-            type = MonitorController.monitor_controller.findTypeByName(type_name)
+            type = controller.find_type_by_name(type_name)
             edit_types_form.set_initial_values(type)
 
     if request.method == 'POST':
@@ -177,19 +179,19 @@ def edit_types(type=None):
 
             git_url = request.form.get('gitUrl')
 
-            success, message = MonitorController.monitor_controller.validateRepository(git_url=git_url)
+            success, message = controller.validate_repository(git_url=git_url)
 
             return jsonify(success=success, message=message)
 
         elif action == '':
             if edit_types_form.validate_on_submit():
-                success, message_sha = MonitorController.monitor_controller.cloneRepository(
+                success, message_sha = controller.clone_repository(
                     git_url=edit_types_form.repo_url.data)
                 if success:
                     new_type = Type(name=edit_types_form.name.data,
-                                    repoUrl=edit_types_form.repo_url.data,
+                                    repo_url=edit_types_form.repo_url.data,
                                     description=edit_types_form.description.data, sha=message_sha)
-                    MonitorController.monitor_controller.appendType(new_type)
+                    controller.manage_types(new_type)
 
                     flash('Successfully edited type {} !'.format(new_type), 'success')
                     return redirect(url_for("view_types"))

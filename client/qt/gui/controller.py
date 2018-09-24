@@ -1,46 +1,55 @@
+from client.qt.comm.commandinterface import CommandNetworkInterface
+from common.entity.entities import Sector
+from common.entity.metadata import Singleton
 import threading
 
-from comm.commandinterface import CommandInterface
-from common.entity.entities import Sector
 
+class QtInterfaceController(metaclass=Singleton):
+    """
+    Qt interface controller class.
+    @todo evaluate if this class is needed indeed.
+    """
 
-class GUIController():
-
-    def __init__(self, server="localhost", servPort: int = 6789):
-        self.commandInterface = CommandInterface(serverAddress=server, serverPort=servPort)
+    def __init__(self):
+        """
+        Initializes the data structures reflecting the Redis db.
+        :param server: the server's IP address.
+        :param server_port: the server's port.
+        """
+        self.command_interface = CommandNetworkInterface.get_instance()
 
         self.sectors = Sector.sectors()
 
         self.nodes = {}
-        self.updateNodesLockList = {}
+        self.update_nodes_lock_list = {}
 
         for sector in self.sectors:
             self.nodes[sector] = {"configured": [], "unconfigured": []}
-            self.updateNodesLockList[sector] = threading.Lock()
+            self.update_nodes_lock_list[sector] = threading.Lock()
 
         self.types = []
         self.typeLock = threading.Lock()
 
-    def switch(self, registeredNode, unregisteredNode):
-        return self.commandInterface.switch(registeredNode, unregisteredNode)
+    def switch(self, registered_node, unregistered_node):
+        return self.command_interface.switch(registered_node, unregistered_node)
 
-    def reboot(self, registeredNode):
-        return self.commandInterface.reboot(registeredNode)
+    def reboot(self, registered_node):
+        return self.command_interface.reboot(registered_node)
 
-    def getNodesFromSector(self, sector, registered=True):
-        return self.commandInterface.getNodesFromSector(sector, registered)
+    def get_nodes_from_sector(self, sector, registered=True):
+        return self.command_interface.get_nodes_from_sector(sector, registered)
 
-    def fetchTypes(self):
-        return self.commandInterface.fetchTypes()
+    def fetch_types(self):
+        return self.command_interface.fetch_types()
 
-    def appendType(self, newType):
-        return self.commandInterface.appendType(newType)
+    def append_type(self, new_type):
+        return self.command_interface.append_type(new_type)
 
-    def removeType(self, typeName):
-        self.commandInterface.removeType(typeName)
+    def remove_type(self, type_name):
+        self.command_interface.remove_type(type_name)
 
-    def appendNode(self, node):
-        return self.commandInterface.appendNode(node)
+    def append_node(self, node):
+        return self.command_interface.append_node(node)
 
-    def removeNodeFromSector(self, node):
-        return self.commandInterface.removeNodeFromSector(node)
+    def remove_node_from_sector(self, node):
+        return self.command_interface.remove_node_from_sector(node)

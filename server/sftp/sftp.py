@@ -1,13 +1,18 @@
+import logging
 import os
-
+import threading
+from common.entity.metadata import Singleton
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
-from pyftpdlib.servers import FTPServer
+from pyftpdlib.servers import FTPServer, ThreadedFTPServer
 
 PASSIVE_PORT_MIN_DEFAULT, PASSIVE_PORT_MAX_DEFAULT = 3000, 3010
 
 
 class BBBHandler(FTPHandler):
+    """
+    A class to handle FTP requests and events.
+    """
 
     def on_connect(self):
         print("Client \t%s:%s\tCONNECTED" % (self.remote_ip, self.remote_port))
@@ -44,27 +49,59 @@ class BBBHandler(FTPHandler):
         os.remove(file)
 
 
-def start_ftp_server(ftp_home_dir='/home/', ftp_port: int = 1026, passive_port_min: int = 3000,
+class FTPServerManager(metaclass=Singleton):
+    """
+    A simple class to manage FTP servers.
+    """
+
+    def __init__(self, ftp_home_dir='/home/', ftp_port: int = 1026, passive_port_min: int = 3000,
                      passive_port_max: int = 3010):
-    if os.path.exists(ftp_home_dir) and not os.path.isdir(ftp_home_dir):
-        print('FTP Server Failed to Start! FTP_HOME Path is not valid !!')
-        return
-    if not os.path.isdir(ftp_home_dir):
-        os.mkdir(ftp_home_dir)
+        """
+        Starts a new FTP server.
+        :param ftp_home_dir: FTP's home directory.
+        :param ftp_port: the connection's port.
+        :param passive_port_min: @todo
+        :param passive_port_max: @todo
+        """
 
-    authorizer = DummyAuthorizer()
-    authorizer.add_anonymous(ftp_home_dir, perm="elr")
+        self.home = ftp_home_dir
+        self.listening_port = ftp_port
+        self.logger = logging.getLogger('sftp')
 
-    handler = BBBHandler
-    handler.authorizer = authorizer
-    handler.masquerade_address = '10.0.6.70'
-    handler.permit_foreign_addresses = True
+        if os.path.exists(self.home) and not os.path.isdir(self.home):
+            raise ValueError('FTP server failed to start! {} path is not valid!'.format(self.home))
 
-    if passive_port_max < 2000 or passive_port_min < 1999 or passive_port_max <= passive_port_min:
-        passive_port_min, passive_port_max = PASSIVE_PORT_MIN_DEFAULT, PASSIVE_PORT_MAX_DEFAULT
+        if not os.path.isdir(ftp_home_dir):
+            os.mkdir(ftp_home_dir)
 
-    handler.passive_ports = range(passive_port_min, passive_port_max)
+        authorizer = DummyAuthorizer()
+        authorizer.add_anonymous(ftp_home_dir, perm="elr")
 
-    print('FTP server at {} {}'.format(ftp_home_dir, ftp_port))
-    server = FTPServer(("0.0.0.0", ftp_port), handler)
-    server.serve_forever()
+        handler = BBBHandler
+        handler.authorizer = authorizer
+        handler.masquerade_address = '10.0.6.70'
+        handler.permit_foreign_addresses = True
+
+        if passive_port_max < 2000 or passive_port_min < 1999 or passive_port_max <= passive_port_min:
+            passive_port_min, passive_port_max = PASSIVE_PORT_MIN_DEFAULT, PASSIVE_PORT_MAX_DEFAULT
+
+        handler.passive_ports = range(passive_port_min, passive_port_max)
+
+        self.server = ThreadedFTPServer(("0.0.0.0", ftp_port), handler)
+        self.server_thread = threading.Thread(target=self.server.serve_forever)
+
+        self.start_server()
+
+    def start_server(self):
+
+        self.logger.info('Starting FTP server at {} {}.'.format(self.home, self.listening_port))
+        self.server_thread.start()
+
+    def stop_ftp_server(self):
+        """
+        Stops the FTP server.
+        """
+        self.logger.info('Stopping FTP server.')
+        self.server.close_all()
+        self.logger.info('FTP server is shut.')
+
