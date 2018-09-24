@@ -5,4 +5,4 @@ pushd ${PWD}/../
 git pull
 popd
 
-python3  /root/bbb-daemon/daemon/daemon.py
+python3 run_daemon.py

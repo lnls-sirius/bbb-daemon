@@ -16,7 +16,7 @@ class Daemon():
     """
 
     def __init__(self, server_address, ping_port, boot_port, bind_port,
-                 ftp_destination_folder, path, rc_local_dest_path, sftp_port):
+                 ftp_destination_folder, path, rc_local_dest_path, sftp_port, ping_candidates):
         """
         Initializes a new Daemon object.
 
@@ -34,6 +34,8 @@ class Daemon():
                        sftp_server_address=server_address, ftp_destination_folder=ftp_destination_folder)
 
         self.logger = logging.getLogger('Daemon')
+
+        self.ping_candidates = ping_candidates
 
         self.ftpDestinationFolder = ftp_destination_folder
 
@@ -83,10 +85,10 @@ class Daemon():
         while self.pinging:
             info = self.bbb.get_current_config()
             print(info)
-            # {chk} | {cmd} | {name} | {type} | {ipAddr} | {sha}
+            # {chk} | {playload}
             message = "{}|{}".format(NetUtils.checksum(info), info)
-
-            ping_socket.sendto(message.encode('utf-8'), (self.server_address, self.ping_port))
+            for addr in self.ping_candidates:
+                ping_socket.sendto(message.encode('utf-8'), (addr, self.ping_port))
 
             time.sleep(PING_INTERVAL)
 

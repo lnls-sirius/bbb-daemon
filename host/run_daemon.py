@@ -2,18 +2,22 @@ import argparse
 import logging
 import os
 from host.daemon import Daemon
+  
+CONFIG_PATH = os.environ.get('CONFIG_PATH', '/root/bbb-daemon/bbb.bin')
+TYPE_RC_LOCAL_PATH = os.environ.get('TYPE_RC_LOCAL_PATH', 'init/rc.local')
+RC_LOCAL_DESTINATION_PATH = os.environ.get('RC_LOCAL_DESTINATION_PATH', '/etc/rc.local')
+FTP_SERVER_PORT = int(os.environ.get('FTP_SERVER_PORT',1026))
+ 
+FTP_DESTINATION_FOLDER = os.environ.get('FTP_DESTINATION_FOLDER', '/root')
+SERVER_ADDR = os.environ.get('SERVER_ADDR','10.0.6.44')
+BOOT_PORT = os.environ.get('BOOT_PORT', 9878)
+BIND_PORT = os.environ.get('BIND_PORT', 9877)
+PING_PORT = os.environ.get('PING_PORT', 9876)
+ 
+PING_CANDIDATES = ['10.0.6.44', '10.0.6.48', '10.0.6.51']
 
-CONFIG_PATH = "/root/bbb-daemon/bbb.bin"
-TYPE_RC_LOCAL_PATH = "init/rc.local"
-RC_LOCAL_DESTINATION_PATH = "/etc/rc.local"
-FTP_SERVER_PORT = 1026
-
-# This info should contain a '/'
-FTP_DESTINATION_FOLDER = '/root/'
-SERVER_ADDR = "10.0.6.44"
-PING_PORT = 9876
-BIND_PORT = 9877
-BOOT_PORT = 9878
+if not SERVER_ADDR in PING_CANDIDATES:
+    PING_CANDIDATES.append(SERVER_ADDR)
 
 # CLONE_PATH = "../"  # remember to place the forward slash !
 
@@ -75,5 +79,6 @@ if __name__ == '__main__':
            path=args['configuration_path'],
            rc_local_dest_path=args['node_rc_local'],
            ftp_destination_folder=args['ftp_destination'],
-           sftp_port=args['ftp_port'])
+           sftp_port=args['ftp_port'],
+           ping_candidates=PING_CANDIDATES)
 

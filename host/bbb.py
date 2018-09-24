@@ -5,6 +5,8 @@ import os
 import shutil
 import subprocess
 import time
+import json
+
 from common.entity.entities import Command, Node, Sector, Type
 from host.sftp import download_from_ftp
 
@@ -51,9 +53,9 @@ class BBB:
         """
         Returns a string representing the host's configuration ready to be sent.
         :return: message representing the current configuration.
-        """
-        return "{}|{}|{}|{}|{}" \
-            .format(Command.PING, self.node.name, self.node.type.name, self.node.ip_address, self.node.type.sha)
+        """ 
+        key, node_info, type_info = self.node.to_set()
+        return json.dumps({'command':Command.PING, 'node_key':key, 'node': node_info, 'type':type_info})
 
     def reboot(self):
         """
@@ -105,8 +107,8 @@ class BBB:
             self.logger.info("Updating current configuration from {} to {}.".format(self.node, new_config_node))
 
             self.node = new_config_node
-
-            self.change_ip_address(new_ip_address=new_config_node.ip_address)
+            network_address = Sector.get_network_address_from_ip_address(new_config_node.ip_address)
+            self.change_ip_address(new_ip_address=new_config_node.ip_address, net_address=network_address)
 
             self.node.ip_address = self.get_ip_address()[0]
 
