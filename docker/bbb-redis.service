@@ -1,0 +1,17 @@
+[Unit]
+Description=BeagleBone Black Redis Server Service
+Wants=docker.service
+After=docker.service
+
+[Service]
+Restart=on-failure
+RestartSec=5
+Type=forking
+ExecStart=/usr/bin/docker start bbb-redis
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
+
+
