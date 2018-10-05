@@ -6,9 +6,6 @@ install:
 	pip3 install virtualenv==16.0.0
 	virtualenv bbb-daemon-virtualenv
 	./setup-env.sh
-cert:
-	sudo apt-get install openssl
-	openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
 
 install-docker:
 	sudo mkdir -p /opt/redis-data

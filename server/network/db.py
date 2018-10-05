@@ -1,6 +1,7 @@
 from common.entity.entities import Node, Type
 from common.entity.metadata import Singleton
 
+import msgpack
 import ast
 import redis
 import threading
@@ -151,18 +152,19 @@ class RedisPersistence(metaclass=Singleton):
         """
 
         if node_name is None:
-            raise TypeError("Node given as parameter is None.")
+            raise TypeError("No node name has been given. node_name is None.")
 
         content_as_string = self.db.get(Node.KEY_PREFIX + node_name)
 
         if content_as_string is not None:
             content_as_dict = ast.literal_eval(content_as_string.decode('utf-8'))
-            node_type = self.get_type_by_name(content_as_dict.get('type', ''))
-
-            ret_node = Node(type_node=node_type, name=node_name)
-            ret_node.from_set(content_as_string)
-
-            return ret_node
+            if type(content_as_dict) == dict:
+                node_type = self.get_type_by_name(content_as_dict.get('type', ''))
+                n = Node()
+                n.from_set(node_dict=content_as_dict, node_type=node_type)
+                return n
+            else:
+                raise TypeError("Type obtained from redis {} after conversion isn't a dictionary.".format(Node.KEY_PREFIX + node_name))
 
         raise DataNotFoundError("Node whose name is {} hasn't been found in the db.".format(node_name))
 
@@ -175,8 +177,14 @@ class RedisPersistence(metaclass=Singleton):
         """
 
         if self.db.exists(Type.KEY_PREFIX + type_name):
-            ret_type = Type(name=type_name)
-            ret_type.from_set(str_dic=self.db.get(Type.KEY_PREFIX + type_name))
+
+            content_as_string = self.db.get(Type.KEY_PREFIX + type_name)
+            content_as_dict = ast.literal_eval(content_as_string.decode('utf-8'))
+            if type(content_as_dict) != dict:
+                raise TypeError("Type obtained from redis {} after conversion isn't a dictionary.".format(Type.KEY_PREFIX + type_name))
+            
+            ret_type = Type()
+            ret_type.from_set(type_dict=content_as_dict)
             return ret_type
 
         raise DataNotFoundError("Type whose name is {} hasn't been found in the db.".format(type_name))
@@ -255,7 +263,6 @@ class RedisPersistence(metaclass=Singleton):
         Removes a node from a sector.
         :param node: Node instance to be removed.
         """
-
         if node is None:
             return 0
 
@@ -275,3 +282,4 @@ class RedisPersistence(metaclass=Singleton):
         self.nodesListMutex.release()
 
         return count
+

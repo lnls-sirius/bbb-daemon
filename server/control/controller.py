@@ -196,6 +196,14 @@ class ServerController(metaclass=Singleton):
 
         return DataNotFoundError("Node whose IP address is {} not found in sector {}".format(
             ip_address, Sector.get_sector_by_ip_address(ip_address)))
+    
+    def get_node_by_name(self, node_name):
+        """
+        Return a node by it's name.
+        :param node_name: Name to look for.
+        :return: the node or None.
+        """
+        return self.db.get_node_by_name(node_name)
 
     def is_ip_address_available(self, ip_address=None):
         return not (ip_address in self.get_node_by_address(ip_address=ip_address))
@@ -241,61 +249,64 @@ class ServerController(metaclass=Singleton):
         :param host_type: the node's type.
         :param bbb_sha: the node's SHA. Used to identify the git repository version.
         """ 
-        name = kwargs['node']['name']
-        address = kwargs['node']['ip_address']
-        device = kwargs['node']['device']
-        details = kwargs['node']['details']
-        config_time = kwargs['node']['config_time']
-        host_type = kwargs['type']['name']
-        bbb_sha = kwargs['type']['bbb_sha']
+        node_dict = kwargs.get('node_dict', None)
+        type_dict = kwargs.get('type_dict', None)
+
+        if not node_dict:
+            return
         
-        sector = Sector.get_sector_by_ip_address(address)
+        t = Type()
+        t.from_set(type_dict)
 
-        self.updateNodesLockList[sector].acquire()
+        node = Node()
+        node.from_set(node_dict, t)
 
-        is_host_connected = False
-        conflicted_host = False
+        sector = Sector.get_sector_by_ip_address(node.ip_address)
 
-        if address in self.nodes[sector]["configured"]:
+        # self.updateNodesLockList[sector].acquire()
+        # is_host_connected = False
+        # conflicted_host = False
 
-            node = self.nodes[sector]["configured"][self.nodes[sector]["configured"].index(address)]
-            node.counter = MAX_LOST_PING
+        # if node.ip_address in self.nodes[sector]["configured"]:
 
-            if node.name == name and node.type.name == host_type and node.type.sha == bbb_sha:
-                node.update_state(NodeState.CONNECTED)
-                is_host_connected = True
-            else:
-                node.update_state(NodeState.MIS_CONFIGURED)
-                conflicted_host = True
+        #     node = self.nodes[sector]["configured"][self.nodes[sector]["configured"].index(node.ip_address)]
+        #     node.counter = MAX_LOST_PING
 
-        if not is_host_connected:
+        #     if node.name == name and node.type.name == host_type and node.type.sha == bbb_sha:
+        #         node.update_state(NodeState.CONNECTED)
+        #         is_host_connected = True
+        #     else:
+        #         node.update_state(NodeState.MIS_CONFIGURED)
+        #         conflicted_host = True
 
-            available_type = self.find_type_by_name(host_type)
+        # if not is_host_connected:
 
-            if not available_type:
-                available_type = Type(name=host_type, description="Unknown type.")
+        #     available_type = self.find_type_by_name(host_type)
 
-            if address in self.nodes[sector]["unconfigured"]:
+        #     if not available_type:
+        #         available_type = Type(name=host_type, description="Unknown type.")
 
-                un_configured_node = self.nodes[sector]["unconfigured"][self.nodes[sector]["unconfigured"].index(address)]
-                un_configured_node.counter = MAX_LOST_PING
-                un_configured_node.name = name
-                un_configured_node.type = available_type
+        #     if address in self.nodes[sector]["unconfigured"]:
 
-                if conflicted_host:
-                    un_configured_node.update_state(NodeState.MIS_CONFIGURED)
-                else:
-                    un_configured_node.update_state(NodeState.CONNECTED)
+        #         un_configured_node = self.nodes[sector]["unconfigured"][self.nodes[sector]["unconfigured"].index(address)]
+        #         un_configured_node.counter = MAX_LOST_PING
+        #         un_configured_node.name = name
+        #         un_configured_node.type = available_type
 
-            else:
-                new_unconfigured_node = Node(name=name, ip=address, state=NodeState.CONNECTED, type_node=available_type,
-                                             sector=sector, counter=MAX_LOST_PING)
-                if conflicted_host:
-                    new_unconfigured_node.update_state(NodeState.MIS_CONFIGURED)
+        #         if conflicted_host:
+        #             un_configured_node.update_state(NodeState.MIS_CONFIGURED)
+        #         else:
+        #             un_configured_node.update_state(NodeState.CONNECTED)
 
-                self.nodes[sector]["unconfigured"].append(new_unconfigured_node)
+        #     else:
+        #         new_unconfigured_node = Node(name=name, ip=address, state=NodeState.CONNECTED, type_node=available_type,
+        #                                      sector=sector, counter=MAX_LOST_PING)
+        #         if conflicted_host:
+        #             new_unconfigured_node.update_state(NodeState.MIS_CONFIGURED)
 
-        self.updateNodesLockList[sector].release()
+        #         self.nodes[sector]["unconfigured"].append(new_unconfigured_node)
+
+        # self.updateNodesLockList[sector].release()
 
     def stop_all(self):
         """
@@ -303,6 +314,27 @@ class ServerController(metaclass=Singleton):
         """
         self.scan_nodes = False
 
+    def check_ip_available(self, ip=None, name=None):
+        """
+        Check if a specific ip is available.
+        :param ip: ip to be checked.
+        :param name: node name.
+        :return (bool: True/False, str: A simple text)
+        @todo: this method deserver some love.
+        """
+        
+        if ip is None or name is None:
+            return False, "Node name/ip is not defined."
+
+        node = self.db.get_node_by_address(node_addr=ip)
+        if node is None:
+            return True, "No node with the ip {} is registered.".format(ip)
+        else:
+            if node.name == name:
+                return True, "The ip {} is already belong to this node ({})".format(ip, name)
+            else:
+        return False, "This ip {} is linked to another node ({})".format(ip, node.name)
+        
     def validate_repository(self, rc_path: str = None, git_url: str = None, check_rc_local: bool = False):
         """
         Verify if the repository is valid.

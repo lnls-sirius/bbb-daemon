@@ -1,8 +1,7 @@
 import logging
 import socket
 import threading
-import json
-import pickle
+import msgpack
 
 from common.entity.entities import Command
 from common.entity.metadata import Singleton
@@ -68,22 +67,20 @@ class DaemonHostListener(metaclass=Singleton):
         A worker's thread. It dequeues an element and updates the respective node's paramenters.
         """
         while self.listening:
-
             try:
-                #  {chk} | {}
-                info = self.queueUdp.get(timeout=5, block=True)
-                payload = json.loads(info[1]) 
-                if payload['command'] == Command.PING:  
-                    node_dict = pickle.loads(payload['node'])
-                    type_dict = pickle.loads(payload['type'])
-
-                    # @todo: Transform node_dict and type_dict to node and type objects
-                    self.controller.update_host_counter_by_address(node = None)
-                elif payload['command'] == Command.EXIT:
-                    self.logger.info("Worker received a EXIT command. Finishing its thread.")
+                data = self.queueUdp.get(timeout=5, block=True)
+                payload = NetUtils.compare_checksum(expected_chk=data['chk'], payload=data['payload'])
+                if payload['comm'] == Command.PING:  
+                    self.controller.update_host_counter_by_address(node_dict=payload['n'], type_dict=payload['t'])
+                    
+                elif payload['comm'] == Command.EXIT:
+                    self.logger.info("Worker received an EXIT command. Finishing its thread.")
                     return
+                    
             except KeyError:
                 self.logger.exception("Worker UDP wrong payload format.")
+            except ValueError:
+                self.logger.info("Received a corrupted message.")
             except Empty:
                 # Queue is empty, wait again
                 pass
@@ -99,16 +96,22 @@ class DaemonHostListener(metaclass=Singleton):
         self.logger.info("Listening UDP on 0.0.0.0:{}.".format(self.bbbUdpPort))
 
         while self.listening:
-            data, ip_address = self.ping_socket.recvfrom(1024)  # buffer size is 1024 bytes
-            data = str(data.decode('utf-8'))
+            try:
+                data, ip_address = self.ping_socket.recvfrom(1024)  # buffer size is 1024 bytes
+                if type(data) != bin:
+                    pass
+                    
+                data = msgpack.unpackb(data, raw=False)
 
-            if len(data) == 1 and int(data) == Command.EXIT:
-                self.logger.info("Stopping pinging thread's inner loop")
-                break 
-            info = NetUtils.compare_checksum(data=data)
-            if info: 
-                self.queueUdp.put(info)
+                if len(data) == 1 and int(data) == Command.EXIT:
+                    self.logger.info("Stopping pinging thread's inner loop")
+                    break 
 
+                self.queueUdp.put(data)
+            except:
+                # Probably a malformed message caused an exception when unpacking
+                self.logger.exception('asdasd')
+                pass
         self.ping_socket.close()
         self.logger.info("Ping listening thread closed.")
 
@@ -122,7 +125,7 @@ class DaemonHostListener(metaclass=Singleton):
         # In order to close the socket and exit from the accept () function, emulate a new connection
         try:
             shutdown_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            shutdown_socket.sendto('{}'.format(Command.EXIT).encode('utf-8'), ("localhost", self.bbbUdpPort))
+            shutdown_socket.sendto('{}'.format(msgpack.packb(Command.EXIT, use_bin_type=True)), ("localhost", self.bbbUdpPort))
             shutdown_socket.close()
         except socket.error:
             self.logger.exception("Error while closing threads.")

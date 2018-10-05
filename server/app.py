@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import logging
+
 from flask import Flask, render_template, flash, redirect, url_for, request, jsonify, json
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
@@ -8,6 +10,7 @@ from flask_restful import Api
 from common.entity.entities import Sector, Type, Node, NodeState
 from common.serialization.models import NodeSchema, TypeSchema
 from server.control.controller import ServerController
+from server.network.db import DataNotFoundError
 from forms import EditNodeForm, EditTypeForm
 from restful.resources import RestNode, RestBBB
 
@@ -22,6 +25,8 @@ api = Api(app)
 
 api.add_resource(RestNode, '/node/')
 api.add_resource(RestBBB, '/bbb/')
+
+logger = logging.getLogger('app')
 
 @nav.navigation()
 def my_navbar():
@@ -51,23 +56,25 @@ def list_nodes():
 def view_nodes():
     if request.method == 'POST':
         action = request.form.get('action', '')
+        
         if action == 'DELETE':
             node_name = request.form.get('node_name', '')
-            node = controller.get_node_by_name(node_name)
-            if node:
+            try:
+                node = controller.get_node_by_name(node_name)
                 if controller.remove_node_from_sector(node):
                     return 'Node Deleted !'
                 else:
                     return 'Failed to Delete !'
-            else:
+            except DataNotFoundError:
                 return 'Node not found'
+            except:
+                logger.exception("Failed to display view_nodes.")
 
     sectors_list = Sector.SECTORS
 
     refresh_url = url_for('list_nodes')
     edit_url = url_for('edit_nodes')
     return render_template("node/view_nodes.html", refresh_url=refresh_url, edit_url=edit_url, sectors=sectors_list)
-
 
 @app.route("/edit_nodes/", methods=['GET', 'POST'])
 def edit_nodes(node=None):
@@ -94,13 +101,14 @@ def edit_nodes(node=None):
             pass
         elif action == '':
             # Insert new  node
+
             if edit_nodes_form.validate_on_submit():
-                type = controller.find_type_by_name(edit_nodes_form.type.data)
-                if type:
+                _type = controller.find_type_by_name(edit_nodes_form.type.data)
+                if _type:
 
                     res_1, message_1 = controller.validate_repository(
                         rc_path=edit_nodes_form.rc_local_path.data,
-                        git_url=type.repoUrl, check_rc_local=True)
+                        git_url=_type.repoUrl, check_rc_local=True)
 
                     res_2, message_2 = controller.check_ip_available(
                         ip=edit_nodes_form.ip_address.data,
@@ -110,9 +118,9 @@ def edit_nodes(node=None):
                                     ip=edit_nodes_form.ip_address.data,
                                     sector=edit_nodes_form.sector.data,
                                     pv_prefixes=Node.get_prefix_array(edit_nodes_form.pv_prefix.data),
-                                    type_node=type,
+                                    type_node=_type,
                                     rc_local_path=edit_nodes_form.rc_local_path.data)
-                        controller.manage_nodes(node)
+                        controller.append_node(node)
                         flash('Successfully edited node {} !'.format(node), 'success')
                         return redirect(url_for("view_nodes"))
                     else:
@@ -125,10 +133,12 @@ def edit_nodes(node=None):
     if request.method == 'GET':
         print("GET {}".format(request.args))
         node_name = request.args.get('node_name', '')
-        node = controller.get_node_by_name(node_name)
-        if node:
+        try: 
+            node = controller.get_node_by_name(node_name)
             edit_nodes_form.set_initial_values(node)
-
+        except DataNotFoundError:
+            logger.info("Node not found.")
+        
     return render_template("node/edit_node.html", node=node, form=edit_nodes_form)
 
 
@@ -142,17 +152,18 @@ def list_types():
 def view_types():
     if request.method == 'POST':
         action = request.form.get('action', '')
+
         if action == 'DELETE':
             type_name = request.form.get('type_name', '')
             if type_name == '':
                 return 'Invalid type name'
 
-            type_to_delete = controller.find_type_by_name(type_name)
-            if type_to_delete is not None:
+            try:
+                type_to_delete = controller.find_type_by_name(type_name)
                 print('{}'.format(type_to_delete))
                 controller.remove_type_by_name(type_to_delete.name)
                 return 'Type deleted'
-            else:
+            except DataNotFoundError:
                 return 'Type not found'
 
     types = controller.fetch_types()
@@ -163,24 +174,21 @@ def view_types():
 
 
 @app.route("/edit_types/", methods=['GET', 'POST'])
-def edit_types(type=None):
+def edit_types(_type=None):
     edit_types_form = EditTypeForm()
 
     if request.method == 'GET':
         type_name = request.args.get('type_name', '')
         if type_name is not '':
-            type = controller.find_type_by_name(type_name)
-            edit_types_form.set_initial_values(type)
+            _type = controller.find_type_by_name(type_name)
+            edit_types_form.set_initial_values(_type)
 
     if request.method == 'POST':
         action = request.form.get('action', '')
 
         if action == 'VALIDATE':
-
             git_url = request.form.get('gitUrl')
-
             success, message = controller.validate_repository(git_url=git_url)
-
             return jsonify(success=success, message=message)
 
         elif action == '':
@@ -191,7 +199,7 @@ def edit_types(type=None):
                     new_type = Type(name=edit_types_form.name.data,
                                     repo_url=edit_types_form.repo_url.data,
                                     description=edit_types_form.description.data, sha=message_sha)
-                    controller.manage_types(new_type)
+                    controller.append_type(new_type)
 
                     flash('Successfully edited type {} !'.format(new_type), 'success')
                     return redirect(url_for("view_types"))
@@ -200,7 +208,7 @@ def edit_types(type=None):
         else:
             return 'Invalid Command'
 
-    return render_template("type/edit_type.html", type=type, form=edit_types_form, url=url_for('edit_types'))
+    return render_template("type/edit_type.html", type=_type, form=edit_types_form, url=url_for('edit_types'))
 
 
 def get_wsgi_app():
