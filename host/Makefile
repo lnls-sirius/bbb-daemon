@@ -1,6 +1,5 @@
 PREFIX ?= /usr/local
 
-# Docker files
 SERVICE_NAME = bbb-daemon
 SRC_SERVICE_FILE = ${SERVICE_NAME}.service
 SERVICE_FILE_DEST = /etc/systemd/system
@@ -13,7 +12,7 @@ install:
 	apt-get install python3
 	apt-get install python3-pip
 	pip3 install --no-cache-dir -r requirements.txt
-	cp --preserve=mode ${SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
+	cp --preserve=mode services/${SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
 	systemctl daemon-reload
 	systemctl stop ${SERVICE_NAME}
 	systemctl start ${SERVICE_NAME}

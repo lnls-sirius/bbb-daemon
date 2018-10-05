@@ -2,6 +2,7 @@ import logging
 import socket
 import threading
 import time
+import msgpack
 
 from host.bbb import BBB
 from common.entity.definition import PING_INTERVAL
@@ -83,12 +84,14 @@ class Daemon():
         ping_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         while self.pinging:
+
             info = self.bbb.get_current_config()
-            print(info)
-            # {chk} | {playload}
-            message = "{}|{}".format(NetUtils.checksum(info), info)
+            chk = NetUtils.checksum(str(info))
+            payload = {'chk' : chk, 'payload':info}
+            pack = msgpack.packb(payload, use_bin_type=True)
+
             for addr in self.ping_candidates:
-                ping_socket.sendto(message.encode('utf-8'), (addr, self.ping_port))
+                ping_socket.sendto(pack, (addr, self.ping_port))
 
             time.sleep(PING_INTERVAL)
 

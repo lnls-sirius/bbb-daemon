@@ -15,7 +15,8 @@ class BBB:
     """
     A class to represent a Beaglebone host.
     """
-
+    CONFIG_JSON_PATH = '/opt/config.json'
+    
     def __init__(self, path, rc_local_destination_path, sftp_server_address, sftp_port=22,
                  ftp_destination_folder = None, interface='eth0'):
         """
@@ -45,17 +46,34 @@ class BBB:
         self.node.ip_address = ipaddress.ip_address(self.get_ip_address()[0])
 
         self.logger = logging.getLogger('BBB')
+        self.current_config_json_mtime = None
 
         # Load the data from the cfg file.
         self.read_node_parameters()
 
+    def check_config_json(self):
+        """
+        Verify if the version loaded of the file config.json is the lattest
+        available. If not, load again.
+        """
+        if os.path.exists(BBB.CONFIG_JSON_PATH):
+            config_json_mtime = os.path.getmtime(BBB.CONFIG_JSON_PATH)
+            if self.current_config_json_mtime == None or config_json_mtime != self.current_config_json_mtime:
+                with open(BBB.CONFIG_JSON_PATH, 'r') as f:
+                    config = json.load(f)
+                    self.current_config_json_mtime = config_json_mtime
+                    self.node.device = config['device']
+                    self.node.details  = config['details'] + '   ' + str(config['baudrate'])
+                    self.node.config_time = config['time']
+        
+
     def get_current_config(self):
         """
-        Returns a string representing the host's configuration ready to be sent.
+        Returns a dictionary containing the host's information and the command type.
         :return: message representing the current configuration.
         """ 
-        key, node_info, type_info = self.node.to_set()
-        return json.dumps({'command':Command.PING, 'node_key':key, 'node': node_info, 'type':type_info})
+        dict_res = self.node.to_set()
+        return {'comm' : Command.PING, 'n' : dict_res[1], 't' : dict_res[2][1]}
 
     def reboot(self):
         """
@@ -86,15 +104,41 @@ class BBB:
             print("Downloaded Node repository from FTP server {} at {}".format(self.node.type.repoUrl, repo_name))
 
             if not os.path.isfile(repo_dir + self.node.rcLocalPath):
-                shutil.rmtree(repo_dir)
-                raise Exception("rc.local not found on path.")
+                self.logger.info("rc.local not found on path {}".format(repo_dir + self.node.rcLocalPath))
+            else:
+                shutil.copy2((repo_dir + self.node.rcLocalPath), self.rc_local_destination_path)
+                print("Copied file {} to {}".format(repo_dir + self.node.rcLocalPath, self.rc_local_destination_path))
 
-            shutil.copy2((repo_dir + self.node.rcLocalPath), self.rc_local_destination_path)
-            print("Copied file {} to {}".format(repo_dir + self.node.rcLocalPath, self.rc_local_destination_path))
             return True
-        except Exception as e:
-            print("{}".format(e))
+        except:
+            self.logger.exception('Error when updating the project via SFTP.')
             return False
+
+    def update_hostname(self, new_hostname):
+        """
+        Updates the host with anew hostname.
+        """
+        old_hostname = self.node.name.replace(':', '-')
+        new_hostname = new_hostname.replace(':','-')
+        
+        if old_hostname != new_hostname:
+            self.logger.info("Updating current hostname from {} to {}.".format(old_hostname, new_hostname))
+
+            with open("/etc/hostname", "w") as hostnameFile:
+                hostnameFile.write(new_hostname)
+                hostnameFile.close()
+
+    def update_ip_address(self, new_ip_address):
+        """
+        Updates the host with a new ip address
+        """
+        if self.node.ip_address != new_ip_address:
+            self.logger.info("Updating current ip address from {} to {}.".format(self.node.ip_address, new_ip_address))
+
+            network_address = Sector.get_network_address_from_ip_address(new_ip_address)
+            self.change_ip_address(new_ip_address=new_ip_address, net_address=network_address)
+            self.node.ip_address = self.get_ip_address()[0]
+
 
     def update(self, new_config_node=None):
         """
@@ -107,14 +151,10 @@ class BBB:
             self.logger.info("Updating current configuration from {} to {}.".format(self.node, new_config_node))
 
             self.node = new_config_node
-            network_address = Sector.get_network_address_from_ip_address(new_config_node.ip_address)
-            self.change_ip_address(new_ip_address=new_config_node.ip_address, net_address=network_address)
+            
+            self.update_ip_address(self.node.ip_address)
 
-            self.node.ip_address = self.get_ip_address()[0]
-
-            with open("/etc/hostname", "w") as hostnameFile:
-                hostnameFile.write(new_config_node.name.replace(":", "-"))
-                hostnameFile.close()
+            self.update_hostname(self.node.name)
 
             self.update_project()
             self.write_node_configuration()
