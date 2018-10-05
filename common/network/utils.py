@@ -95,19 +95,23 @@ class NetUtils():
         return ~total + 0x10000 & 0xffff
 
     @staticmethod
-    def compare_checksum(data):
+    def compare_checksum(expected_chk, payload):
         """
         Compares the received message's and the object checksum fields. This method must be updated
         as the data format sent by the bbb is modified.
         Message content: {chk} | {payload}
         :param data: received packet to be verified.
-        :return: Array containing the data.
+        :return: Array containing the payload.
         :raise ValueError: checksum fields do not match.
         """
-        splt = data.split("|")
-        message = data[(len(splt[0]) + 1):]
-        res = NetUtils.checksum(message)
-        if int(res) == int(splt[0]):
-            return splt
+        if not type(payload) == dict:
+            raise TypeError("Incorrect payload type. Expected python dictionary but received {}.".format(type(payload)))
+        
+        payload_str = str(payload)
 
-        raise ValueError("Computed and received checksum fields do not match.")
+        res = NetUtils.checksum(payload_str)
+
+        if int(res) == expected_chk:
+            return payload
+
+        raise ValueError("Computed and received checksum fields do not match. Computed, received  {} != {}".format(int(res), expected_chk))

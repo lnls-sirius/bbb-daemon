@@ -7,6 +7,7 @@ import ipaddress
 import json
 import copy
 
+
 class Command:
     """
     A simple class to wrap command codes.
@@ -108,9 +109,9 @@ class Sector:
 
     @staticmethod
     def get_network_address_from_ip_address(ip_address):
-        ip_interface =  ipaddress.ip_interface(ip_address)
-        return ipaddress.ip_network(ip_interface, strict = False)
-        
+        ip_interface = ipaddress.ip_interface(ip_address)
+        return ipaddress.ip_network(ip_interface, strict=False)
+
 
 class NodeState:
     """
@@ -157,7 +158,7 @@ class BaseRedisEntity:
         """
         raise NotImplementedError("Provide an implementation for BaseRedisEntity class")
 
-    def from_set(self, str_dic):
+    def from_set(self, **kwargs):
         """
         Returns a BaseRedisEntity object from a string representation of dictionary queried from the Redis db.
         :param str_dic: python's string representation of the dictionary.
@@ -194,8 +195,10 @@ class Type(BaseRedisEntity):
     KEY_PREFIX = 'Type:'
     KEY_PREFIX_LEN = len(KEY_PREFIX)
 
-    def __init__(self, name="generic", repo_url="A generic URL.", color=(255, 255, 255),
-                 description="A generic host.", sha=""):
+    UNDEFINED, POWER_SUPPLY, COUNTER_PRU, SERIAL_THERMO, MBTEMP, AGILENT4UHV, MKS937B, SPIXCON = range(8)
+
+    def __init__(self, name="generic", repo_url="A generic URL.", color=[255, 255, 255],
+                 description="A generic host.", sha="", code=UNDEFINED):
         """
         Initializes a type instance.
         :param name: a type's name.
@@ -209,6 +212,32 @@ class Type(BaseRedisEntity):
         self.repoUrl = repo_url
         self.description = description
         self.sha = sha
+        self.code = code
+
+    @property
+    def name(self):
+
+        if self.code == Type.POWER_SUPPLY:
+            return 'Power Supply'
+        elif self.code == Type.COUNTER_PRU:
+            return 'Counter PRU'
+        elif self.code == Type.SERIAL_THERMO:
+            return 'Thermo Probe'
+        elif self.code == Type.MBTEMP:
+            return 'MBTemp'
+        elif self.code == Type.AGILENT4UHV:
+            return 'Agilent 4UHV'
+        elif self.code == Type.MKS937B:
+            return 'MKS 937b'
+        elif self.code == Type.SPIXCON:
+            return 'SPIxCON'
+        else:
+            return 'Undefined'
+
+    @name.setter
+    def name(self, value):
+
+        pass
 
     @staticmethod
     def get_name_from_key(key):
@@ -226,9 +255,9 @@ class Type(BaseRedisEntity):
         """
         Returns the object representation that will be saved on the Redis db.
         :return: string representation of dict representing a type
-        """ 
+        """
         type_dict = copy.deepcopy(self.__dict__)
-        return self.get_key(), json.dumps(type_dict)
+        return self.get_key(), type_dict
 
     def get_key(self):
         """
@@ -237,24 +266,14 @@ class Type(BaseRedisEntity):
         """
         return Type.KEY_PREFIX + str(self.name)
 
-    def from_set(self, str_dic):
+    def from_set(self, type_dict):
         """
         Load values from a redis set.
-        :param str_dic: python's string representation of the dictionary.
+        :param type_dict: dictionary representing a Type.
         :raise TypeError: the dictionary provided is None.
         """
-        if str_dic is None:
-            raise TypeError("The provided set is None")
-
-        dic_obj = str_dic.decode('utf-8')
-        if type(dic_obj) is str:
-            dic_obj = ast.literal_eval(dic_obj)
-
-        if type(dic_obj) is dict:
-            self.color = dic_obj.get('color', '')
-            self.repoUrl = dic_obj.get('repoUrl', '')
-            self.description = dic_obj.get("description", '')
-            self.sha = dic_obj.get("sha", '')
+        for key in type_dict:
+            setattr(self, key, type_dict[key])
 
     def __eq__(self, other):
         """
@@ -284,7 +303,7 @@ class Node(BaseRedisEntity):
     REBOOT_COUNTER_PERIOD = -90
 
     def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, type_node=None, sector=1,
-                 counter=0, pv_prefixes=[], rc_local_path='',details='', config_time='', device=''):
+                 counter=0, pv_prefixes=[], rc_local_path='', details='', config_time=''):
         """
         Initializes a node instance.
         :param name: a node's name.
@@ -312,8 +331,22 @@ class Node(BaseRedisEntity):
 
         self.details = details
         self.config_time = config_time
-        self.device = device
 
+    # @property
+    # def state_string(self):
+    #      """
+    #      String representation of state
+    #      """
+    #      return NodeState.to_string(self.state)
+
+    def update_state(self, state):
+        """
+        Updates the current node's state.
+        :param state: new node state.
+        :return:
+        """
+        self.state = state
+        self.state_string = NodeState.to_string(state)
 
     @staticmethod
     def get_prefix_string(pref):
@@ -323,8 +356,8 @@ class Node(BaseRedisEntity):
         """
         pref_str = ''
         if pref:
-            for str in pref:
-                pref_str += str + '\n'
+            for a_str in pref:
+                pref_str += a_str + '\n'
 
         if pref_str.endswith('\r\n'):
             pref_str = pref_str[:-2]
@@ -342,8 +375,8 @@ class Node(BaseRedisEntity):
         pref_array = []
         if pref:
             pref = pref.replace(' ', '')
-            for str in pref.split('\r\n'):
-                pref_array.append(str)
+            for a_str in pref.split('\r\n'):
+                pref_array.append(a_str)
 
         return set(pref_array)
 
@@ -365,11 +398,11 @@ class Node(BaseRedisEntity):
         """
         node_dict = copy.deepcopy(self.__dict__)
         type_dict = None
-        if node_dict['type'] != None:
+        if node_dict['type'] is not None:
             node_dict['type'] = self.type.name
             type_dict = self.type.to_set()
-        
-        return self.get_key(), json.dumps(node_dict), type_dict 
+
+        return self.get_key(), node_dict, type_dict
 
     def get_key(self):
         """
@@ -377,37 +410,30 @@ class Node(BaseRedisEntity):
         """
         return (Node.KEY_PREFIX + str(self.name)).replace(' ', '')
 
-    def from_set(self, str_dic):
+    def from_set(self, node_dict, node_type):
         """
         Load the values from a redis set.
-        :param str_dic: python's string representation of the dictionary.
+        :param node_dict: dictionary representing the node object according to the pattern defined
+        in the method get_set() from the Node object.
+        :param node_type: the type object or dictionary that this node shall contain.
         :raise TypeError: the dictionary provided is None.
         """
-        if str_dic is None:
-            raise TypeError("The provided set is None")
+        for key in node_dict:
 
-        dic_obj = str_dic.decode('utf-8')
-        if type(dic_obj) is str:
-            dic_obj = ast.literal_eval(dic_obj)
+            if key == 'type':
+                if node_dict[key] is not None:
+                    print(type(Type))
+                    print(type(node_type))
+                    if type(node_type) == dict:
+                        new_type = Type()
+                        new_type.from_set(node_type)
+                        node_dict[key] = new_type
+                    elif type(node_type) == Type:
+                        node_dict[key] = node_type
+                    else:
+                        node_dict[key] = None
 
-        if type(dic_obj) is dict:
-            self.rcLocalPath = dic_obj.get('rcLocalPath', '')
-            self.ip_address = ipaddress.ip_address(dic_obj.get("ip_address", ''))
-            self.pvPrefix = dic_obj.get("prefix", [])
-            self.sector = dic_obj.get("sector", self.sector) 
-            
-            self.details = dic_obj.get("details", '')
-            self.configTime = dic_obj.get("configTime", '')
-            self.device = dic_obj.get("device", '') 
-
-    def update_state(self, state):
-        """
-        Updates the current node's state.
-        :param state: new node state.
-        :return:
-        """
-        self.state = state
-        self.state_string = NodeState.to_string(state)
+            setattr(self, key, node_dict[key])
 
     def is_connected(self):
         """
@@ -451,4 +477,3 @@ class Node(BaseRedisEntity):
         """
         return "Name: %s, IP Address: %s, Current state: %s" % (
             self.name, self.ip_address, NodeState.to_string(self.state))
-
