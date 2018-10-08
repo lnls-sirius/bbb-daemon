@@ -28,7 +28,7 @@ def no_tty():
 
 def power_suppply_pru():
     """
-    PRU Power Supply 
+    PRU Power Supply
     """
     GPIO.setup("P8_11", GPIO.IN)
     GPIO.setup("P8_12", GPIO.IN)
@@ -64,13 +64,15 @@ def thermo_probe():
         persist_info(Type.SERIAL_THERMO, baud, SERIAL_THERMO)
 
 
-def mbtempChecksum(entrada):
-    print('{}'.format(entrada))
-    soma = 0
-    for elemento in entrada:
-        soma += ord(elemento)
-    soma = 256 - soma % 256
-    return "0x%x" % soma
+def MBTempChecksum(string):
+    counter = 0
+    i = 0
+    while (i < len(string)):
+        counter += ord(string[i])
+        i += 1
+    counter = (counter & 0xFF)
+    counter = (256 - counter) & 0xFF
+    return(string + chr(counter))
 
 
 def mbtemp():
@@ -79,32 +81,30 @@ def mbtemp():
     """
     baud = 115200
     ser = Serial(PORT, baud, timeout=TIMEOUT)
-    try:
-        mbt_addr = 0
-        for msg in MBTEMP_CONSTS:
-            mbt_addr += 1
-            ser.write(msg)
-            res = ser.read()
-            if len(res) != 0:
-                persist_info(Type.MBTEMP, baud, MBTEMP, 'MBTemp Addr {}'.format(mbt_addr))
-    except Exception as e:
-        print('{}'.format(e))
+    devices = []
+    for mbt_addr in range(1, 31):
+        ser.write(MBTempChecksum(chr(mbt_addr)+"\x10\x00\x01\x00"))
+        res = ser.read(10)
+        if len(res) != 0:
+            devices.append(mbt_addr)
     ser.close()
+    if len(devices):
+        persist_info(Type.MBTEMP, baud, MBTEMP, 'MBTemps connected {}'.format(devices))
 
 
 def mks9376b():
     baud = 115200
     ser = Serial(port=PORT, baudrate=baud, timeout=TIMEOUT)
-    for i in range(1, 254):
-        try:
-            msgm = '\@{0:03d}'.format(i) + "PR1?;FF"
-            ser.write(msgm)
-            res = ser.read()
-            if len(res) != 0:
-                persist_info(Type.MKS937B, baud, MKS937B, 'First MKS937b at addr {}'.format(i))
-        except Exception as e:
-            print('{}'.format(e))
+    devices = []
+    for mks_addr in range(1, 254):
+        msgm = '\@{0:03d}'.format(mks_addr) + "PR1?;FF"
+        ser.write(msgm)
+        res = ser.read()
+        if len(res) != 0:
+            devices.append(mks_addr)
     ser.close()
+    if len(devices):
+        persist_info(Type.MKS937B, baud, MKS937B, 'MKS937Bs connected {}'.format(devices))
 
 
 def agilent4uhv():
@@ -114,7 +114,7 @@ def agilent4uhv():
     pass
 
 
-def spixcon():
+def spixconv():
     """
     SPIxCON
     """
