@@ -1,9 +1,9 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-source functions.sh
+source scripts/functions.sh
 source envs.sh
 
-pushd functions
+pushd scripts
 
 	function cleanup {      
 			if [ -f res ]; then
