@@ -5,8 +5,8 @@ from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
 import Adafruit_BBIO.GPIO as GPIO
 from PRUserial485 import PRUserial485_address
 
-from function.scripts.persist import persist_info
-from function.scripts.consts import *
+from persist import persist_info
+from consts import *
 from common.entity.entities import Type
 
 
