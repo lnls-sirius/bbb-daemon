@@ -7,6 +7,7 @@
 # Patricia H Nallin
 # --------------------------------------------------
 
+RSYNC_SERVER="10.0.6.49"
 RSYNC_LOCAL="/root"
 RSYNC_PORT="873"
 PROJECT=$1
@@ -26,10 +27,9 @@ if [ "${SYNC_AVAILABLE%% *}" = "online" ]; then
     # There are updates for the project, sync files and build libraries
     else
         echo "Updates available!";
-        echo -n "Updating...";
+        echo -n "Updating... ";
         rsync -a --delete-after $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT > /tmp/rsync.log;
         if [ $? -eq 0 ]; then
-            # Also build library for selected projects
             if [ "$PROJECT" = "pru-serial485" ] || [ "$PROJECT" = "counting-pru" ]; then
                 echo "Updated!";
                 echo "Building library...";
