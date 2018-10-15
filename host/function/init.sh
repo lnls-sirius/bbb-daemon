@@ -17,10 +17,10 @@ pushd scripts
 	trap cleanup EXIT
 	cleanup
 
-	# The whoami.py script will save in a temporary file wich device is connected
+	# The whoami.py script will save in a temporary file which device is connected
 	# The comparison is based on the following environment variables. Do not use spaces !
 	export PRU_FONTES='PRU_FONTES'
-	export PRU_CONTADORA='PRU_CONTADORA'
+	export COUNTING_PRU='COUNTING_PRU'
 	export SERIAL_THERMO='SERIAL_THERMO'
 	export MBTEMP='MBTEMP'
 	export AGILENT4UHV='AGILENT4UHV'
@@ -30,6 +30,10 @@ pushd scripts
 
 	# Added the root folder to pythonpath in order to gain access to the commons/ scripts folder
 	export PYTHONPATH=${PWD}/../../../
+
+    # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
+    # @todo
+    # - Atualizar arquivos gerais
 
     # Run identification script
     ./whoami.py
@@ -46,26 +50,33 @@ pushd scripts
 	if [[ ${CONN_DEVICE} = "${SPIXCONV}" ]]; then
 		echo SPIXCONV detected.
 		overlay_SPIxCONV
-		# @todo: SPIxCONV ...
+        # @todo
+        # - Atualizar arquivos da SPIXCONV
+        # - Rodar aplicação SPIxCONV
 	fi
 
 	if [[ ${CONN_DEVICE} = "${PRU_FONTES}" ]]; then
 		echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
 		overlay_PRUserial485
-		# @todo: Fontes ...
+		# @todo
+        # - Atualizar arquivos PRUserial485 e Ponte.py
+        # - Rodar IOC FAC
 		exit 1
 	fi
 
-	if [[ ${CONN_DEVICE} = "${PRU_CONTADORA}" ]]; then
+	if [[ ${CONN_DEVICE} = "${COUNTING_PRU}" ]]; then
 		echo  PRUserial485 address != 21 and ttyUSB0 is disconnected. Assuming PRU Counter.
-		overlay_PRUserial485
-		pru_contadora
-	fi
+		overlay_CountingPRU
+        # @todo
+        # - Atualizar arquivos da Contadora
+        # - Rodar Socket da Contadora
 
 	if [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
 		echo  Serial Thermo probe detected.
 		overlay_PRUserial485
-		# @todo: Thermo ...
+        # @todo
+        # - Atualizar arquivos da Sonda Thermo
+        # - Rodar IOC
 	fi
 
 	if [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ] || [ $CONN_DEVICE == "${MKS937}" ]; }; then
