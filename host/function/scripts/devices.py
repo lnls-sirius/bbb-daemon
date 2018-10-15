@@ -102,6 +102,9 @@ def mbtemp():
 
 
 def mks9376b():
+    """
+    MKS 937B
+    """
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 115200
         ser = Serial(port=PORT, baudrate=baud, timeout=TIMEOUT)

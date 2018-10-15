@@ -49,6 +49,7 @@ pushd scripts
 
 	if [[ ${CONN_DEVICE} = "${SPIXCONV}" ]]; then
 		echo SPIXCONV detected.
+        overlay_PRUserial485
 		overlay_SPIxCONV
         # @todo
         # - Atualizar arquivos da SPIXCONV
@@ -70,6 +71,7 @@ pushd scripts
         # @todo
         # - Atualizar arquivos da Contadora
         # - Rodar Socket da Contadora
+        counting_pru
 
 	if [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
 		echo  Serial Thermo probe detected.
