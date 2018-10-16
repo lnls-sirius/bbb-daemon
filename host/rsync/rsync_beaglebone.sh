@@ -12,36 +12,34 @@ RSYNC_LOCAL="/root"
 RSYNC_PORT="873"
 PROJECT=$1
 
+# Proceed if a project was requested
+if [ ! -z ${PROJECT} ]; then
+    # Check whether Rsync Server is available - First item in rsync.conf must be "online"
+    SYNC_AVAILABLE=`rsync -n $RSYNC_SERVER::`;
+    if [ "${SYNC_AVAILABLE%% *}" = "online" ]; then
+        # Server is available. Check if there are updates
+        UPDATES=`rsync -ainO $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT`;
 
-# Check whether Rsync Server is available - First item in rsync.conf must be "online"
-SYNC_AVAILABLE=`rsync -n $RSYNC_SERVER::`;
-if [ "${SYNC_AVAILABLE%% *}" = "online" ]; then
-    echo "Rsync Server is available!";
-    echo "Checking for updates...";
-    UPDATES=`rsync -ainO $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT`;
+        # No updates available
+        if [ -z "$UPDATES" ]; then
+            echo "No updates found.";
 
-    # No updates available
-    if [ -z "$UPDATES" ]; then
-        echo "No updates found.";
-
-    # There are updates for the project, sync files and build libraries
-    else
-        echo "Updates available!";
-        echo -n "Updating... ";
-        rsync -a --delete-after $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT > /tmp/rsync.log;
-        if [ $? -eq 0 ]; then
-            if [ "$PROJECT" = "pru-serial485" ] || [ "$PROJECT" = "counting-pru" ]; then
-                echo "Updated!";
-                echo "Building library...";
-                cd $RSYNC_LOCAL/$PROJECT/src;
-                ./library_build.sh;
-            else
-                echo "Done!";
-            fi
+        # There are updates for the project, sync files and build libraries
         else
-            echo "Updating failed.";
+            rsync -a --delete-after $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT > /tmp/rsync.log;
+            if [ $? -eq 0 ]; then
+                # If project is listed below, build libraries as well
+                if [ "$PROJECT" = "pru-serial485" ] || [ "$PROJECT" = "counting-pru" ]; then
+                    cd $RSYNC_LOCAL/$PROJECT/src;
+                    ./library_build.sh;
+                fi
+            else
+                echo "Updating failed.";
+            fi
         fi
+    else
+        echo "Rsync Server is not available.";
     fi
 else
-    echo "Rsync Server is not available.";
+    echo "No project selected for updating.";
 fi
