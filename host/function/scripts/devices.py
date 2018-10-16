@@ -10,22 +10,22 @@ from consts import *
 from common.entity.entities import Type
 
 PIN_FTDI_PRU = "P8_11"      # 0: FTDI / 1: PRU
-PIN_RS232_RS485 = "P8_12"   # 0: RS232 / 1: RS485
-
 FTDI = 0
 PRU = 1
+
+PIN_RS232_RS485 = "P8_12"   # 0: RS232 / 1: RS485
 RS232 = 0
 RS485 = 1
 
 GPIO.setup(PIN_FTDI_PRU, GPIO.IN)
 GPIO.setup(PIN_RS232_RS485, GPIO.IN)
 
-def counter_pru():
+def counting_pru():
     """
-    Counter PRU
+    CountingPRU
     """
     if PRUserial485_address() != 21 and not path.isfile(PORT):
-        persist_info(Type.COUNTER_PRU, 115200, COUNTING_PRU)
+        persist_info(Type.COUNTING_PRU, 115200, COUNTING_PRU)
 
 
 def no_tty():
@@ -36,12 +36,12 @@ def no_tty():
         persist_info(Type.UNDEFINED, 115200, NOTTY)
 
 
-def power_suppply_pru():
+def power_supply_pru():
     """
     PRU Power Supply
     """
     if GPIO.input(PIN_FTDI_PRU) == PRU and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
-        persist_info(Type.POWER_SUPPLY, 6000000, PRU_FONTES)
+        persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY)
 
 
 def thermoIncluirChecksum(entrada):

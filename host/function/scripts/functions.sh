@@ -55,7 +55,7 @@ function overlay_SPIxCONV {
 
 function counting_pru {
     echo Socat not started. No ttyUSB0 detected and PRUserial485_address isn\'t 21.
-    echo Initializing Counter PRU ...
+    echo Initializing CountingPRU ...
 
     if [ ! -d /root/counting-pru ]; then
         echo ERROR! The folder /root/counting-pru doesn\'t exist.

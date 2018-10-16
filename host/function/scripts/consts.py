@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from os import environ
 
-PRU_FONTES = environ.get('PRU_FONTES')
+PRU_POWER_SUPPLY = environ.get('PRU_POWER_SUPPLY')
 COUNTING_PRU = environ.get('COUNTING_PRU')
 SERIAL_THERMO = environ.get('SERIAL_THERMO')
 MBTEMP = environ.get('MBTEMP')

@@ -19,7 +19,7 @@ pushd scripts
 
 	# The whoami.py script will save in a temporary file which device is connected
 	# The comparison is based on the following environment variables. Do not use spaces !
-	export PRU_FONTES='PRU_FONTES'
+	export PRU_POWER_SUPPLY='PRU_POWER_SUPPLY'
 	export COUNTING_PRU='COUNTING_PRU'
 	export SERIAL_THERMO='SERIAL_THERMO'
 	export MBTEMP='MBTEMP'
@@ -56,7 +56,7 @@ pushd scripts
         # - Rodar aplicação SPIxCONV
 	fi
 
-	if [[ ${CONN_DEVICE} = "${PRU_FONTES}" ]]; then
+	if [[ ${CONN_DEVICE} = "${PRU_POWER_SUPPLY}" ]]; then
 		echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
 		overlay_PRUserial485
 		# @todo
@@ -72,6 +72,7 @@ pushd scripts
         # - Atualizar arquivos da Contadora
         # - Rodar Socket da Contadora
         counting_pru
+    fi
 
 	if [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
 		echo  Serial Thermo probe detected.
