@@ -35,9 +35,14 @@ pushd scripts
     pushd ../../rsync
         echo Synchronizing bbb-daemon files
         ./rsync_beaglebone.sh bbb-daemon
-
+        # bbb-daemon updated. Reboot before continuing
+        if [ $? -ne 0 ]; then
+            echo Rebooting BBB...
+            shutdown -r now
+        fi
         echo Synchronizing startup scripts
         ./rsync_beaglebone.sh startup-scripts
+
     popd
 
 

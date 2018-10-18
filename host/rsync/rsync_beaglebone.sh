@@ -33,13 +33,17 @@ if [ ! -z ${PROJECT} ]; then
                     cd $RSYNC_LOCAL/$PROJECT/src;
                     ./library_build.sh;
                 fi
+                exit 0
             else
                 echo "Updating failed.";
+                exit 1
             fi
         fi
     else
         echo "Rsync Server is not available.";
+        exit 1
     fi
 else
     echo "No project selected for updating.";
+    exit 1
 fi
