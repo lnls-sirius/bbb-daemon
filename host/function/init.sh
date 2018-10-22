@@ -17,6 +17,15 @@ pushd scripts
 	trap cleanup EXIT
 	cleanup
 
+    # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
+    pushd ../../rsync
+        echo Synchronizing startup scripts
+        ./rsync_beaglebone.sh startup-scripts
+    popd
+
+    # Run HardReset script, which is available at all boards
+    startup_HardReset
+
 	# The whoami.py script will save in a temporary file which device is connected
 	# The comparison is based on the following environment variables. Do not use spaces !
 	export PRU_POWER_SUPPLY='PRU_POWER_SUPPLY'
@@ -31,25 +40,9 @@ pushd scripts
 	# Added the root folder to pythonpath in order to gain access to the commons/ scripts folder
 	export PYTHONPATH=${PWD}/../../../
 
-    # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
-    pushd ../../rsync
-        echo Synchronizing bbb-daemon files
-        ./rsync_beaglebone.sh bbb-daemon
-        # bbb-daemon updated. Reboot before continuing
-        if [ $? -ne 0 ]; then
-            echo Rebooting BBB...
-            shutdown -r now
-        fi
-        echo Synchronizing startup scripts
-        ./rsync_beaglebone.sh startup-scripts
-
-    popd
-
-
     # Run identification script, repeats until a device is found
     while { [ ! -f res ] && [ ! -f baudrate ]; }; do
         ./whoami.py
-        echo  Nothing has been found. Will try again soon.
         sleep 1
     done
 
@@ -72,8 +65,8 @@ pushd scripts
         overlay_PRUserial485
 		overlay_SPIxCONV
         # @todo
-        # - Atualizar arquivos da SPIXCONV
         # - Rodar aplicação SPIxCONV
+        startup_blinkingLED
 
 	elif [[ ${CONN_DEVICE} = "${PRU_POWER_SUPPLY}" ]]; then
 		echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
@@ -85,6 +78,7 @@ pushd scripts
 		overlay_PRUserial485
 		# @todo
         # - Rodar IOC FAC e Ponte.py
+        startup_blinkingLED
 		exit 1
 
 	elif [[ ${CONN_DEVICE} = "${COUNTING_PRU}" ]]; then
@@ -97,6 +91,7 @@ pushd scripts
         # @todo
         # - Rodar Socket da Contadora
         counting_pru
+        startup_blinkingLED
 
 	elif [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
 		echo  Serial Thermo probe detected.
@@ -108,6 +103,7 @@ pushd scripts
 		overlay_PRUserial485
         # @todo
         # - Rodar IOC
+        startup_blinkingLED
 
 	elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ] || [ $CONN_DEVICE == "${MKS937}" ]; }; then
         echo Synchronizing pru-serial485 files
@@ -115,6 +111,7 @@ pushd scripts
             ./rsync_beaglebone.sh pru-serial485
         popd
 		overlay_PRUserial485
+        startup_blinkingLED
 		echo  Starting socat with ${BAUDRATE} baudrate on port ${SOCAT_PORT} and range=${SERVER_IP_ADDR}:${SERVER_MASK}.
 		socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR}:${SERVER_MASK} FILE:${CONN_DEVICE},b${BAUDRATE},rawer
 	else
