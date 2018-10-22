@@ -72,3 +72,41 @@ function counting_pru {
     echo SI-CountingPRU_Socket.py Terminated !
     popd
 }
+
+
+function startup_blinkingLED {
+    echo Startup LED blinking...
+
+    if [ ! -d /root/startup-scripts ]; then
+        echo ERROR! The folder /root/startup-scripts doesn\'t exist.
+        exit 1
+    fi
+
+    if [ ! -f /root/startup-scripts/HeartBeat.py ]; then
+        echo ERROR! The file /root/startup-scripts/HeartBeat.py doesn\'t exist.
+        exit 1
+    fi
+
+    pushd /root/startup-scripts
+    ./HeartBeat.py &
+    popd
+}
+
+
+function startup_HardReset {
+    echo Startup HardReset...
+
+    if [ ! -d /root/startup-scripts ]; then
+        echo ERROR! The folder /root/startup-scripts doesn\'t exist.
+        exit 1
+    fi
+
+    if [ ! -f /root/startup-scripts/HardReset.py ]; then
+        echo ERROR! The file /root/startup-scripts/HardReset.py doesn\'t exist.
+        exit 1
+    fi
+
+    pushd /root/startup-scripts
+    ./HardReset.py &
+    popd
+}
