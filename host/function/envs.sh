@@ -10,3 +10,4 @@ export SERVER_MASK=255.255.255.0
 
 # The serial port ....
 export DEVICE=/dev/ttyUSB0
+export PING_CANDIDATES="10.0.6.44 10.0.6.48 10.0.6.51"

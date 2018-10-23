@@ -8,8 +8,6 @@ import time
 import json
 
 from common.entity.entities import Command, Node, Sector, Type
-from host.sftp import download_from_ftp
-
 
 class BBB:
     """
@@ -17,24 +15,14 @@ class BBB:
     """
     CONFIG_JSON_PATH = '/opt/config.json'
     
-    def __init__(self, path, rc_local_destination_path, sftp_server_address, sftp_port=22,
-                 ftp_destination_folder = None, interface='eth0'):
+    def __init__(self, path, interface='eth0'):
         """
         Creates a new object instance.
         :param path: the configuration file's location
-        :param rc_local_destination_path: the node's rc.local path.
-        :param sftp_server_address: the FTP server's IP address.
-        :param sftp_port: the FTP server's listening port.
-        :param ftp_destination_folder: the path which the project will be copied to.
         """
 
         #  Parameters that define absolute locations inside the host
-        self.ftp_destination_folder = ftp_destination_folder
-        self.rc_local_destination_path = rc_local_destination_path
         self.configuration_file_path = path
-
-        self.sfp_server_address = sftp_server_address
-        self.sftp_port = sftp_port
 
         # The interface used (ethernet port on the Beaglebone).
         self.interface_name = interface
@@ -81,39 +69,7 @@ class BBB:
         """
         self.logger.info("Rebooting system.")
         os.system('reboot')
-
-    def update_project(self):
-        """
-        Imports the current project version from the FTP server. This method does not keep old project versions.
-        :return: True or False
-        """
-        try:
-            repo_name = self.node.type.repoUrl.strip().split('/')[-1].split('.')[0]
-
-            repo_dir = self.ftp_destination_folder + repo_name + "/"
-            if os.path.exists(repo_dir) and os.path.isdir(repo_dir):
-                shutil.rmtree(repo_dir)
-                time.sleep(1)
-
-            if repo_dir.endswith('/') and self.node.rcLocalPath.startswith('/'):
-                self.node.rcLocalPath = self.node.rcLocalPath[1:]
-
-            download_from_ftp(sftp_server_addr=self.sfp_server_address, sftp_port=self.sftp_port, path=repo_name,
-                              destination=repo_dir)
-
-            print("Downloaded Node repository from FTP server {} at {}".format(self.node.type.repoUrl, repo_name))
-
-            if not os.path.isfile(repo_dir + self.node.rcLocalPath):
-                self.logger.info("rc.local not found on path {}".format(repo_dir + self.node.rcLocalPath))
-            else:
-                shutil.copy2((repo_dir + self.node.rcLocalPath), self.rc_local_destination_path)
-                print("Copied file {} to {}".format(repo_dir + self.node.rcLocalPath, self.rc_local_destination_path))
-
-            return True
-        except:
-            self.logger.exception('Error when updating the project via SFTP.')
-            return False
-
+ 
     def update_hostname(self, new_hostname):
         """
         Updates the host with anew hostname.
@@ -156,7 +112,7 @@ class BBB:
 
             self.update_hostname(self.node.name)
 
-            self.update_project()
+            # self.update_project()
             self.write_node_configuration()
 
             self.logger.info("Current configuration updated successfully.")

@@ -91,7 +91,7 @@ def mbtemp():
         baud = 115200
         ser = Serial(PORT, baud, timeout=TIMEOUT)
         devices = []
-        for mbt_addr in range(1, 31):
+        for mbt_addr in range(1, 32):
             ser.write(MBTempChecksum(chr(mbt_addr)+"\x10\x00\x01\x00"))
             res = ser.read(10)
             if len(res) != 0:
@@ -109,7 +109,7 @@ def mks9376b():
         baud = 115200
         ser = Serial(port=PORT, baudrate=baud, timeout=TIMEOUT)
         devices = []
-        for mks_addr in range(1, 254):
+        for mks_addr in range(1, 255):
             msgm = '\@{0:03d}'.format(mks_addr) + "PR1?;FF"
             ser.write(msgm)
             res = ser.read()
@@ -137,22 +137,19 @@ def agilent4uhv():
     """
     AGILENT 4UHV
     """
-    pass
-    '''
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
-        baud = 115200
-        ser = Serial(port=PORT, baudrate=baud, timeout=TIMEOUT)
+        baud = 38400
+        ser = Serial(port=PORT, baudrate=baud, timeout=200)
         devices = []
-        for agilent4uhv_addr in range(1, 32):
-            msgm = '\@{0:03d}'.format(agilent4uhv_addr) + "XXXXXXXXXXXXXXXX"
-            ser.write(Agilent4UHV_CRC(msgm))
+        for addr in range(0, 32):
+            #'\x02', str(128 + addr), "323", '\x30', '\x03', $CRC;
+            ser.write(Agilent4UHV_CRC('\x02{}323\x30\x03'.format(str(128 + addr))))
             res = ser.read()
             if len(res) != 0:
-                devices.append(agilent4uhv_addr)
+                devices.append(addr)
         ser.close()
         if len(devices):
-            persist_info(Type.AGILENT4UHV, baud, AGILENT4UHV, 'AGILENT4UHVs connected {}'.format(devices))
-    '''
+            persist_info(Type.AGILENT4UHV, baud, AGILENT4UHV, 'AGILENT4UHV connected {}'.format(devices))
 
 def spixconv():
     """

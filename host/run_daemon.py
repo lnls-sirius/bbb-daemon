@@ -10,11 +10,9 @@ FTP_SERVER_PORT = int(os.environ.get('FTP_SERVER_PORT',1026))
  
 FTP_DESTINATION_FOLDER = os.environ.get('FTP_DESTINATION_FOLDER', '/root')
 SERVER_ADDR = os.environ.get('SERVER_ADDR','10.0.6.44')
-BOOT_PORT = os.environ.get('BOOT_PORT', 9878)
 BIND_PORT = os.environ.get('BIND_PORT', 9877)
 PING_PORT = os.environ.get('PING_PORT', 9876)
- 
-PING_CANDIDATES = ['10.0.6.44', '10.0.6.48', '10.0.6.51']
+PING_CANDIDATES = os.environ.get('PING_CANDIDATES','10.0.6.44 10.0.6.48 10.0.6.51').split(' ')
 
 if not SERVER_ADDR in PING_CANDIDATES:
     PING_CANDIDATES.append(SERVER_ADDR)
@@ -34,10 +32,6 @@ if __name__ == '__main__':
 
     parser.add_argument("--ping-port", "-p", nargs='?', default=PING_PORT,
                         help='The port to which ping request are sent.', dest="ping_port")
-
-    parser.add_argument("--boot-port", "-b", nargs='?', default=BOOT_PORT,
-                        help='The port that a BBB used when it booted to load the project it must run',
-                        dest="boot_port")
 
     parser.add_argument("--ftp-server-addr", "-S", nargs='?', default=SERVER_ADDR,
                         help="The FTP server's IP address", dest="ftp_server")
@@ -75,10 +69,6 @@ if __name__ == '__main__':
     Daemon(server_address=args['server_address'],
            ping_port=args['ping_port'],
            bind_port=args['command_port'],
-           boot_port=args['boot_port'],
            path=args['configuration_path'],
-           rc_local_dest_path=args['node_rc_local'],
-           ftp_destination_folder=args['ftp_destination'],
-           sftp_port=args['ftp_port'],
            ping_candidates=PING_CANDIDATES)
 
