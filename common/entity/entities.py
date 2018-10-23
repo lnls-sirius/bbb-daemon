@@ -302,7 +302,7 @@ class Node(BaseRedisEntity):
     KEY_PREFIX_LEN = len(KEY_PREFIX)
     REBOOT_COUNTER_PERIOD = -90
 
-    def __init__(self, name="r0n0", ip="10.128.0.0", state=NodeState.DISCONNECTED, type_node=None, sector=1,
+    def __init__(self, name="r0n0", ip_address="10.128.0.0", state=NodeState.DISCONNECTED, type_node=None, sector=1,
                  counter=0, pv_prefixes=[], rc_local_path='', details='', config_time=''):
         """
         Initializes a node instance.
@@ -320,7 +320,7 @@ class Node(BaseRedisEntity):
         """
 
         self.name = name
-        self.ip_address = ip
+        self.ip_address = ip_address
         self.state = state
         self.state_string = NodeState.to_string(state)
         self.type = type_node
