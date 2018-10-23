@@ -1,6 +1,8 @@
 #!/bin/bash
 
-export SERVER_APP_IP="10.0.6.44"
+export RSYNC_SERVER="10.0.6.51"
+export RSYNC_LOCAL="/root"
+export RSYNC_PORT="873"
 
 # Updating some contents at etc folder. If so, reboots before continuing
 pushd /root/bbb-daemon/host/rsync

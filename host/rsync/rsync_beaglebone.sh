@@ -7,11 +7,7 @@
 # Patricia H Nallin
 # --------------------------------------------------
 
-RSYNC_SERVER="10.0.6.49"
-RSYNC_LOCAL="/root"
-RSYNC_PORT="873"
 PROJECT=$1
-
 
 # Proceed if a project was requested
 if [ ! -z ${PROJECT} ]; then
