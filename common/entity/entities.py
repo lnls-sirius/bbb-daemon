@@ -195,7 +195,7 @@ class Type(BaseRedisEntity):
     KEY_PREFIX = 'Type:'
     KEY_PREFIX_LEN = len(KEY_PREFIX)
 
-    UNDEFINED, POWER_SUPPLY, COUNTER_PRU, SERIAL_THERMO, MBTEMP, AGILENT4UHV, MKS937B, SPIXCON = range(8)
+    UNDEFINED, POWER_SUPPLY, COUNTING_PRU, SERIAL_THERMO, MBTEMP, AGILENT4UHV, MKS937B, SPIXCONV = range(8)
 
     def __init__(self, name="generic", repo_url="A generic URL.", color=[255, 255, 255],
                  description="A generic host.", sha="", code=UNDEFINED):
@@ -219,8 +219,8 @@ class Type(BaseRedisEntity):
 
         if self.code == Type.POWER_SUPPLY:
             return 'Power Supply'
-        elif self.code == Type.COUNTER_PRU:
-            return 'Counter PRU'
+        elif self.code == Type.COUNTING_PRU:
+            return 'CountingPRU'
         elif self.code == Type.SERIAL_THERMO:
             return 'Thermo Probe'
         elif self.code == Type.MBTEMP:
@@ -229,8 +229,8 @@ class Type(BaseRedisEntity):
             return 'Agilent 4UHV'
         elif self.code == Type.MKS937B:
             return 'MKS 937b'
-        elif self.code == Type.SPIXCON:
-            return 'SPIxCON'
+        elif self.code == Type.SPIXCONV:
+            return 'SPIxCONV'
         else:
             return 'Undefined'
 

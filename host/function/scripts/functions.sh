@@ -10,11 +10,29 @@ function overlay_PRUserial485 {
     if [ ! -f /root/pru-serial485/src/overlay.sh ]; then
         echo ERROR! The file /root/pru-serial485/src/overlay.sh doesn\'t exist.
         exit 1
-    fi 
+    fi
 
     pushd /root/pru-serial485/src
     ./overlay.sh
-    popd 
+    popd
+}
+
+function overlay_CountingPRU {
+    echo Initializing CountingPRU overlay.
+
+    if [ ! -d /root/counting-pru ]; then
+        echo ERROR! The folder /root/counting-pru doesn\'t exist.
+        exit 1
+    fi
+
+    if [ ! -f /root/counting-pru/src/DTO_CountingPRU.sh ]; then
+        echo ERROR! The file /root/counting-pru/src/DTO_CountingPRU.sh doesn\'t exist.
+        exit 1
+    fi
+
+    pushd /root/counting-pru/src
+    ./DTO_CountingPRU.sh
+    popd
 }
 
 function overlay_SPIxCONV {
@@ -28,29 +46,67 @@ function overlay_SPIxCONV {
     if [ ! -f /root/SPIxCONV/init/SPIxCONV_config-pin.sh ]; then
         echo ERROR! The file /root/SPIxCONV/init/SPIxCONV_config-pin.sh doesn\'t exist.
         exit 1
-    fi 
+    fi
 
     pushd /root/SPIxCONV/init
     ./SPIxCONV_config-pin.sh
-    popd 
+    popd
 }
 
-function pru_contadora {
+function counting_pru {
     echo Socat not started. No ttyUSB0 detected and PRUserial485_address isn\'t 21.
-    echo Initializing Counter PRU ...
+    echo Initializing CountingPRU ...
 
     if [ ! -d /root/counting-pru ]; then
         echo ERROR! The folder /root/counting-pru doesn\'t exist.
         exit 1
     fi
 
-    if [ ! -f /root/counting-pru/IOC/v2-2/SI-CountingPRU_Socket.py ]; then
-        echo ERROR! The file /root/counting-pru/IOC/v2-2/SI-CountingPRU_Socket.py doesn\'t exist.
+    if [ ! -f /root/counting-pru/IOC/SI-CountingPRU_Socket.py ]; then
+        echo ERROR! The file /root/counting-pru/IOC/SI-CountingPRU_Socket.py doesn\'t exist.
         exit 1
-    fi 
+    fi
 
-    pushd /root/counting-pru/IOC/v2-2
+    pushd /root/counting-pru/IOC
     ./SI-CountingPRU_Socket.py
     echo SI-CountingPRU_Socket.py Terminated !
+    popd
+}
+
+
+function startup_blinkingLED {
+    echo Startup LED blinking...
+
+    if [ ! -d /root/startup-scripts ]; then
+        echo ERROR! The folder /root/startup-scripts doesn\'t exist.
+        exit 1
+    fi
+
+    if [ ! -f /root/startup-scripts/HeartBeat.py ]; then
+        echo ERROR! The file /root/startup-scripts/HeartBeat.py doesn\'t exist.
+        exit 1
+    fi
+
+    pushd /root/startup-scripts
+    ./HeartBeat.py &
+    popd
+}
+
+
+function startup_HardReset {
+    echo Startup HardReset...
+
+    if [ ! -d /root/startup-scripts ]; then
+        echo ERROR! The folder /root/startup-scripts doesn\'t exist.
+        exit 1
+    fi
+
+    if [ ! -f /root/startup-scripts/HardReset.py ]; then
+        echo ERROR! The file /root/startup-scripts/HardReset.py doesn\'t exist.
+        exit 1
+    fi
+
+    pushd /root/startup-scripts
+    ./HardReset.py &
     popd
 }
