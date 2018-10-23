@@ -19,7 +19,7 @@ args['bbb_tcp'] = int(os.environ.get('BBB_TCP', 9877))
 args['command_port'] = int(os.environ.get('COM_INTERFACE_TCP', 6789))
 args['workers'] = int(os.environ.get('WORKERS_NUM', 10))
 args['web_port'] = int(os.environ.get('FLASK_PORT', 4850))
-args['ftp_port'] = int(os.environ.get('FTP_SERVER_PORT', 21))
+args['ftp_port'] = int(os.environ.get('FTP_SERVER_PORT', 2121))
 args['ftp_path'] = os.environ.get('FTP_HOME_DIR', '../types_repository/') 
 
 args['log_path'] = os.environ.get('LOG_PATH','./server.log')

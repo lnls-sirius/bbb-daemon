@@ -3,16 +3,16 @@ from flask.json import jsonify
 from flask_restful import Resource
 
 from common.entity.entities import NodeState, Sector
-from common.serialization.models import NodeSchema, TypeSchema
+from common.serialization.models import dump_node, dump_type
 from server.control.controller import ServerController
 
 controller = ServerController.get_instance()
 
-node_schema = NodeSchema()
-nodes_schema = NodeSchema(many=True)
+# node_schema = NodeSchema()
+# nodes_schema = NodeSchema(many=True)
 
-type_schema = TypeSchema()
-types_schema = TypeSchema(many=True)
+# type_schema = TypeSchema()
+# types_schema = TypeSchema(many=True)
 
 
 class RestBBB(Resource):
@@ -150,7 +150,7 @@ class RestNode(Resource):
     def get_node_by_name(n_name: str = None):
         node = controller.get_node_by_name(node_name=n_name)
         if node:
-            return jsonify(node=node_schema.dump(node).data)
+            return jsonify(node=dump_node(node))
         else:
             return {}
 
@@ -158,7 +158,7 @@ class RestNode(Resource):
     def get_node_by_ip(ip: str = None):
         node = controller.get_node_by_address(ipAddress=ip)
         if node:
-            return jsonify(node=node_schema.dump(node).data)
+            return jsonify(node=dump_node(node))
         else:
             return {}
 
@@ -179,8 +179,8 @@ class RestNode(Resource):
             c_nodes = controller.nodes[sector]["configured"]
             u_nodes = controller.nodes[sector]["unconfigured"]
             
-        return jsonify(configured_nodes=nodes_schema.dump(c_nodes).data,
-                       unconfigured_nodes=nodes_schema.dump(u_nodes).data)
+        return jsonify(configured_nodes=dump_node(c_nodes),
+                       unconfigured_nodes=dump_node(u_nodes))
 
     @staticmethod
     def get_sectors_connected_faulty():

@@ -299,7 +299,7 @@ class ServerController(metaclass=Singleton):
         #             un_configured_node.update_state(NodeState.CONNECTED)
 
         #     else:
-        #         new_unconfigured_node = Node(name=name, ip=address, state=NodeState.CONNECTED, type_node=available_type,
+        #         new_unconfigured_node = Node(name=name, ip_address=address, state=NodeState.CONNECTED, type_node=available_type,
         #                                      sector=sector, counter=MAX_LOST_PING)
         #         if conflicted_host:
         #             new_unconfigured_node.update_state(NodeState.MIS_CONFIGURED)
@@ -324,17 +324,18 @@ class ServerController(metaclass=Singleton):
         """
         
         if ip is None or name is None:
-            return False, "Node name/ip is not defined."
+            raise ValueError("Node name/ip is not defined.")
 
-        node = self.db.get_node_by_address(node_addr=ip)
+        node = self.db.get_node_by_address(node_address=ip)
+
         if node is None:
             return True, "No node with the ip {} is registered.".format(ip)
         else:
             if node.name == name:
                 return True, "The ip {} is already belong to this node ({})".format(ip, name)
-            else:
-        return False, "This ip {} is linked to another node ({})".format(ip, node.name)
-        
+
+        raise ValueError("This ip {} is linked to another node ({})".format(ip, node.name))
+
     def validate_repository(self, rc_path: str = None, git_url: str = None, check_rc_local: bool = False):
         """
         Verify if the repository is valid.

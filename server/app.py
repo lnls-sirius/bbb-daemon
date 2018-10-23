@@ -7,8 +7,7 @@ from flask_nav import Nav
 from flask_nav.elements import Navbar, View
 from flask_restful import Api
 
-from common.entity.entities import Sector, Type, Node, NodeState
-from common.serialization.models import NodeSchema, TypeSchema
+from common.entity.entities import Sector, Type, Node, NodeState 
 from server.control.controller import ServerController
 from server.network.db import DataNotFoundError
 from forms import EditNodeForm, EditTypeForm
@@ -91,9 +90,7 @@ def edit_nodes(node=None):
         if action == 'VALIDATE':
             # @todo: implement this !
             # git_url = request.form.get('gitUrl', '')
-
             # success, message = controller.validateRepository(git_url=git_url)
-
             # return jsonify(success=success, message=message)
             pass
         elif action == 'EDIT':
@@ -105,15 +102,15 @@ def edit_nodes(node=None):
             if edit_nodes_form.validate_on_submit():
                 _type = controller.find_type_by_name(edit_nodes_form.type.data)
                 if _type:
+                    try:
+                        res_1, message_1 = controller.validate_repository(
+                            rc_path=edit_nodes_form.rc_local_path.data,
+                            git_url=_type.repoUrl, check_rc_local=True)
 
-                    res_1, message_1 = controller.validate_repository(
-                        rc_path=edit_nodes_form.rc_local_path.data,
-                        git_url=_type.repoUrl, check_rc_local=True)
+                        res_2, message_2 = controller.check_ip_available(
+                            ip=edit_nodes_form.ip_address.data,
+                            name=edit_nodes_form.name.data)
 
-                    res_2, message_2 = controller.check_ip_available(
-                        ip=edit_nodes_form.ip_address.data,
-                        name=edit_nodes_form.name.data)
-                    if res_1 and res_2:
                         node = Node(name=edit_nodes_form.name.data,
                                     ip=edit_nodes_form.ip_address.data,
                                     sector=edit_nodes_form.sector.data,
@@ -123,12 +120,9 @@ def edit_nodes(node=None):
                         controller.append_node(node)
                         flash('Successfully edited node {} !'.format(node), 'success')
                         return redirect(url_for("view_nodes"))
-                    else:
+                    except:
+                        logger.exception("Failed to edit/insert node.")
                         flash("Failed to edit/insert node.", 'danger')
-                        if not res_1:
-                            flash("{}".format(message_1), 'danger')
-                        if not res_2:
-                            flash("{}".format(message_2), 'danger')
 
     if request.method == 'GET':
         print("GET {}".format(request.args))
