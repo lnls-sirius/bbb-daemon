@@ -6,7 +6,8 @@ Restart=always
 RestartSec=3
 Type=simple
 Environment=PYTHONPATH=/root/bbb-daemon/
-WorkingDirectory=root/bbb-daemon/host/
+WorkingDirectory=/root/bbb-daemon/host/
+ExecStartPre=/bin/sleep 15
 ExecStart=/bin/bash /root/bbb-daemon/host/run/run-functions.sh
 StandardOutput=syslog
 StandardError=syslog

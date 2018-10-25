@@ -5,7 +5,7 @@ from datetime import datetime
 
 def persist_info(device, baud, exit_code=None, details=None):
     """
-    This method persist the information about witch device is connected to this sbc.
+    This method persist the information about which device is connected to this sbc.
     The info is stored using the following format:
     device_info = {'device': device, 'baudrate': baud, 'details': details, 'time': str(datetime.now())}
     Where:

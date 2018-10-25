@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import logging
 import socket
 import threading
@@ -58,7 +60,7 @@ class Daemon():
 
             info = self.bbb.get_current_config()
             chk = NetUtils.checksum(str(info))
-            payload = {'chk' : chk, 'payload':info}
+            payload = {'chk':chk, 'payload':info}
             pack = msgpack.packb(payload, use_bin_type=True)
 
             for addr in self.ping_candidates:

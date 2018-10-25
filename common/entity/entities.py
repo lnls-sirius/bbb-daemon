@@ -195,8 +195,16 @@ class Type(BaseRedisEntity):
     KEY_PREFIX = 'Type:'
     KEY_PREFIX_LEN = len(KEY_PREFIX)
 
-    UNDEFINED, POWER_SUPPLY, COUNTING_PRU, SERIAL_THERMO, MBTEMP, AGILENT4UHV, MKS937B, SPIXCONV = range(8)
+    NUM_TYPES = 8
+    UNDEFINED, POWER_SUPPLY, COUNTING_PRU, SERIAL_THERMO, MBTEMP, AGILENT4UHV, MKS937B, SPIXCONV = range(NUM_TYPES)
 
+    @staticmethod
+    def from_code(type_code):
+        if type_code not in range(Type.NUM_TYPES):
+            raise ValueError("type_code {} invalid.".format(type_code))
+        
+        return Type(code=type_code)
+        
     def __init__(self, name="generic", repo_url="A generic URL.", color=[255, 255, 255],
                  description="A generic host.", sha="", code=UNDEFINED):
         """
@@ -208,8 +216,8 @@ class Type(BaseRedisEntity):
         :param sha: A way to provide error detection.
         """
         self.name = name
-        self.color = color
-        self.repoUrl = repo_url
+        # self.color = color
+        self.repo_url = repo_url
         self.description = description
         self.sha = sha
         self.code = code
@@ -236,7 +244,6 @@ class Type(BaseRedisEntity):
 
     @name.setter
     def name(self, value):
-
         pass
 
     @staticmethod
@@ -302,8 +309,9 @@ class Node(BaseRedisEntity):
     KEY_PREFIX_LEN = len(KEY_PREFIX)
     REBOOT_COUNTER_PERIOD = -90
 
-    def __init__(self, name="r0n0", ip_address="10.128.0.0", state=NodeState.DISCONNECTED, type_node=None, sector=1,
-                 counter=0, pv_prefixes=[], rc_local_path='', details='', config_time=''):
+    def __init__(self, **kwargs):
+        # def __init__(self, name="r0n0", ip_address="10.128.0.0", state=NodeState.DISCONNECTED, type_node=None, sector=1,
+        #              counter=0, pv_prefixes=[], rc_local_path='', details='', config_time=''):
         """
         Initializes a node instance.
         :param name: a node's name.
@@ -316,21 +324,20 @@ class Node(BaseRedisEntity):
         :param rc_local_path: rc.local location in the project.
         :param details: details provided by the host
         :param config_time: when the host found it's configuration
-        :param device: device informed by the host
         """
 
-        self.name = name
-        self.ip_address = ip_address
-        self.state = state
-        self.state_string = NodeState.to_string(state)
-        self.type = type_node
-        self.sector = sector
-        self.pvPrefix = pv_prefixes
-        self.counter = counter
-        self.rcLocalPath = rc_local_path
+        self.name = kwargs.get('name', 'r0n0')
+        self.ip_address = kwargs.get('ip_address', '10.128.0.0')
+        self.state = kwargs.get('state', NodeState.DISCONNECTED)
+        self.state_string = NodeState.to_string(self.state)
+        self.type = kwargs.get('type_node', None);
+        self.sector = kwargs.get('sector', 1)
+        # self.pvPrefix = pv_prefixes
+        self.counter = kwargs.get('counter', 0)
+        # self.rcLocalPath = rc_local_path
 
-        self.details = details
-        self.config_time = config_time
+        self.details = kwargs.get('details', '')
+        self.config_time = kwargs.get('config_time', '')
 
     # @property
     # def state_string(self):

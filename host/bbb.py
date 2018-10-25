@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import ipaddress
 import logging
 import pickle
@@ -7,19 +8,23 @@ import subprocess
 import time
 import json
 
-from common.entity.entities import Command, Node, Sector, Type
+from common.entity.entities import Command, Node, Sector, Type, NodeState
 
 class BBB:
     """
     A class to represent a Beaglebone host.
     """
-    CONFIG_JSON_PATH = '/opt/config.json'
+    CONFIG_JSON_PATH = '/opt/device.json'
     
     def __init__(self, path, interface='eth0'):
         """
         Creates a new object instance.
         :param path: the configuration file's location
         """
+        # Creates the objects that wrap the host's settings.
+        self.node = Node()
+
+        self.logger = logging.getLogger('BBB')
 
         #  Parameters that define absolute locations inside the host
         self.configuration_file_path = path
@@ -27,17 +32,17 @@ class BBB:
         # The interface used (ethernet port on the Beaglebone).
         self.interface_name = interface
 
-        # Creates the objects that wrap the host's settings.
-        self.node = Node()
-        self.node.type = Type()
-        print(self.get_ip_address()[0])
-        self.node.ip_address = ipaddress.ip_address(self.get_ip_address()[0])
+        self.read_node_parameters()
 
-        self.logger = logging.getLogger('BBB')
+        
+        self.node.type = Type.from_code(Type.UNDEFINED)
+        self.node.update_state(NodeState.CONNECTED)
+        self.node.ip_address = str(ipaddress.ip_address(self.get_ip_address()[0]))
+
         self.current_config_json_mtime = None
 
         # Load the data from the cfg file.
-        self.read_node_parameters()
+        self.check_config_json()
 
     def check_config_json(self):
         """
@@ -50,16 +55,18 @@ class BBB:
                 with open(BBB.CONFIG_JSON_PATH, 'r') as f:
                     config = json.load(f)
                     self.current_config_json_mtime = config_json_mtime
-                    self.node.device = config['device']
-                    self.node.details  = config['details'] + '   ' + str(config['baudrate'])
+                    self.node.type.code = int(config['device'])
+                    self.node.details  = '{}\tbaudrate={}'.format(config['details'], config['baudrate'])
                     self.node.config_time = config['time']
-        
+
+                    self.write_node_configuration()
 
     def get_current_config(self):
         """
         Returns a dictionary containing the host's information and the command type.
         :return: message representing the current configuration.
         """ 
+        self.check_config_json()
         dict_res = self.node.to_set()
         return {'comm' : Command.PING, 'n' : dict_res[1], 't' : dict_res[2][1]}
 
@@ -67,6 +74,9 @@ class BBB:
         """
         Reboots this node.
         """
+        self.logger.info("Setting state to reboot ... Waiting for the next ping ...")
+        self.node.update_state(NodeState.REBOOTING)
+        time.sleep(3.)
         self.logger.info("Rebooting system.")
         os.system('reboot')
  
@@ -112,7 +122,6 @@ class BBB:
 
             self.update_hostname(self.node.name)
 
-            # self.update_project()
             self.write_node_configuration()
 
             self.logger.info("Current configuration updated successfully.")
@@ -129,7 +138,7 @@ class BBB:
         except IOError:
             self.logger.exception("Configuration file not found. Adopting default values.")
 
-        name = subprocess.check_output(["hostname"]).strip('\n')
+        name = subprocess.check_output(["hostname"]).decode('utf-8').strip('\n')
         indexes = [i for i, letter in enumerate(name) if letter == "-"]
         name = list(name)
         if len(indexes) > 2:
@@ -160,13 +169,13 @@ class BBB:
         Get the host's IP address with the 'ip addr' Linux command.
         :return: a tuple containing the host's ip address and network address.
         """
-        command_out = subprocess.check_output("ip addr show dev {} scope global".format(self.interface_name).split())
+        command_out = subprocess.check_output("ip addr show dev {} scope global".format(self.interface_name).split()).decode('utf-8')
 
         lines = command_out.split('\n')
         address_line = lines[2].split()[1]
 
-        return ipaddress.IPv4Address(address_line.decode('utf-8')[0:address_line.index('/')]), \
-               ipaddress.IPv4Network(address_line.decode('utf-8'), strict=False)
+        return ipaddress.IPv4Address(address_line[0:address_line.index('/')]), \
+               ipaddress.IPv4Network(address_line, strict=False)
 
     def change_ip_address(self, new_ip_address, net_address, default_gateway_address = None):
         """

@@ -1,23 +1,18 @@
+#!/usr/bin/python3
 import argparse
 import logging
 import os
+
 from host.daemon import Daemon
   
 CONFIG_PATH = os.environ.get('CONFIG_PATH', '/root/bbb-daemon/bbb.bin')
-TYPE_RC_LOCAL_PATH = os.environ.get('TYPE_RC_LOCAL_PATH', 'init/rc.local')
-RC_LOCAL_DESTINATION_PATH = os.environ.get('RC_LOCAL_DESTINATION_PATH', '/etc/rc.local')
-FTP_SERVER_PORT = int(os.environ.get('FTP_SERVER_PORT',1026))
- 
-FTP_DESTINATION_FOLDER = os.environ.get('FTP_DESTINATION_FOLDER', '/root')
 SERVER_ADDR = os.environ.get('SERVER_ADDR','10.0.6.44')
-BIND_PORT = os.environ.get('BIND_PORT', 9877)
-PING_PORT = os.environ.get('PING_PORT', 9876)
+BIND_PORT = int(os.environ.get('BIND_PORT', 9877))
+PING_PORT = int(os.environ.get('PING_PORT', 9876))
 PING_CANDIDATES = os.environ.get('PING_CANDIDATES','10.0.6.44 10.0.6.48 10.0.6.51').split(' ')
 
 if not SERVER_ADDR in PING_CANDIDATES:
     PING_CANDIDATES.append(SERVER_ADDR)
-
-# CLONE_PATH = "../"  # remember to place the forward slash !
 
 if __name__ == '__main__':
 
@@ -36,20 +31,8 @@ if __name__ == '__main__':
     parser.add_argument("--ftp-server-addr", "-S", nargs='?', default=SERVER_ADDR,
                         help="The FTP server's IP address", dest="ftp_server")
 
-    parser.add_argument("--ftp-server-port", "-P", nargs='?', default=FTP_SERVER_PORT,
-                        help="The FTP server's listening port", dest="ftp_port")
-
-    parser.add_argument("--ftp-destination-folder", '-F', nargs='?', default=FTP_DESTINATION_FOLDER,
-                        help="The path which the project will be copied to", dest="ftp_destination")
-
     parser.add_argument("--configuration-path", "-C", nargs='?', default=CONFIG_PATH,
                         help="The configuration file's location", dest="configuration_path")
-
-    parser.add_argument("--project-rc-local", "-r", nargs='?', default=TYPE_RC_LOCAL_PATH,
-                        help="RC.local path inside the project repository.", dest="project_rc_local")
-
-    parser.add_argument("--node-rc-local", "-R", nargs='?', default=RC_LOCAL_DESTINATION_PATH,
-                        help="A node's RC.local path.", dest="node_rc_local")
 
     parser.add_argument('--log-path', '-l', nargs='?', default='./daemon.log',
                         help="Daemon's log file location.", dest='log_path')
@@ -59,12 +42,6 @@ if __name__ == '__main__':
     logging.basicConfig(filename=args['log_path'], level=logging.INFO,
                         format='%(asctime)-15s %(message)s',
                         datefmt='%d/%m/%Y %H:%M:%S')
-
-    if not args['ftp_destination'].endswith('/'):
-        args['ftp_destination'] = args['ftp_destination'] + '/'
-
-    if not os.path.exists(args['ftp_destination']):
-        os.makedirs(args['ftp_destination'])
 
     Daemon(server_address=args['server_address'],
            ping_port=args['ping_port'],
