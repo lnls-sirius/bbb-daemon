@@ -31,7 +31,7 @@ if [ ! -z ${PROJECT} ]; then
             if [ "${PROJECT}" = "etc-folder" ]; then
                 rsync -a $RSYNC_SERVER::$PROJECT /etc > /tmp/rsync.log;
             else
-                rsync -a --exclude $IGNORE --delete-after $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT > /tmp/rsync.log;
+                rsync -a --delete-after $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT > /tmp/rsync.log;
             fi
             if [ $? -eq 0 ]; then
                 # If project is listed below, build libraries as well

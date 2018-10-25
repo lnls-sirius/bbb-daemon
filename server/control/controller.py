@@ -251,17 +251,18 @@ class ServerController(metaclass=Singleton):
         """ 
         node_dict = kwargs.get('node_dict', None)
         type_dict = kwargs.get('type_dict', None)
-
+        print(kwargs)
+        
         if not node_dict:
             return
         
-        t = Type()
-        t.from_set(type_dict)
+        # t = Type()
+        # t.from_set(type_dict)
 
-        node = Node()
-        node.from_set(node_dict, t)
+        # node = Node()
+        # node.from_set(node_dict, t)
 
-        sector = Sector.get_sector_by_ip_address(node.ip_address)
+        # sector = Sector.get_sector_by_ip_address(node.ip_address)
 
         # self.updateNodesLockList[sector].acquire()
         # is_host_connected = False

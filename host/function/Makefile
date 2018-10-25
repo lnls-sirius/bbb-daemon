@@ -9,9 +9,11 @@ SERVICE_FILE_DEST = /etc/systemd/system
 all:
 clean:
 
-install:
+install-dependencies:
 	pip3 install Adafruit_BBIO
 	apt-get install socat
+
+install:
 	cp --preserve=mode ${SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
 	systemctl daemon-reload
 	systemctl stop ${SERVICE_NAME}
