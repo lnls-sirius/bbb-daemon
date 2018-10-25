@@ -4,7 +4,7 @@ SERVICE_NAME = serial-bind
 SRC_SERVICE_FILE = ${SERVICE_NAME}.service
 SERVICE_FILE_DEST = /etc/systemd/system
 
-.PHONY: all install uninstall
+.PHONY: all install uninstall install-dependencies
 
 all:
 clean:
