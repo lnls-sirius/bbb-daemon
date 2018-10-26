@@ -4,7 +4,8 @@ import logging
 import os
 
 from host.daemon import Daemon
-  
+
+DAEMON_BASE = os.environ.get('DAEMON_BASE', '/root/bbb-daemon')
 CONFIG_PATH = os.environ.get('CONFIG_PATH', '/root/bbb-daemon/bbb.bin')
 SERVER_ADDR = os.environ.get('SERVER_ADDR','10.0.6.44')
 BIND_PORT = int(os.environ.get('BIND_PORT', 9877))

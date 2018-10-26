@@ -1,7 +1,9 @@
 #!/usr/bin/python
 import json
+import logging
 from datetime import datetime
-
+from consts import FILE_FOLDER, DEVICE_JSON
+logger = logging.getLogger('Whoami')
 
 def persist_info(device, baud, exit_code=None, details=None):
     """
@@ -15,20 +17,21 @@ def persist_info(device, baud, exit_code=None, details=None):
     'baudrate' is the baudrate used for communicate to the connected device.
     """
     if exit_code != None:
-        write_info('res', exit_code)
+        write_info(FILE_FOLDER + 'res', exit_code)
     if type(baud) != int:
         raise TypeError('baud type is incorrect. ', baud)
 
-    write_info('baudrate', str(baud))
+    write_info(FILE_FOLDER + 'baudrate', str(baud))
 
     device_info = {'device': device, 'baudrate': baud, 'details': details, 'time': str(datetime.now())}
-    print(device_info)
-
-    write_info('/opt/device.json', json.dumps(device_info))
+    
+    logger.info('Device Identified !')
+    write_info(DEVICE_JSON, json.dumps(device_info))
     exit()
 
 
 def write_info(file_name, data):
+    logger.info('Persisting {} at {}.'.format(data, file_name))
     file = open(file_name, 'w+')
     file.writelines(data)
     file.close()

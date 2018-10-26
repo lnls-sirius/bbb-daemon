@@ -1,10 +1,9 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-source scripts/functions.sh
-source envs.sh
+source ${DAEMON_BASE}/host/function/scripts/functions.sh
+source ${DAEMON_BASE}/host/function/envs.sh
 
-pushd scripts
-
+pushd ${DAEMON_BASE}/host/function/scripts
 	function cleanup {
 			if [ -f res ]; then
 					rm -rf res
@@ -18,7 +17,7 @@ pushd scripts
 	cleanup
 
     # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
-    pushd ../../rsync
+    pushd ${DAEMON_BASE}/host/rsync
         echo Synchronizing startup scripts
         ./rsync_beaglebone.sh startup-scripts
     popd
@@ -37,19 +36,19 @@ pushd scripts
 	export SPIXCONV='SPIXCONV'
 	export NOTTY='NOTTY'
 
-	# Added the root folder to pythonpath in order to gain access to the commons/ scripts folder
-	export PYTHONPATH=${PWD}/../../../
-
+	
     # Run identification script, repeats until a device is found
+    echo Running identification script, repeats until a device is found
     while { [ ! -f res ] && [ ! -f baudrate ]; }; do
         ./whoami.py
         sleep 1
     done
 
-
     # Prepare board to its application
 	CONN_DEVICE=$(awk NR==1 res)
 	BAUDRATE=$(awk NR==1 baudrate)
+
+    echo Device identified ! $CONN_DEVICE at $BAUDRATE.
 
 	if [[ ${CONN_DEVICE} = "${NOTTY}" ]]; then
 		echo No matching device has been found. ttyUSB0 is disconnected.
@@ -58,7 +57,7 @@ pushd scripts
 	elif [[ ${CONN_DEVICE} = "${SPIXCONV}" ]]; then
 		echo SPIXCONV detected.
         echo Synchronizing pru-serial485 and spixconv files
-        pushd ../../rsync
+        pushd ${DAEMON_BASE}/host/rsync
             ./rsync_beaglebone.sh pru-serial485
             ./rsync_beaglebone.sh spixconv
         popd
@@ -70,8 +69,8 @@ pushd scripts
 
 	elif [[ ${CONN_DEVICE} = "${PRU_POWER_SUPPLY}" ]]; then
 		echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
-        echo Synchronizing pru-serial485 and ponte-py files
-        pushd ../../rsync
+        echo Synchronizing pru-serial485 and ponte-py files.
+        pushd ${DAEMON_BASE}/host/rsync
             ./rsync_beaglebone.sh pru-serial485
             ./rsync_beaglebone.sh ponte-py
         popd
@@ -84,7 +83,7 @@ pushd scripts
 	elif [[ ${CONN_DEVICE} = "${COUNTING_PRU}" ]]; then
 		echo  PRUserial485 address != 21 and ttyUSB0 is disconnected. Assuming CountingPRU.
         echo Synchronizing counting-pru files
-        pushd ../../rsync
+        pushd ${DAEMON_BASE}/host/rsync
             ./rsync_beaglebone.sh counting-pru
         popd
 		overlay_CountingPRU
@@ -96,7 +95,7 @@ pushd scripts
 	elif [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
 		echo  Serial Thermo probe detected.
         echo Synchronizing pru-serial485 and serial-thermo files
-        pushd ../../rsync
+        pushd ${DAEMON_BASE}/host/rsync
             ./rsync_beaglebone.sh pru-serial485
             ./rsync_beaglebone.sh serial-thermo
         popd
@@ -107,7 +106,7 @@ pushd scripts
 
 	elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ] || [ $CONN_DEVICE == "${MKS937}" ]; }; then
         echo Synchronizing pru-serial485 files
-        pushd ../../rsync
+        pushd ${DAEMON_BASE}/host/rsync
             ./rsync_beaglebone.sh pru-serial485
         popd
 		overlay_PRUserial485
@@ -119,3 +118,5 @@ pushd scripts
 		exit 1
 	fi
 popd
+
+resetDeviceJson

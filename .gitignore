@@ -6,8 +6,7 @@ wait-for-it
 server/bbb-daemon-virtualenv/
 types_repository
 .vscode
-server.log
-server/server.log
+*.log
 ftp_devrepo_teste/
 
 # Created by https://www.gitignore.io/api/python,pycharm

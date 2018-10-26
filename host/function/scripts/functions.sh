@@ -1,4 +1,12 @@
 #!/bin/bash
+# -*- coding: utf-8 -*-
+function resetDeviceJson {
+    pushd ${DAEMON_BASE}/host/function/scripts/
+        ./initial.py
+        cat /opt/device.json
+    popd
+}
+
 function overlay_PRUserial485 {
     echo Initializing PRUserial485 overlay.
 
