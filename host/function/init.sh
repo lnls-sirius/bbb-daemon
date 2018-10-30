@@ -112,7 +112,8 @@ pushd ${DAEMON_BASE}/host/function/scripts
 		overlay_PRUserial485
         startup_blinkingLED
 		echo  Starting socat with ${BAUDRATE} baudrate on port ${SOCAT_PORT} and range=${SERVER_IP_ADDR}:${SERVER_MASK}.
-		socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR}:${SERVER_MASK} FILE:${CONN_DEVICE},b${BAUDRATE},rawer
+		socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay FILE:${CONN_DEVICE},b${BAUDRATE},rawer
+		# socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR}:${SERVER_MASK} FILE:${CONN_DEVICE},b${BAUDRATE},rawer
 	else
 		echo  Unknown device. Nothing has been done.
 		exit 1

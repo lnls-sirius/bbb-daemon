@@ -8,7 +8,6 @@ SERVICE_FILE_DEST = /etc/systemd/system
 
 all:
 clean:
-
 install-dependencies:
 	pip3 install Adafruit_BBIO
 	apt-get install socat

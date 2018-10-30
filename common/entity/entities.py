@@ -45,7 +45,6 @@ class SectorNotFoundError(Exception):
     """
     pass
 
-
 class Sector:
     """
     A static class providing helper functions to manage sectors.
@@ -216,7 +215,6 @@ class Type(BaseRedisEntity):
         :param sha: A way to provide error detection.
         """
         self.name = name
-        # self.color = color
         self.repo_url = repo_url
         self.description = description
         self.sha = sha
@@ -310,8 +308,6 @@ class Node(BaseRedisEntity):
     REBOOT_COUNTER_PERIOD = -90
 
     def __init__(self, **kwargs):
-        # def __init__(self, name="r0n0", ip_address="10.128.0.0", state=NodeState.DISCONNECTED, type_node=None, sector=1,
-        #              counter=0, pv_prefixes=[], rc_local_path='', details='', config_time=''):
         """
         Initializes a node instance.
         :param name: a node's name.
@@ -332,19 +328,10 @@ class Node(BaseRedisEntity):
         self.state_string = NodeState.to_string(self.state)
         self.type = kwargs.get('type_node', None);
         self.sector = kwargs.get('sector', 1)
-        # self.pvPrefix = pv_prefixes
         self.counter = kwargs.get('counter', 0)
-        # self.rcLocalPath = rc_local_path
 
         self.details = kwargs.get('details', '')
         self.config_time = kwargs.get('config_time', '')
-
-    # @property
-    # def state_string(self):
-    #      """
-    #      String representation of state
-    #      """
-    #      return NodeState.to_string(self.state)
 
     def update_state(self, state):
         """
