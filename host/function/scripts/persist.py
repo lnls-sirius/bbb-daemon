@@ -5,7 +5,7 @@ from datetime import datetime
 from consts import FILE_FOLDER, DEVICE_JSON
 logger = logging.getLogger('Whoami')
 
-def persist_info(device, baud, exit_code=None, details=None):
+def persist_info(device, baud, exit_code, details=None):
     """
     This method persist the information about which device is connected to this sbc.
     The info is stored using the following format:
@@ -16,6 +16,7 @@ def persist_info(device, baud, exit_code=None, details=None):
     'time' the string representation os a python time object at the time this information has been defined.
     'baudrate' is the baudrate used for communicate to the connected device.
     """
+    print('ex code',exit_code)
     if exit_code != None:
         write_info(FILE_FOLDER + 'res', exit_code)
     if type(baud) != int:
@@ -24,7 +25,7 @@ def persist_info(device, baud, exit_code=None, details=None):
     write_info(FILE_FOLDER + 'baudrate', str(baud))
 
     device_info = {'device': device, 'baudrate': baud, 'details': details, 'time': str(datetime.now())}
-    
+
     logger.info('Device Identified !')
     write_info(DEVICE_JSON, json.dumps(device_info))
     exit()

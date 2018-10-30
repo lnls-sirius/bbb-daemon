@@ -12,6 +12,8 @@ pushd ${DAEMON_BASE}/host/function/scripts
 			if [ -f baudrate ]; then
 				rm -rf baudrate
 			fi
+
+            resetDeviceJson
 	}
 	trap cleanup EXIT
 	cleanup
@@ -36,7 +38,7 @@ pushd ${DAEMON_BASE}/host/function/scripts
 	export SPIXCONV='SPIXCONV'
 	export NOTTY='NOTTY'
 
-	
+
     # Run identification script, repeats until a device is found
     echo Running identification script, repeats until a device is found
     while { [ ! -f res ] && [ ! -f baudrate ]; }; do
@@ -66,6 +68,7 @@ pushd ${DAEMON_BASE}/host/function/scripts
         # @todo
         # - Rodar aplicação SPIxCONV
         startup_blinkingLED
+        startup_success
 
 	elif [[ ${CONN_DEVICE} = "${PRU_POWER_SUPPLY}" ]]; then
 		echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
@@ -74,11 +77,11 @@ pushd ${DAEMON_BASE}/host/function/scripts
             ./rsync_beaglebone.sh pru-serial485
             ./rsync_beaglebone.sh ponte-py
         popd
-		overlay_PRUserial485
-		# @todo
+        overlay_PRUserial485
+        # @todo
         # - Rodar IOC FAC e Ponte.py
         startup_blinkingLED
-		exit 1
+        startup_success
 
 	elif [[ ${CONN_DEVICE} = "${COUNTING_PRU}" ]]; then
 		echo  PRUserial485 address != 21 and ttyUSB0 is disconnected. Assuming CountingPRU.
@@ -91,6 +94,7 @@ pushd ${DAEMON_BASE}/host/function/scripts
         # - Rodar Socket da Contadora
         counting_pru
         startup_blinkingLED
+        startup_success
 
 	elif [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
 		echo  Serial Thermo probe detected.
@@ -103,6 +107,7 @@ pushd ${DAEMON_BASE}/host/function/scripts
         # @todo
         # - Rodar IOC
         startup_blinkingLED
+        startup_success
 
 	elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ] || [ $CONN_DEVICE == "${MKS937}" ]; }; then
         echo Synchronizing pru-serial485 files
@@ -119,5 +124,3 @@ pushd ${DAEMON_BASE}/host/function/scripts
 		exit 1
 	fi
 popd
-
-resetDeviceJson

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RSYNC_SERVER="10.0.6.51"
+export RSYNC_SERVER="10.0.6.49"
 export RSYNC_LOCAL="/root"
 export RSYNC_PORT="873"
 

@@ -1,5 +1,13 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
+function startup_success {
+    while [[ true ]]; do
+        sleep 2
+        echo 'w8'
+    done
+    echo bye
+}
+
 function resetDeviceJson {
     pushd ${DAEMON_BASE}/host/function/scripts/
         ./initial.py

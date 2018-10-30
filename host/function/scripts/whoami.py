@@ -1,8 +1,9 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 import logging
 from serial import Serial
 from os import environ
+from os import path
+#!/usr/bin/python
 from persist import persist_info
 
 from consts import *
@@ -15,18 +16,23 @@ logging.basicConfig(level=logging.INFO,
                     datefmt='%d/%m/%Y %H:%M:%S')
 
 logger = logging.getLogger('Whoami')
-logger.info('Iterating through possible devices ...')
-try:
-    no_tty()
-    counting_pru()
-    power_supply_pru()
-    thermo_probe()
-    mbtemp()
-    mks9376b()
-    agilent4uhv()
-    spixconv()
-except SystemExit:
+
+while path.:
     pass
-except:
-    logger.exception('Something wrong happened !')
+    logger.info('Iterating through possible devices ...')
+    try:
+        no_tty()
+        counting_pru()
+        power_supply_pru()
+        thermo_probe()
+        mbtemp()
+        mks9376b()
+        agilent4uhv()
+        spixconv()
+    except SystemExit:
+        pass
+    except:
+        logger.exception('Something wrong happened !')
+
+
 logger.info('End of the identification Script ...')
