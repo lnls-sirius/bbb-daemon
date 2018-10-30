@@ -1,8 +1,12 @@
 #!/bin/bash
 
+<<<<<<< HEAD
 export DAEMON_BASE=/root/bbb-daemon
 export PYTHONPATH=${DAEMON_BASE}
 export RSYNC_SERVER="10.0.6.51"
+=======
+export RSYNC_SERVER="10.0.6.49"
+>>>>>>> 2fd49ea74b703db0ef4e4cb3e8dc96092c1883d2
 export RSYNC_LOCAL="/root"
 export RSYNC_PORT="873"
 
