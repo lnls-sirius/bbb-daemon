@@ -16,7 +16,6 @@ def persist_info(device, baud, exit_code, details='No details.'):
     'time' the string representation os a python time object at the time this information has been defined.
     'baudrate' is the baudrate used for communicate to the connected device.
     """
-    print('ex code',exit_code)
     if exit_code != None:
         write_info(RES_FILE, exit_code)
     if type(baud) != int:

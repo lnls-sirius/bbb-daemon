@@ -17,7 +17,6 @@ pushd ${DAEMON_BASE}/host/function/scripts
 				rm -rf baudrate
 			fi
 
-            resetDeviceJson
 	}
 
 	trap cleanup EXIT
