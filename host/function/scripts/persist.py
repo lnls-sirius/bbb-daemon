@@ -5,11 +5,7 @@ from datetime import datetime
 from consts import RES_FILE, BAUDRATE_FILE, DEVICE_JSON
 logger = logging.getLogger('Whoami')
 
-<<<<<<< HEAD
 def persist_info(device, baud, exit_code, details='No details.'):
-=======
-def persist_info(device, baud, exit_code, details=None):
->>>>>>> 2fd49ea74b703db0ef4e4cb3e8dc96092c1883d2
     """
     This method persist the information about which device is connected to this sbc.
     The info is stored using the following format:

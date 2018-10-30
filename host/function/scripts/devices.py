@@ -130,8 +130,6 @@ def mks9376b():
             persist_info(Type.MKS937B, baud, MKS937B, 'MKS937Bs connected {}'.format(devices))
 
 
-# @todo
-# Write this function!!
 def Agilent4UHV_CRC(string):
     counter = 0
     i = 0
