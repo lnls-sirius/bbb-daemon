@@ -1,6 +1,5 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-<<<<<<< HEAD
 function synchronize_common {
     # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
     pushd ${DAEMON_BASE}/host/rsync
@@ -14,14 +13,6 @@ function startup_loop {
     while [ true ]; do 
 		sleep 2
 	done
-=======
-function startup_success {
-    while [[ true ]]; do
-        sleep 2
-        echo 'w8'
-    done
-    echo bye
->>>>>>> 2fd49ea74b703db0ef4e4cb3e8dc96092c1883d2
 }
 
 function resetDeviceJson {

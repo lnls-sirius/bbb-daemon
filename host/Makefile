@@ -8,16 +8,17 @@ FUNCTION_SRC_SERVICE_FILE = ${FUNCTION_SERVICE_NAME}.service
 
 SERVICE_FILE_DEST = /etc/systemd/system
 
-.PHONY: all install uninstall
+.PHONY: all install uninstall dependencies
 
 all:
 
-install:
+dependencies:
 	# Dependencies
 	apt-get install python3
 	apt-get install python3-pip
 	pip3 install --no-cache-dir -r requirements.txt
 
+install:
 	# Services
 	cp --preserve=mode services/${DAEMON_SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
 	cp --preserve=mode services/${FUNCTION_SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
