@@ -1,9 +1,10 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
+
 function synchronize_common {
     # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
     pushd ${DAEMON_BASE}/host/rsync
-        echo Synchronizing startup scripts
+        echo "Synchronizing startup scripts"
         ./rsync_beaglebone.sh startup-scripts
     popd
 }
@@ -26,17 +27,17 @@ function overlay_PRUserial485 {
     echo Initializing PRUserial485 overlay.
 
     if [ ! -d /root/pru-serial485 ]; then
-        echo ERROR! The folder /root/pru-serial485 doesn\'t exist.
+        echo "ERROR! The folder /root/pru-serial485 doesn\'t exist."
         exit 1
     fi
 
     if [ ! -f /root/pru-serial485/src/overlay.sh ]; then
-        echo ERROR! The file /root/pru-serial485/src/overlay.sh doesn\'t exist.
+        echo "ERROR! The file /root/pru-serial485/src/overlay.sh doesn\'t exist."
         exit 1
     fi
 
     pushd /root/pru-serial485/src
-    ./overlay.sh
+        ./overlay.sh
     popd
 }
 
@@ -44,30 +45,30 @@ function overlay_CountingPRU {
     echo Initializing CountingPRU overlay.
 
     if [ ! -d /root/counting-pru ]; then
-        echo ERROR! The folder /root/counting-pru doesn\'t exist.
+        echo "ERROR! The folder /root/counting-pru doesn\'t exist."
         exit 1
     fi
 
     if [ ! -f /root/counting-pru/src/DTO_CountingPRU.sh ]; then
-        echo ERROR! The file /root/counting-pru/src/DTO_CountingPRU.sh doesn\'t exist.
+        echo "ERROR! The file /root/counting-pru/src/DTO_CountingPRU.sh doesn\'t exist."
         exit 1
     fi
 
     pushd /root/counting-pru/src
-    ./DTO_CountingPRU.sh
+        ./DTO_CountingPRU.sh
     popd
 }
 
 function overlay_SPIxCONV {
-    echo Initializing SPIxCONV overlay.
+    echo "Initializing SPIxCONV overlay."
 
     if [ ! -d /root/SPIxCONV ]; then
-        echo ERROR! The folder /root/SPIxCONV doesn\'t exist.
+        echo "ERROR! The folder /root/SPIxCONV doesn\'t exist."
         exit 1
     fi
 
     if [ ! -f /root/SPIxCONV/init/SPIxCONV_config-pin.sh ]; then
-        echo ERROR! The file /root/SPIxCONV/init/SPIxCONV_config-pin.sh doesn\'t exist.
+        echo "ERROR! The file /root/SPIxCONV/init/SPIxCONV_config-pin.sh doesn\'t exist."
         exit 1
     fi
 
@@ -77,8 +78,8 @@ function overlay_SPIxCONV {
 }
 
 function counting_pru {
-    echo  PRUserial485 address != 21 and ttyUSB0 is disconnected. Assuming CountingPRU.
-    echo Synchronizing counting-pru files
+    echo "PRUserial485 address != 21 and ttyUSB0 is disconnected. Assuming CountingPRU."
+    echo "Synchronizing counting-pru files"
     
     pushd ${DAEMON_BASE}/host/rsync
         ./rsync_beaglebone.sh counting-pru
@@ -87,59 +88,69 @@ function counting_pru {
     overlay_CountingPRU
     # @todo
     # - Rodar Socket da Contadora
-    echo Socat not started. No ttyUSB0 detected and PRUserial485_address isn\'t 21.
-    echo Initializing CountingPRU ...
+    echo "Socat not started. No ttyUSB0 detected and PRUserial485_address isn\'t 21."
+    echo "Initializing CountingPRU ..."
 
     if [ ! -d /root/counting-pru ]; then
-        echo ERROR! The folder /root/counting-pru doesn\'t exist.
+        echo "ERROR! The folder /root/counting-pru doesn\'t exist."
         exit 1
     fi
 
     if [ ! -f /root/counting-pru/IOC/SI-CountingPRU_Socket.py ]; then
-        echo ERROR! The file /root/counting-pru/IOC/SI-CountingPRU_Socket.py doesn\'t exist.
+        echo "ERROR! The file /root/counting-pru/IOC/SI-CountingPRU_Socket.py doesn\'t exist."
         exit 1
     fi
 
     pushd /root/counting-pru/IOC
         ./SI-CountingPRU_Socket.py
-        echo SI-CountingPRU_Socket.py Terminated !
+        echo "SI-CountingPRU_Socket.py Terminated !"
     popd
 }
 
 function startup_blinkingLED {
-    echo Startup LED blinking...
+    if pgrep "HeartBeat" >/dev/null 2>&1
+    then
+        echo "HeartBeat Running ..."
+    else
+        echo "Startup LED blinking..."
 
-    if [ ! -d /root/startup-scripts ]; then
-        echo ERROR! The folder /root/startup-scripts doesn\'t exist.
-        exit 1
+        if [ ! -d /root/startup-scripts ]; then
+            echo "ERROR! The folder /root/startup-scripts doesn\'t exist."
+            exit 1
+        fi
+
+        if [ ! -f /root/startup-scripts/HeartBeat.py ]; then
+            echo "ERROR! The file /root/startup-scripts/HeartBeat.py doesn\'t exist."
+            exit 1
+        fi
+
+        pushd /root/startup-scripts
+        ./HeartBeat.py &
+        popd
     fi
-
-    if [ ! -f /root/startup-scripts/HeartBeat.py ]; then
-        echo ERROR! The file /root/startup-scripts/HeartBeat.py doesn\'t exist.
-        exit 1
-    fi
-
-    pushd /root/startup-scripts
-    ./HeartBeat.py &
-    popd
 }
 
 function startup_HardReset {
-    echo Startup HardReset...
+    if pgrep "HardReset" >/dev/null 2>&1
+    then
+        echo "HardReset Running ..."
+    else
+        echo "Startup HardReset..."
 
-    if [ ! -d /root/startup-scripts ]; then
-        echo ERROR! The folder /root/startup-scripts doesn\'t exist.
-        exit 1
+        if [ ! -d /root/startup-scripts ]; then
+            echo "ERROR! The folder /root/startup-scripts doesn\'t exist."
+            exit 1
+        fi
+
+        if [ ! -f /root/startup-scripts/HardReset.py ]; then
+            echo "ERROR! The file /root/startup-scripts/HardReset.py doesn\'t exist."
+            exit 1
+        fi
+
+        pushd /root/startup-scripts
+        ./HardReset.py &
+        popd
     fi
-
-    if [ ! -f /root/startup-scripts/HardReset.py ]; then
-        echo ERROR! The file /root/startup-scripts/HardReset.py doesn\'t exist.
-        exit 1
-    fi
-
-    pushd /root/startup-scripts
-    ./HardReset.py &
-    popd
 }
 
 function spixconv {
