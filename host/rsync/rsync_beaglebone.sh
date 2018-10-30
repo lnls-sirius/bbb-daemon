@@ -36,7 +36,7 @@ if [ ! -z ${PROJECT} ]; then
             if [ $? -eq 0 ]; then
                 # If project is listed below, build libraries as well
                 if [ "$PROJECT" = "pru-serial485" ] || [ "$PROJECT" = "counting-pru" ]; then
-                    pushd $RSYNC_LOCAL/$PROJECT/src;
+                    pushd $RSYNC_LOCAL/$PROJECT/src
                         ./library_build.sh;
                     popd
                 fi

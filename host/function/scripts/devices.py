@@ -119,6 +119,8 @@ def mks9376b():
         devices = []
         for mks_addr in range(1, 255):
             msgm = '\@{0:03d}'.format(mks_addr) + "PR1?;FF"
+            ser.reset_input_buffer()
+            ser.reset_output_buffer()
             ser.write(msgm)
             res = ser.read()
             if len(res) != 0:
@@ -151,7 +153,9 @@ def agilent4uhv():
         ser = Serial(port=PORT, baudrate=baud, timeout=.2)
         devices = []
         for addr in range(0, 32):
-            #'\x02', str(128 + addr), "323", '\x30', '\x03', $CRC;
+            ser.reset_input_buffer()
+            ser.reset_output_buffer()
+            
             ser.write(Agilent4UHV_CRC('\x02{}323\x30\x03'.format(str(128 + addr))))
             res = ser.read()
             if len(res) != 0:

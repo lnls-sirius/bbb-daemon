@@ -11,3 +11,14 @@ export SERVER_MASK=255.255.255.0
 # Serial port name to be used
 export DEVICE=/dev/ttyUSB0
 export PING_CANDIDATES="10.0.6.44 10.0.6.48 10.0.6.51"
+
+# The whoami.py script will use the following environment variables.
+# Do not use spaces!
+export PRU_POWER_SUPPLY='PRU_POWER_SUPPLY'
+export COUNTING_PRU='COUNTING_PRU'
+export SERIAL_THERMO='SERIAL_THERMO'
+export MBTEMP='MBTEMP'
+export AGILENT4UHV='AGILENT4UHV'
+export MKS937B='MKS937B'
+export SPIXCONV='SPIXCONV'
+export NOTTY='NOTTY'

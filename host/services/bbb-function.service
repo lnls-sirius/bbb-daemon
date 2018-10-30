@@ -4,9 +4,7 @@ Description=BeagleBone Black Daemon Function Identification and Synchronism Serv
 [Service]
 Restart=always
 RestartSec=3
-Type=simple
-Environment=PYTHONPATH=/root/bbb-daemon
-Environment=DAEMON_BASE=/root/bbb-daemon
+Type=simple 
 WorkingDirectory=/root/bbb-daemon/host/
 ExecStartPre=/bin/sleep 15
 ExecStart=/bin/bash /root/bbb-daemon/host/run/run-functions.sh

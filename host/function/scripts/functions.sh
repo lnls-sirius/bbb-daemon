@@ -1,5 +1,20 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
+function synchronize_common {
+    # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
+    pushd ${DAEMON_BASE}/host/rsync
+        echo Synchronizing startup scripts
+        ./rsync_beaglebone.sh startup-scripts
+    popd
+}
+
+function startup_loop {
+    echo "Starting infinite loop ..."
+    while [ true ]; do 
+		sleep 2
+	done
+}
+
 function resetDeviceJson {
     pushd ${DAEMON_BASE}/host/function/scripts/
         ./initial.py
@@ -62,6 +77,16 @@ function overlay_SPIxCONV {
 }
 
 function counting_pru {
+    echo  PRUserial485 address != 21 and ttyUSB0 is disconnected. Assuming CountingPRU.
+    echo Synchronizing counting-pru files
+    
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh counting-pru
+    popd
+    
+    overlay_CountingPRU
+    # @todo
+    # - Rodar Socket da Contadora
     echo Socat not started. No ttyUSB0 detected and PRUserial485_address isn\'t 21.
     echo Initializing CountingPRU ...
 
@@ -76,11 +101,10 @@ function counting_pru {
     fi
 
     pushd /root/counting-pru/IOC
-    ./SI-CountingPRU_Socket.py
-    echo SI-CountingPRU_Socket.py Terminated !
+        ./SI-CountingPRU_Socket.py
+        echo SI-CountingPRU_Socket.py Terminated !
     popd
 }
-
 
 function startup_blinkingLED {
     echo Startup LED blinking...
@@ -100,7 +124,6 @@ function startup_blinkingLED {
     popd
 }
 
-
 function startup_HardReset {
     echo Startup HardReset...
 
@@ -117,4 +140,52 @@ function startup_HardReset {
     pushd /root/startup-scripts
     ./HardReset.py &
     popd
+}
+
+function spixconv {
+    echo SPIXCONV detected.
+    echo Synchronizing pru-serial485 and spixconv files
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+        ./rsync_beaglebone.sh spixconv
+    popd
+    overlay_PRUserial485
+    overlay_SPIxCONV
+    # @todo
+    # - Rodar aplicação SPIxCONV
+}
+
+function pru_power_supply {
+    echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
+    echo Synchronizing pru-serial485 and ponte-py files.
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+        ./rsync_beaglebone.sh ponte-py
+    popd
+    overlay_PRUserial485
+    # @todo
+    # - Rodar IOC FAC e Ponte.py
+}
+
+function serial_thermo {
+    echo  Serial Thermo probe detected.
+    echo Synchronizing pru-serial485 and serial-thermo files
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+        ./rsync_beaglebone.sh serial-thermo
+    popd
+    overlay_PRUserial485
+    # @todo
+    # - Rodar IOC 
+}
+
+function socat_devices {
+    echo Synchronizing pru-serial485 files
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+    popd
+    overlay_PRUserial485
+    
+    echo  Starting socat with ${BAUDRATE} baudrate on port ${SOCAT_PORT} and range=${SERVER_IP_ADDR}:${SERVER_MASK}.
+    socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay FILE:${CONN_DEVICE},b${BAUDRATE},rawer
 }

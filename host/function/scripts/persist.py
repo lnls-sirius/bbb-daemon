@@ -2,10 +2,10 @@
 import json
 import logging
 from datetime import datetime
-from consts import FILE_FOLDER, DEVICE_JSON
+from consts import RES_FILE, BAUDRATE_FILE, DEVICE_JSON
 logger = logging.getLogger('Whoami')
 
-def persist_info(device, baud, exit_code=None, details=None):
+def persist_info(device, baud, exit_code, details='No details.'):
     """
     This method persist the information about which device is connected to this sbc.
     The info is stored using the following format:
@@ -17,11 +17,11 @@ def persist_info(device, baud, exit_code=None, details=None):
     'baudrate' is the baudrate used for communicate to the connected device.
     """
     if exit_code != None:
-        write_info(FILE_FOLDER + 'res', exit_code)
+        write_info(RES_FILE, exit_code)
     if type(baud) != int:
         raise TypeError('baud type is incorrect. ', baud)
 
-    write_info(FILE_FOLDER + 'baudrate', str(baud))
+    write_info(BAUDRATE_FILE, str(baud))
 
     device_info = {'device': device, 'baudrate': baud, 'details': details, 'time': str(datetime.now())}
     

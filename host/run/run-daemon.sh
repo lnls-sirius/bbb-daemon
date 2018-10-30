@@ -1,6 +1,8 @@
 #!/bin/bash
 pushd $DAEMON_BASE/host
 
+    export DAEMON_BASE=/root/bbb-daemon
+    export PYTHONPATH=${DAEMON_BASE}
     export CONFIG_PATH=$DAEMON_BASE"/bbb.bin"
     export SERVER_ADDR="10.0.6.44"
     export BIND_PORT=9877

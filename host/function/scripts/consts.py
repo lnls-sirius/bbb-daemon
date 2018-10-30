@@ -2,7 +2,9 @@
 from os import environ
 
 DAEMON_BASE = environ.get('DAEMON_BASE', '/root/bbb-daemon')
-FILE_FOLDER = DAEMON_BASE + '/host/function/scripts/'
+FILE_FOLDER = DAEMON_BASE + '/host/function/scripts'
+RES_FILE = FILE_FOLDER + '/res'
+BAUDRATE_FILE = FILE_FOLDER + '/baudrate'
 
 DEVICE_JSON = environ.get('DEVICE_JSON', '/opt/device.json')
 
