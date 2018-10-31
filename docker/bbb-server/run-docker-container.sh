@@ -15,7 +15,5 @@ docker run -d \
     -e COM_INTERFACE_TCP=6789 \
     -e WORKERS_NUM=10 \
     -e FLASK_PORT=4850 \
-    -e FTP_PORT=1026 \
-    -e FTP_HOME='/root/bbb-daemon/types_repository/' \
     -v /root/bbb_daemon_ftp:/root/bbb-daemon/types_repository/ \
     --name bbb-serv-cont lnlscon/bbb-daemon-container:latest

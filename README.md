@@ -15,11 +15,6 @@ The host app also is capable of receiving commands from the server side. The goa
     <li>Update project .... (Rsync Client)</li>
 </ul>
 
-A simple make inside the host foler should me enought to set everything going.
-```
-make install 
-```
-
 ## Server
 
 The server keeps a list of all hosts connected to the Controls Group's network. Move to the `server/` directory and execute `./run.sh`.

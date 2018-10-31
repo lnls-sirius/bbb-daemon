@@ -12,6 +12,12 @@ services:
       - /storage/epics-services/daemon/db/:/data
     networks:
       - bbb_daemon_network
+    deploy:
+      resources:
+          limits:
+            cpus: "4"
+            memory: 512M
+
   bbb-server:
     hostname: bbb-server
     image: lnlscon/bbb-daemon-container:latest
@@ -25,16 +31,16 @@ services:
     dns:
       - 10.0.0.71
       - 10.0.0.72
-    env_file:
-      -  /home/con-srv/repository/bbb-daemon/docker/bbb-server/bbb-server.env
-    volumes:
-      - /storage/epics-services/daemon/ftp-data/:/root/bbb-daemon/types_repository/
     networks:
       - bbb_daemon_network
     depends_on:
       - redis
     deploy:
       replicas: 1
+      resources:
+          limits:
+            cpus: "4"
+            memory: 512M
 
 networks:
   bbb_daemon_network:
