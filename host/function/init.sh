@@ -21,10 +21,10 @@ pushd ${DAEMON_BASE}/host/function/scripts
 
 	trap cleanup EXIT
 	cleanup
-    
+
     # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
     synchronize_common
-    
+
     # Run HardReset script, which is available at all boards
     startup_HardReset
 
@@ -46,13 +46,14 @@ pushd ${DAEMON_BASE}/host/function/scripts
         pru_power_supply
 
 	elif [[ ${CONN_DEVICE} = "${COUNTING_PRU}" ]]; then
+        echo CountingPRU
         startup_blinkingLED
         counting_pru
 
 	elif [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
         startup_blinkingLED
         serial_thermo
-        
+
 	elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ] || [ $CONN_DEVICE == "${MKS937}" ]; }; then
         startup_blinkingLED
         socat_devices

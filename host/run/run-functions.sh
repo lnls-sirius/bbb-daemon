@@ -2,13 +2,13 @@
 
 export DAEMON_BASE=/root/bbb-daemon
 export PYTHONPATH=${DAEMON_BASE}
-export RSYNC_SERVER="10.0.6.51"
+export RSYNC_SERVER="10.0.6.49"
 export RSYNC_LOCAL="/root"
 export RSYNC_PORT="873"
 
 # Generate the initial device.json
 pushd ${DAEMON_BASE}/host/function/scripts/
-    ./initial.py
+    ./whoami.py reset
     cat /opt/device.json
 popd
 

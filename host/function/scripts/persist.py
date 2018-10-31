@@ -23,7 +23,7 @@ def persist_info(device, baud, exit_code, details='No details.'):
 
     write_info(BAUDRATE_FILE, str(baud))
 
-    device_info = {'device': device, 'baudrate': baud, 'details': details, 'time': str(datetime.now())}
+    device_info = {'device': device, 'baudrate': baud, 'details': str(exit_code) + " -  " + details, 'time': str(datetime.now())}
 
     logger.info('Device Identified !')
     write_info(DEVICE_JSON, json.dumps(device_info))
