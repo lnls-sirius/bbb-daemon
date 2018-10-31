@@ -1,36 +1,31 @@
 pid file = /var/run/rsyncd.pid
 lock file = /var/run/rsync.lock
 log file = /var/log/rsync.log
+
+exclude = lost+found/ .idea/ .vscode/
+dont compress = *.gz *.tgz *.zip *.z *.Z *.rpm *.deb *.bz2
+
+uid = con-srv
+gid = con-srv
+
 port = 873
 
 [online]
         path = /home/con-srv/repository
         comment = SERVER ON!
         read only = true
-        uid = con-srv
-        gid = con-srv
 
 [archiver-db]
         path = /storage/epics-archiver/db
         comment = Epics Archiver MySQL Database.
-        uid = con-srv
-        gid = con-srv
 
 [bbb-daemon]
         path = /home/con-srv/repository/bbb-daemon
         comment = BBB Daemon Repository
-        uid = con-srv
-        gid = con-srv
 
 [bbb-daemon-host]
         path = /home/con-srv/repository/bbb-daemon/host
-        comment = BBB Daemon Repository - host folder
-        uid = con-srv
-        gid = con-srv
+        exclude = lost+found/ .idea/ .vscode/ server/ docker/ types_repository/ wait-for-it/
+        comment = BBB Daemon Repository - Host Content
 
-[bbb-daemon-common]
-        path = /home/con-srv/repository/bbb-daemon/common
-        comment = BBB Daemon Repository - common folder
-        uid = con-srv
-        gid = con-srv
         
