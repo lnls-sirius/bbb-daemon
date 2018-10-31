@@ -22,13 +22,19 @@ GPIO.setup(PIN_RS232_RS485, GPIO.IN)
 
 logger = logging.getLogger('Whoami')
 
+def reset():
+    """
+    Reset device.json content.
+    """
+    persist_info(0, 0, 'RESET', 'Still trying to find out where i\'m connected...')
+
 def counting_pru():
     """
     CountingPRU
     """
     logger.info('Counting PRU')
     if PRUserial485_address() != 21 and not path.isfile(PORT):
-        persist_info(Type.COUNTING_PRU, 115200, COUNTING_PRU)
+        persist_info(Type.COUNTING_PRU, 0, COUNTING_PRU)
 
 
 def no_tty():
@@ -153,7 +159,7 @@ def agilent4uhv():
         for addr in range(0, 32):
             ser.reset_input_buffer()
             ser.reset_output_buffer()
-            
+
             ser.write(Agilent4UHV_CRC('\x02{}323\x30\x03'.format(str(128 + addr))))
             res = ser.read()
             if len(res) != 0:
