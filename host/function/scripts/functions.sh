@@ -174,6 +174,10 @@ function pru_power_supply {
         ./rsync_beaglebone.sh ponte-py
     popd
     overlay_PRUserial485
+    echo Running Ponte-py at port 4000
+    pushd /root/ponte-py
+        python-sirius Ponte.py &
+    popd
     # @todo
     # - Rodar IOC FAC e Ponte.py
 }
