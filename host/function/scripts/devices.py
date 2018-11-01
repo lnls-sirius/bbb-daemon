@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import logging
+import time
 from os import environ, path
 from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
 import Adafruit_BBIO.GPIO as GPIO
@@ -77,6 +78,8 @@ def thermo_probe():
                      stopbits=STOPBITS_TWO,
                      timeout=TIMEOUT)
         msg = thermoIncluirChecksum("\x07" + "01RM1")
+        ser.reset_input_buffer()
+        ser.reset_output_buffer()
         ser.write(msg.encode('utf-8'))
         res = ser.read(50)
 
@@ -139,12 +142,14 @@ def mks9376b():
 def Agilent4UHV_CRC(string):
     counter = 0
     i = 0
-    while (i < len(string)):
-        counter += ord(string[i])
+    for b in string:
+        if i > 0:
+            counter ^= b
         i += 1
-    counter = (counter & 0xFF)
-    counter = (256 - counter) & 0xFF
-    return(string + chr(counter))
+    
+    string.append(int(bin(counter)[6:], 2))
+    string.append(int(bin(counter)[2:6], 2))
+    return(string)
 
 
 def agilent4uhv():
@@ -159,9 +164,16 @@ def agilent4uhv():
         for addr in range(0, 32):
             ser.reset_input_buffer()
             ser.reset_output_buffer()
-
-            ser.write(Agilent4UHV_CRC('\x02{}323\x30\x03'.format(str(128 + addr))))
-            res = ser.read()
+            pl = bytearray()
+            pl.append(0x02)
+            pl.append(addr  + 128)
+            pl.append(0x38)
+            pl.append(0x31)
+            pl.append(0x30)
+            pl.append(0x30)
+            pl.append(0x03)
+            ser.write(Agilent4UHV_CRC(pl))
+            res = ser.read(15)
             if len(res) != 0:
                 devices.append(addr)
         ser.close()
