@@ -110,7 +110,7 @@ def mbtemp():
         for mbt_addr in range(1, 32):
             ser.write(MBTempChecksum(chr(mbt_addr)+"\x10\x00\x01\x00"))
             res = ser.read(10)
-            if len(res) != 0:
+            if len(res) == 7 and res[1] == "\x11":
                 devices.append(mbt_addr)
         ser.close()
         if len(devices):
@@ -146,7 +146,7 @@ def Agilent4UHV_CRC(string):
         if i > 0:
             counter ^= b
         i += 1
-    
+
     string.append(int(bin(counter)[6:], 2))
     string.append(int(bin(counter)[2:6], 2))
     return(string)

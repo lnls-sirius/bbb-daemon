@@ -11,7 +11,7 @@ function synchronize_common {
 
 function startup_loop {
     echo "Starting infinite loop ..."
-    while [ true ]; do 
+    while [ true ]; do
 		sleep 2
 	done
 }
@@ -80,15 +80,13 @@ function overlay_SPIxCONV {
 function counting_pru {
     echo "PRUserial485 address != 21 and ttyUSB0 is disconnected. Assuming CountingPRU."
     echo "Synchronizing counting-pru files"
-    
+
     pushd ${DAEMON_BASE}/host/rsync
         ./rsync_beaglebone.sh counting-pru
     popd
-    
+
     overlay_CountingPRU
-    # @todo
-    # - Rodar Socket da Contadora
-    echo "Socat not started. No ttyUSB0 detected and PRUserial485_address isn\'t 21."
+
     echo "Initializing CountingPRU ..."
 
     if [ ! -d /root/counting-pru ]; then
@@ -179,7 +177,7 @@ function pru_power_supply {
         python-sirius Ponte.py &
     popd
     # @todo
-    # - Rodar IOC FAC e Ponte.py
+    # - Rodar IOC FAC
 }
 
 function serial_thermo {
@@ -191,7 +189,7 @@ function serial_thermo {
     popd
     overlay_PRUserial485
     # @todo
-    # - Rodar IOC 
+    # - Rodar IOC
 }
 
 function socat_devices {
@@ -200,7 +198,7 @@ function socat_devices {
         ./rsync_beaglebone.sh pru-serial485
     popd
     overlay_PRUserial485
-    
+
     echo  Starting socat with ${BAUDRATE} baudrate on port ${SOCAT_PORT} and range=${SERVER_IP_ADDR}:${SERVER_MASK}.
     socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay FILE:${CONN_DEVICE},b${BAUDRATE},rawer
 }
