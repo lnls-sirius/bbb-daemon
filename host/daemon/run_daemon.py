@@ -3,7 +3,7 @@ import argparse
 import logging
 import os
 
-from host.daemon import Daemon
+from host.daemon.daemon import Daemon
 
 DAEMON_BASE = os.environ.get('DAEMON_BASE', '/root/bbb-daemon')
 CONFIG_PATH = os.environ.get('CONFIG_PATH', '/root/bbb-daemon/bbb.bin')
@@ -49,4 +49,3 @@ if __name__ == '__main__':
            bind_port=args['command_port'],
            path=args['configuration_path'],
            ping_candidates=PING_CANDIDATES)
-

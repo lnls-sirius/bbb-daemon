@@ -6,7 +6,7 @@ import threading
 import time
 import msgpack
 
-from host.bbb import BBB
+from host.daemon.bbb import BBB
 from common.entity.definition import PING_INTERVAL
 from common.entity.entities import Command
 from common.entity.metadata import Singleton
@@ -22,7 +22,7 @@ class Daemon():
         Initializes a new Daemon object.
 
         :param server_address:
-        :param ping_port: 
+        :param ping_port:
         :param bind_port:
         :param path:
         """
@@ -122,7 +122,7 @@ class Daemon():
                 self.stop()
                 self.bbb.update_ip_address(new_ip)
                 self.bbb.reboot()
-                
+
 
         command_socket.close()
 

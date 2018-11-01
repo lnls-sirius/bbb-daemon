@@ -15,7 +15,7 @@ class BBB:
     A class to represent a Beaglebone host.
     """
     CONFIG_JSON_PATH = '/opt/device.json'
-    
+
     def __init__(self, path, interface='eth0'):
         """
         Creates a new object instance.
@@ -34,7 +34,7 @@ class BBB:
 
         self.read_node_parameters()
 
-        
+
         self.node.type = Type.from_code(Type.UNDEFINED)
         self.node.update_state(NodeState.CONNECTED)
         self.node.ip_address = str(ipaddress.ip_address(self.get_ip_address()[0]))
@@ -65,7 +65,7 @@ class BBB:
         """
         Returns a dictionary containing the host's information and the command type.
         :return: message representing the current configuration.
-        """ 
+        """
         self.check_config_json()
         dict_res = self.node.to_set()
         return {'comm' : Command.PING, 'n' : dict_res[1], 't' : dict_res[2][1]}
@@ -79,14 +79,14 @@ class BBB:
         time.sleep(3.)
         self.logger.info("Rebooting system.")
         os.system('reboot')
- 
+
     def update_hostname(self, new_hostname):
         """
         Updates the host with anew hostname.
         """
         old_hostname = self.node.name.replace(':', '-')
         new_hostname = new_hostname.replace(':','-')
-        
+
         if old_hostname != new_hostname:
             self.logger.info("Updating current hostname from {} to {}.".format(old_hostname, new_hostname))
 
@@ -117,7 +117,7 @@ class BBB:
             self.logger.info("Updating current configuration from {} to {}.".format(self.node, new_config_node))
 
             self.node = new_config_node
-            
+
             self.update_ip_address(self.node.ip_address)
 
             self.update_hostname(self.node.name)

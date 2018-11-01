@@ -9,5 +9,7 @@ pushd $DAEMON_BASE/host
     export PING_PORT=9876
     export PING_CANDIDATES="10.0.6.44 10.0.6.48 10.0.6.51"
 
-    ./run_daemon.py
+    pushd daemon
+        ./run_daemon.py
+    popd
 popd
