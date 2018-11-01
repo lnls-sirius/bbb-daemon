@@ -110,7 +110,6 @@ def mbtemp():
         for mbt_addr in range(1, 32):
             ser.write(MBTempChecksum(chr(mbt_addr)+"\x10\x00\x01\x00"))
             res = ser.read(10)
-            print('MBTemp ', res)
             if len(res) != 0:
                 devices.append(mbt_addr)
         ser.close()
@@ -133,7 +132,6 @@ def mks9376b():
             ser.reset_output_buffer()
             ser.write(msgm)
             res = ser.read()
-            print('MKS ', res)
             if len(res) != 0:
                 devices.append(mks_addr)
         ser.close()
@@ -151,7 +149,6 @@ def Agilent4UHV_CRC(string):
     
     string.append(int(bin(counter)[6:], 2))
     string.append(int(bin(counter)[2:6], 2))
-    print(string)
     return(string)
 
 
