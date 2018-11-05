@@ -70,37 +70,50 @@ class ServerController(metaclass=Singleton):
 
     def scan_nodes_worker(self):
         """
-        A thread to decrement the counter of each host and update its status accordingly.
+        It will loop though the ping nodes and update the configured nodes accordingly.
         """
 
         self.logger.info("Starting node scanning thread.")
 
         while self.scan_nodes:
-
-            for sector in self.sectors:
-
-                self.updateNodesLockList[sector].acquire()
-                # Verify if there is an unregistered node
-                for configured_node in self.nodes[sector]["configured"]:
-
-                    configured_node = self.nodes[sector]["configured"][self.nodes[sector]["configured"].index(configured_node)]
-                    configured_node.counter = max(Node.REBOOT_COUNTER_PERIOD - 1, configured_node.counter - 1)
-                    # A host is considered disconnected if its internal counter reaches 0 (connected)
-                    #  or REBOOT_COUNTER_PERIOD(rebooting)
-                    if (configured_node.state != NodeState.REBOOTING and configured_node.counter <= 0) or \
-                            (configured_node.state == NodeState.REBOOTING and
-                             configured_node.counter <= Node.REBOOT_COUNTER_PERIOD):
-                        configured_node.update_state(NodeState.DISCONNECTED)
+            self.db.clear_ping_node_list()
+            keys = self.db.get_node_keys()
+            if keys:
+                for key in keys:
+                    print(key) # @todo: dbg
+                    ping_node = self.db.get_ping_node(key=key)
+                    if ping_node:
+                        # @todo: Check if is configured or not! 
+                        pass
                     else:
-                        configured_node.update_state(configured_node.state)
+                        # The configured node is disconnected !S
+                        
+                        pass
+                    pass
+            # for sector in self.sectors:
 
-                # Verify unregistered nodes and remove from the list if they are disconnected
-                for unconfigured_node in self.nodes[sector]["unconfigured"]:
-                    unconfigured_node.counter = max(0, unconfigured_node.counter - 1)
-                    if unconfigured_node.counter <= 0:
-                        self.nodes[sector]["unconfigured"].remove(unconfigured_node)
+            #     self.updateNodesLockList[sector].acquire()
+            #     # Verify if there is an unregistered node
+            #     for configured_node in self.nodes[sector]["configured"]:
 
-                self.updateNodesLockList[sector].release()
+            #         configured_node = self.nodes[sector]["configured"][self.nodes[sector]["configured"].index(configured_node)]
+            #         configured_node.counter = max(Node.REBOOT_COUNTER_PERIOD - 1, configured_node.counter - 1)
+            #         # A host is considered disconnected if its internal counter reaches 0 (connected)
+            #         #  or REBOOT_COUNTER_PERIOD(rebooting)
+            #         if (configured_node.state != NodeState.REBOOTING and configured_node.counter <= 0) or \
+            #                 (configured_node.state == NodeState.REBOOTING and
+            #                  configured_node.counter <= Node.REBOOT_COUNTER_PERIOD):
+            #             configured_node.update_state(NodeState.DISCONNECTED)
+            #         else:
+            #             configured_node.update_state(configured_node.state)
+
+            #     # Verify unregistered nodes and remove from the list if they are disconnected
+            #     for unconfigured_node in self.nodes[sector]["unconfigured"]:
+            #         unconfigured_node.counter = max(0, unconfigured_node.counter - 1)
+            #         if unconfigured_node.counter <= 0:
+            #             self.nodes[sector]["unconfigured"].remove(unconfigured_node)
+
+            #     self.updateNodesLockList[sector].release()
 
             time.sleep(PING_INTERVAL)
 
@@ -228,6 +241,14 @@ class ServerController(metaclass=Singleton):
 
         self.updateNodesLockList[sector].release()
 
+    # def update_ping_node(self, **kwargs):
+    #     """
+    #     Update the ping list.
+    #     :param node: The node
+    #     """
+    #     self.db.
+    #     pass
+
     def update_node(self, old_node: Node = None, new_node: Node = None):
         """
         Updates the mis-configured node with the data of the selected configured node.
@@ -238,42 +259,38 @@ class ServerController(metaclass=Singleton):
                                                 address=old_node.ip_address, node=new_node)
         self.reboot_node(old_node)
 
-    def update_host_counter_by_address(self, **kwargs): 
+    def update_ping_hosts(self, **kwargs): 
         """
         Updates a given node's counter.
-        :param address: the node's IP address.
-        :param name: the node's name.
-        :param device: device connected currently connected on the node.
-        :param config_time: when the host has detected it's current device.
-        :param details: details according to the host.
-        :param host_type: the node's type.
-        :param bbb_sha: the node's SHA. Used to identify the git repository version.
+        :param node_dict: Node dictionary representation.
+        :param type_dict: Typé dictionary representation.
         """ 
         node_dict = kwargs.get('node_dict', None)
         type_dict = kwargs.get('type_dict', None)
-        print(kwargs)
         
-        if not node_dict:
-            return
+        # if not node_dict:
+        #     return
         
-        # t = Type()
-        # t.from_set(type_dict)
+        t = Type()
+        t.from_set(type_dict)
 
-        # node = Node()
-        # node.from_set(node_dict, t)
+        node = Node()
+        node.from_set(node_dict, t)
+        self.db.update_ping_node_list(node = node)
 
         # sector = Sector.get_sector_by_ip_address(node.ip_address)
 
         # self.updateNodesLockList[sector].acquire()
+
         # is_host_connected = False
         # conflicted_host = False
 
-        # if node.ip_address in self.nodes[sector]["configured"]:
+        # if node.get_key() in self.nodes[sector]["configured"]:
 
-        #     node = self.nodes[sector]["configured"][self.nodes[sector]["configured"].index(node.ip_address)]
-        #     node.counter = MAX_LOST_PING
+        #     old_node = self.nodes[sector]["configured"][node.get_key()]
+        #     old_node.counter = MAX_LOST_PING
 
-        #     if node.name == name and node.type.name == host_type and node.type.sha == bbb_sha:
+        #     if node.name == old_node.name and node.type  == t:
         #         node.update_state(NodeState.CONNECTED)
         #         is_host_connected = True
         #     else:

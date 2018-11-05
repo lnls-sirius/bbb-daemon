@@ -1,6 +1,6 @@
 PREFIX ?= /usr/local
 
-SERVICE_NAME = rsyncd
+SERVICE_NAME = rsync
 
 .PHONY: all install 
 

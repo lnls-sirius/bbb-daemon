@@ -14,7 +14,7 @@ def dump_node(node):
         return n
     elif type(node) == list:
         res = []
-        for n in list:
+        for n in node:
             if type(n) == Node:
                 res.append(dump_node(n))
         return res
@@ -34,8 +34,8 @@ def dump_type(_type):
         return t
     elif type(_type) == list:
         res = []
-        for t in list:
-            if type(_type) ==Type:
+        for t in _type:
+            if type(_type) == Type:
                 res.append(dump_type(t))
         return res
     else:

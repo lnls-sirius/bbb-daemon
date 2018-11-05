@@ -71,7 +71,7 @@ class DaemonHostListener(metaclass=Singleton):
                 data = self.queueUdp.get(timeout=5, block=True)
                 payload = NetUtils.compare_checksum(expected_chk=data['chk'], payload=data['payload'])
                 if payload['comm'] == Command.PING:  
-                    self.controller.update_host_counter_by_address(node_dict=payload['n'], type_dict=payload['t'])
+                    self.controller.update_ping_hosts(node_dict=payload['n'], type_dict=payload['t'])
                     
                 elif payload['comm'] == Command.EXIT:
                     self.logger.info("Worker received an EXIT command. Finishing its thread.")

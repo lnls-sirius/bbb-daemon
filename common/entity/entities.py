@@ -7,6 +7,8 @@ import ipaddress
 import json
 import copy
 
+PING_KEY_PREFIX = 'Ping:'
+PING_NODES = 'Ping:Nodes'
 
 class Command:
     """
@@ -173,6 +175,12 @@ class BaseRedisEntity:
         """
         raise NotImplementedError("Provide an implementation for BaseRedisEntity class")
 
+    def get_ping_key(self):
+        """
+        :return: returns the node's ping key
+        """
+        return PING_KEY_PREFIX + self.get_key()
+
     @staticmethod
     def get_name_from_key(key):
         """
@@ -204,8 +212,7 @@ class Type(BaseRedisEntity):
         
         return Type(code=type_code)
         
-    def __init__(self, name="generic", repo_url="A generic URL.", color=[255, 255, 255],
-                 description="A generic host.", sha="", code=UNDEFINED):
+    def __init__(self,  **kwargs):
         """
         Initializes a type instance.
         :param name: a type's name.
@@ -214,11 +221,10 @@ class Type(BaseRedisEntity):
         :param description: A brief description of the type
         :param sha: A way to provide error detection.
         """
-        self.name = name
-        self.repo_url = repo_url
-        self.description = description
-        self.sha = sha
-        self.code = code
+        self.repo_url = kwargs.get('repo_url', 'A generic URL.')
+        self.description = kwargs.get('repo_url', 'A generic host.')
+        self.sha = kwargs.get('sha', '')
+        self.code = kwargs.get('code', Type.UNDEFINED)
 
     @property
     def name(self):
@@ -295,7 +301,7 @@ class Type(BaseRedisEntity):
         return other.to_set() == self.to_set()
 
     def __str__(self):
-        return str(self.__dict__)
+        return '{}\t{}'.format(type(self), str(self.__dict__))
 
 
 class Node(BaseRedisEntity):
@@ -303,6 +309,8 @@ class Node(BaseRedisEntity):
     This class represents a Controls group's host. Each host has a symbolic name, a valid IP address, a type
     and the sector where it is located.
     """
+    EXPIRE_TIME = 5.
+
     KEY_PREFIX = 'Node:'
     KEY_PREFIX_LEN = len(KEY_PREFIX)
     REBOOT_COUNTER_PERIOD = -90
@@ -416,8 +424,6 @@ class Node(BaseRedisEntity):
 
             if key == 'type':
                 if node_dict[key] is not None:
-                    print(type(Type))
-                    print(type(node_type))
                     if type(node_type) == dict:
                         new_type = Type()
                         new_type.from_set(node_type)
@@ -469,5 +475,4 @@ class Node(BaseRedisEntity):
         """
         :return: the string representation of the object
         """
-        return "Name: %s, IP Address: %s, Current state: %s" % (
-            self.name, self.ip_address, NodeState.to_string(self.state))
+        return '{}\t{}'.format(type(self), str(self.__dict__))

@@ -1,4 +1,4 @@
-from common.entity.entities import Node, Type
+from common.entity.entities import Node, Type, PING_NODES
 from common.entity.metadata import Singleton
 
 import msgpack
@@ -56,7 +56,72 @@ class RedisPersistence(metaclass=Singleton):
         # request data at the same time.
         self.typesListMutex = threading.Lock()
         self.nodesListMutex = threading.Lock()
+        self.pingNodesListMutex = threading.Lock()
 
+    def clear_ping_node_list(self):
+        """
+        Clear expired nodes from the pingging nodes list.
+        """
+        self.pingNodesListMutex.acquire()
+        ping_nodes = self.db.zrange(PING_NODES,0, -1)
+        if ping_nodes:
+            for n_key in ping_nodes:
+                if not self.db.exists(n_key):
+                    self.db.srem(PING_NODES, n_key)
+        self.pingNodesListMutex.release()
+
+    def update_ping_node_list(self, **kwargs):
+        """
+        Receives a pinging node
+        """
+        node = kwargs.get('node', None)
+        if node is None or node.name is None or node.name == "":
+            raise TypeError("Node given as parameter is None or its name is not valid.")
+        
+        self.pingNodesListMutex.acquire()
+        pipeline = self.db.pipeline()
+
+        pipeline.sadd("Ping:Nodes", node.get_ping_key())
+        k, n, t = node.to_set()
+        pipeline.set(node.get_ping_key(), {'n':n, 't':t})
+        pipeline.expire(node.get_ping_key(), Node.EXPIRE_TIME)
+        pipeline.execute()
+
+        self.pingNodesListMutex.release()
+
+    def get_ping_node(self, **kwargs):
+        """
+        Get a ping node. Pass a node object.
+        :param key: Ping key to look for.
+        """
+        key = kwargs.get('key', None)
+        node = None
+        if key:
+            self.pingNodesListMutex.acquire()
+            # if exists ... 
+            self.db.sismember(PING_NODES, key)
+            content_as_string = self.db.get(key)
+            if content_as_string != None:
+                res = ast.literal_eval(content_as_string.decode('utf-8'))
+                node = Node()
+                node.from_set(res['n'], res['t'])
+            self.pingNodesListMutex.release()
+        return node
+
+    def remove_ping_node(self, **kwargs):
+        # Todo: Remove Ping:Node
+        pass
+
+    def get_node_keys(self):
+        """
+        Get all nodes.
+        """
+        return self.db.keys(pattern= Node.KEY_PREFIX + '*')
+    
+        # for n_key in self.db.scan_iter(Node.KEY_PREFIX + '*'):
+            # pass
+    
+    
     def append_type(self, new_type: Type = None):
         """
         Append a new type to the database, updating its value if it already exists.
@@ -70,7 +135,7 @@ class RedisPersistence(metaclass=Singleton):
 
         self.typesListMutex.acquire()
         if not self.db.exists(new_type.get_key()):
-            self.db.lpush("types", new_type.get_key())
+            self.db.lpush("Types:", new_type.get_key())
 
         key, val = new_type.to_set()
         success = self.db.set(key, val)
@@ -200,7 +265,7 @@ class RedisPersistence(metaclass=Singleton):
 
         ret_list = []
 
-        type_list = self.db.lrange("types", 0, -1)
+        type_list = self.db.lrange("Types:", 0, -1)
 
         if type_list is None:
             self.typesListMutex.release()
@@ -252,7 +317,7 @@ class RedisPersistence(metaclass=Singleton):
         type_name = Type.KEY_PREFIX + type_name
         if self.db.exists(type_name):
             self.db.delete(type_name)
-            count = self.db.lrem(name="types", value=type_name, count=0)
+            count = self.db.lrem(name="Types:", value=type_name, count=0)
 
         self.typesListMutex.release()
 
