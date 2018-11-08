@@ -14,14 +14,12 @@ class ServerController(metaclass=Singleton):
     The main class of the server. It controls the server state and the client requests.
     """
 
-    def __init__(self, sftp_home_dir: str = '/root/bbb-daemon-repos/'):
+    def __init__(self, *args, **kwargs):
         """
         Initializes a controller.
-        :param sftp_home_dir: the directory where the projects should be.
         """
         from server.network.db import RedisPersistence
 
-        self.sftp_home_dir = sftp_home_dir
         self.db = RedisPersistence.get_instance()
         self.sectors = Sector.sectors()
 
@@ -43,22 +41,23 @@ class ServerController(metaclass=Singleton):
         """
         :return: a list containing all types registered in the db.
         """
-        return self.db.fetch_types()
+        return Type.TYPES
+        # return self.db.fetch_types()
 
-    def append_type(self, new_type):
-        """
-        Appends a new type into the db.
-        :param new_type: the new type's instance.
-        :return: True is it succeeds and False, otherwise.
-        """
-        return self.db.append_type(new_type)
+    # def append_type(self, new_type):
+    #     """
+    #     Appends a new type into the db.
+    #     :param new_type: the new type's instance.
+    #     :return: True is it succeeds and False, otherwise.
+    #     """
+    #     return self.db.append_type(new_type)
 
-    def remove_type(self, t):
-        """
-        Removes a type from the db.
-        :param t: Type instance to be removed.
-        """
-        return self.db.remove_type_by_name(t)
+    # def remove_type(self, t):
+    #     """
+    #     Removes a type from the db.
+    #     :param t: Type instance to be removed.
+    #     """
+    #     return self.db.remove_type_by_name(t)
 
     def find_type_by_name(self, type_name):
         """
@@ -66,7 +65,13 @@ class ServerController(metaclass=Singleton):
         :param type_name: a Type's name
         :return: a Type instance or None.
         """
-        return self.db.get_type_by_name(type_name)
+        if type_name == None:
+            return Type(code=Type.UNDEFINED)
+        for _type in Type.TYPES:
+            if type_name.upper() in _type.name.upper():
+                return _type
+        return None
+        # return self.db.get_type_by_name(type_name)
 
     def scan_nodes_worker(self):
         """
@@ -78,16 +83,15 @@ class ServerController(metaclass=Singleton):
         while self.scan_nodes:
             self.db.clear_ping_node_list()
             keys = self.db.get_node_keys()
+
             if keys:
                 for key in keys:
-                    print(key) # @todo: dbg
                     ping_node = self.db.get_ping_node(key=key)
                     if ping_node:
                         # @todo: Check if is configured or not! 
                         pass
                     else:
                         # The configured node is disconnected !S
-                        
                         pass
                     pass
             # for sector in self.sectors:
@@ -220,26 +224,43 @@ class ServerController(metaclass=Singleton):
 
     def is_ip_address_available(self, ip_address=None):
         return not (ip_address in self.get_node_by_address(ip_address=ip_address))
+    
+    def set_hostname(self, **kwargs):
+        """
+        Set the node hostname. Can raise an exception.
+        :param ip: Target Ip.
+        :param hostname: New Hostname.
+        """
+        DaemonHostListener.get_instance().send_command(command=Command.SET_HOSTNAME, address=kwargs['ip'], hostname=kwargs['hostname'])
 
-    def reboot_node(self, node: Node = None):
+    def set_ip(self, **kwargs):
+        """
+        Set the node hostname. Can raise an exception.
+        :param ip: Target Ip.
+        :param ip_new: New IP.
+        """
+        DaemonHostListener.get_instance().send_command(command=Command.SET_IP, address=kwargs['ip'], ip_new=kwargs['ip_new'])
+
+
+    def reboot_node(self, node: Node = None, **kwargs):
         """
         Reboots a given node.
         :param node: a Node instance object.
         """
-        DaemonHostListener.get_instance().send_command(command=Command.REBOOT, address=node.ip_address)
+        DaemonHostListener.get_instance().send_command(command=Command.REBOOT, address=kwargs['ip'])
 
-        sector = node.sector
+        # sector = node.sector
 
-        self.updateNodesLockList[sector].acquire()
+        # self.updateNodesLockList[sector].acquire()
 
-        if node in self.nodes[sector]["configured"]:
-            index = self.nodes[sector]["configured"].index(node)
-            self.nodes[sector]["configured"][index].update_state(NodeState.REBOOTING)
-        elif node in self.nodes[sector]["unconfigured"]:
-            index = self.nodes[sector]["unconfigured"].index(node)
-            self.nodes[sector]["unconfigured"][index].update_state(NodeState.REBOOTING)
+        # if node in self.nodes[sector]["configured"]:
+        #     index = self.nodes[sector]["configured"].index(node)
+        #     self.nodes[sector]["configured"][index].update_state(NodeState.REBOOTING)
+        # elif node in self.nodes[sector]["unconfigured"]:
+        #     index = self.nodes[sector]["unconfigured"].index(node)
+        #     self.nodes[sector]["unconfigured"][index].update_state(NodeState.REBOOTING)
 
-        self.updateNodesLockList[sector].release()
+        # self.updateNodesLockList[sector].release()
 
     # def update_ping_node(self, **kwargs):
     #     """
@@ -263,20 +284,22 @@ class ServerController(metaclass=Singleton):
         """
         Updates a given node's counter.
         :param node_dict: Node dictionary representation.
-        :param type_dict: Typé dictionary representation.
         """ 
         node_dict = kwargs.get('node_dict', None)
-        type_dict = kwargs.get('type_dict', None)
+        # type_dict = kwargs.get('type_dict', None)
         
         # if not node_dict:
         #     return
         
-        t = Type()
-        t.from_set(type_dict)
+        # t = Type()
+        # t.from_set(type_dict)
 
         node = Node()
-        node.from_set(node_dict, t)
+        node.from_set(node_dict)
+        # node.from_set(node_dict, t)
+        # print(node, ' ACQUIRE')
         self.db.update_ping_node_list(node = node)
+        # print(' RELEASE')
 
         # sector = Sector.get_sector_by_ip_address(node.ip_address)
 
@@ -350,22 +373,22 @@ class ServerController(metaclass=Singleton):
             return True, "No node with the ip {} is registered.".format(ip)
         else:
             if node.name == name:
-                return True, "The ip {} is already belong to this node ({})".format(ip, name)
+                return True, "The {} already belong to this node ({})".format(ip, name)
 
         raise ValueError("This ip {} is linked to another node ({})".format(ip, node.name))
 
-    def validate_repository(self, rc_path: str = None, git_url: str = None, check_rc_local: bool = False):
-        """
-        Verify if the repository is valid.
-        :param git_url:
-        :param check_rc_local defaults to False. If true the existence of the rc.local file will be checked.
-        :return: (True or False), ("Message")
-        """
-        return checkUrlFunc(git_url=git_url, rc_local_path=rc_path, check_rc_local=check_rc_local)
+    # def validate_repository(self, rc_path: str = None, git_url: str = None, check_rc_local: bool = False):
+    #     """
+    #     Verify if the repository is valid.
+    #     :param git_url:
+    #     :param check_rc_local defaults to False. If true the existence of the rc.local file will be checked.
+    #     :return: (True or False), ("Message")
+    #     """
+    #     return checkUrlFunc(git_url=git_url, rc_local_path=rc_path, check_rc_local=check_rc_local)
 
-    def clone_repository(self, git_url=None, rc_local_path=None):
-        """
-        Clone the repository from git to the ftp server.
-        :return: (True or False) , (message in case of Failure, SHA of the HEAD commit)
-        """
-        return cloneRepository(git_url=git_url, rc_local_path=rc_local_path, ftp_serv_location=self.sftp_home_dir)
+    # def clone_repository(self, git_url=None, rc_local_path=None):
+    #     """
+    #     Clone the repository from git to the ftp server.
+    #     :return: (True or False) , (message in case of Failure, SHA of the HEAD commit)
+    #     """
+    #     return cloneRepository(git_url=git_url, rc_local_path=rc_local_path, ftp_serv_location=self.sftp_home_dir)

@@ -22,24 +22,32 @@ class RestBBB(Resource):
     """
 
     def post(self):
-        suported_actions = ['reboot', 'switch']
+        # suported_actions = ['reboot', 'switch']
         action = request.form.get('action', default=None)
-        status, message = False, 'Supported Actions are {}'.format(suported_actions)
+        status, message = False, 'No actions taken.'
         if action:
             action = action.lower()
             if action == 'reboot':
-                # reboot a BBB. Must pass its ip, sector and configured (true or false)
-                bbb_ip = request.form.get('ip', None)
-                bbb_sector = request.form.get('sector', None)
-                configured = request.form.get('configured', None)
-                status, message = RestBBB.reboot_bbb(ip=bbb_ip, sector=bbb_sector, configured=configured)
+                status, message = RestBBB.reboot_bbb(ip = request.form.get('ip', None))
+            elif action == 'ip':
+                status, message = RestBBB.new_ip(ip = request.form.get('ip', None), ip_new = request.form.get('ip_new', None))
+            elif action == 'hostname': 
+                status, message = RestBBB.new_hostname(ip = request.form.get('ip', None), hostname = request.form.get('hostname', None))
             elif action == 'switch':
                 # Switch two different BBBs. One must be a configured node and other don't
                 data = request.form.get('data', None)
                 status, message = RestBBB.switch_bbb(data=data)
 
         return jsonify(status=status, message=message)
-
+    
+    @staticmethod
+    def new_ip(** kwargs):
+        return False, 'Not ready ...'
+    
+    @staticmethod
+    def new_hostname(** kwargs):
+        return False, 'Not ready ...'
+    
     @staticmethod
     def switch_bbb(data=None):
         # @todo: Implement this in a way that is more robust !
@@ -60,19 +68,24 @@ class RestBBB(Resource):
         return False, 'Not OK'
 
     @staticmethod
-    def reboot_bbb(ip=None, sector=None, configured=None):
+    def reboot_bbb(**kwargs):
         status, message = False, 'Not Ok!'
-        if ip and sector and configured:
-            if configured == 'true':
-                node = controller.get_configured_node(ip, sector)
-                if node:
-                    controller.reboot_node(node, configured=True)
-                    status, message = True, 'Node {} rebooted '.format(node)
-            elif configured == 'false':
-                node = controller.get_unconfigured_node(ip, sector)
-                if node:
-                    controller.reboot_node(node, configured=False)
-                    status, message = True, 'Node {} rebooted '.format(node)
+        try:
+            controller.reboot_node(ip = kwargs['ip'])
+            status, message = True, 'Rebooted ...'
+        except Exception as e:
+            print(e)
+        # if ip and sector and configured:
+        #     if configured == 'true':
+        #         node = controller.get_configured_node(ip, sector)
+        #         if node:
+        #             controller.reboot_node(node, configured=True)
+        #             status, message = True, 'Node {} rebooted '.format(node)
+        #     elif configured == 'false':
+        #         node = controller.get_unconfigured_node(ip, sector)
+        #         if node:
+        #             controller.reboot_node(node, configured=False)
+        #             status, message = True, 'Node {} rebooted '.format(node)
 
         return status, message
 

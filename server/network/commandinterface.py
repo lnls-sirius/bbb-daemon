@@ -76,7 +76,7 @@ class ServerCommandInterface(metaclass=Singleton):
                     NetUtils.send_command(connection, Command.OK)
 
                 elif command == Command.APPEND_TYPE:
-
+    
                     if NetUtils.recv_command(connection) == Command.TYPE:
 
                         new_type = NetUtils.recv_object(connection)
@@ -187,7 +187,18 @@ class ServerCommandInterface(metaclass=Singleton):
                         NetUtils.send_failure(connection, error_message)
 
                 elif command == Command.REBOOT:
+                    if NetUtils.recv_command(connection) == Command.NODE:
+                        registered_node = NetUtils.recv_object(connection)
+                        self.logger.info("Requesting node {} to reboot".format(registered_node))
+                        self.controller.reboot_node(registered_node)
 
+                elif command == Command.SET_HOSTNAME:
+                    if NetUtils.recv_command(connection) == Command.NODE:
+                        registered_node = NetUtils.recv_object(connection)
+                        self.logger.info("Requesting node {} to reboot".format(registered_node))
+                        self.controller.reboot_node(registered_node)
+
+                elif command == Command.SET_IP:
                     if NetUtils.recv_command(connection) == Command.NODE:
                         registered_node = NetUtils.recv_object(connection)
                         self.logger.info("Requesting node {} to reboot".format(registered_node))

@@ -1,4 +1,4 @@
-from common.entity.entities import Node, Type, PING_NODES
+from common.entity.entities import Node, Type, PING_NODES, PING_KEY_PREFIX
 from common.entity.metadata import Singleton
 
 import msgpack
@@ -25,13 +25,7 @@ class RedisPersistence(metaclass=Singleton):
     """
     A class to persist data to a Redis DB instance. The database architecture is composed of the following
     lists [key, [...]] and key-value pairs:
-
-    + ['types', [type_key_1, type_key_2, ..., type_key_n]]
-    + [type_key_1, type_value_1]
-    + [type_key_1, type_value_2]
-    + ...
-    + [type_key_n, type_value_n]
-
+ 
     + [sector_id_1, [node_name_1, node_name_3, ...]]
     + [sector_id_2, [node_name_2, node_name_8, ...]]
     + ...
@@ -51,10 +45,9 @@ class RedisPersistence(metaclass=Singleton):
         """
 
         self.db = redis.StrictRedis(host=host, port=port, db=0)
-
         # The following mutexes control the concurrent access to the database. Many clients can
         # request data at the same time.
-        self.typesListMutex = threading.Lock()
+        # self.typesListMutex = threading.Lock()
         self.nodesListMutex = threading.Lock()
         self.pingNodesListMutex = threading.Lock()
 
@@ -63,7 +56,8 @@ class RedisPersistence(metaclass=Singleton):
         Clear expired nodes from the pingging nodes list.
         """
         self.pingNodesListMutex.acquire()
-        ping_nodes = self.db.zrange(PING_NODES,0, -1)
+        # ping_nodes = self.db.sme(PING_NODES,0, -1)
+        ping_nodes = self.db.smembers(PING_NODES)
         if ping_nodes:
             for n_key in ping_nodes:
                 if not self.db.exists(n_key):
@@ -79,11 +73,11 @@ class RedisPersistence(metaclass=Singleton):
             raise TypeError("Node given as parameter is None or its name is not valid.")
         
         self.pingNodesListMutex.acquire()
-        pipeline = self.db.pipeline()
 
+        k, n = node.to_set()
+        pipeline = self.db.pipeline()
         pipeline.sadd("Ping:Nodes", node.get_ping_key())
-        k, n, t = node.to_set()
-        pipeline.set(node.get_ping_key(), {'n':n, 't':t})
+        pipeline.set(node.get_ping_key(), n)
         pipeline.expire(node.get_ping_key(), Node.EXPIRE_TIME)
         pipeline.execute()
 
@@ -104,13 +98,19 @@ class RedisPersistence(metaclass=Singleton):
             if content_as_string != None:
                 res = ast.literal_eval(content_as_string.decode('utf-8'))
                 node = Node()
-                node.from_set(res['n'], res['t'])
+                node.from_set(res['n'])
+                # node.from_set(res['n'], res['t'])
             self.pingNodesListMutex.release()
         return node
 
-    def remove_ping_node(self, **kwargs):
-        # Todo: Remove Ping:Node
-        pass
+    # def remove_ping_node(self, **kwargs):
+    #     # Todo: Remove Ping:Node
+    #     pass
+    def get_ping_node_keys(self):
+        """
+        Get all ping nodes.
+        """
+        return self.db.keys(pattern= PING_KEY_PREFIX + Node.KEY_PREFIX + '*')
 
     def get_node_keys(self):
         """
@@ -122,27 +122,27 @@ class RedisPersistence(metaclass=Singleton):
             # pass
     
     
-    def append_type(self, new_type: Type = None):
-        """
-        Append a new type to the database, updating its value if it already exists.
-        :param new_type: the type to be appended.
-        :return: True if the type was successfully added. False, otherwise.
-        :raise: Type given as parameter is None or its name is not valid.
-        """
+    # def append_type(self, new_type: Type = None):
+    #     """
+    #     Append a new type to the database, updating its value if it already exists.
+    #     :param new_type: the type to be appended.
+    #     :return: True if the type was successfully added. False, otherwise.
+    #     :raise: Type given as parameter is None or its name is not valid.
+    #     """
 
-        if new_type is None or new_type.name is None or new_type.name == "":
-            raise TypeError("Type given as parameter is None or its name is not valid.")
+    #     if new_type is None or new_type.name is None or new_type.name == "":
+    #         raise TypeError("Type given as parameter is None or its name is not valid.")
 
-        self.typesListMutex.acquire()
-        if not self.db.exists(new_type.get_key()):
-            self.db.lpush("Types:", new_type.get_key())
+    #     self.typesListMutex.acquire()
+    #     if not self.db.exists(new_type.get_key()):
+    #         self.db.lpush("Types:", new_type.get_key())
 
-        key, val = new_type.to_set()
-        success = self.db.set(key, val)
+    #     key, val = new_type.to_set()
+    #     success = self.db.set(key, val)
 
-        self.typesListMutex.release()
+    #     self.typesListMutex.release()
 
-        return success
+    #     return success
 
     def append_node(self, new_node: Node = None):
         """
@@ -209,7 +209,7 @@ class RedisPersistence(metaclass=Singleton):
 
     def get_node_by_name(self, node_name: str):
         """
-        Search a node instance by its name.
+        Search a node instance by it's name.
         :param node_name: the node's name to search.
         :return: Node instance whose name is node_name.
         :raise TypeError: Node name given as parameter is None.
@@ -224,61 +224,62 @@ class RedisPersistence(metaclass=Singleton):
         if content_as_string is not None:
             content_as_dict = ast.literal_eval(content_as_string.decode('utf-8'))
             if type(content_as_dict) == dict:
-                node_type = self.get_type_by_name(content_as_dict.get('type', ''))
+                # node_type = self.get_type_by_name(content_as_dict.get('type', ''))
                 n = Node()
-                n.from_set(node_dict=content_as_dict, node_type=node_type)
+                n.from_set(node_dict=content_as_dict)
+                # n.from_set(node_dict=content_as_dict, node_type=node_type)
                 return n
             else:
                 raise TypeError("Type obtained from redis {} after conversion isn't a dictionary.".format(Node.KEY_PREFIX + node_name))
 
         raise DataNotFoundError("Node whose name is {} hasn't been found in the db.".format(node_name))
 
-    def get_type_by_name(self, type_name: str):
-        """
-        Search a type by name.
-        :param type_name:  the type's name to search.
-        :return: None if the type was not found or the Type object, otherwise.
-        :raise DataNotFoundError: Type instance has not been found.
-        """
+    # def get_type_by_name(self, type_name: str):
+    #     """
+    #     Search a type by name.
+    #     :param type_name:  the type's name to search.
+    #     :return: None if the type was not found or the Type object, otherwise.
+    #     :raise DataNotFoundError: Type instance has not been found.
+    #     """
 
-        if self.db.exists(Type.KEY_PREFIX + type_name):
+    #     if self.db.exists(Type.KEY_PREFIX + type_name):
 
-            content_as_string = self.db.get(Type.KEY_PREFIX + type_name)
-            content_as_dict = ast.literal_eval(content_as_string.decode('utf-8'))
-            if type(content_as_dict) != dict:
-                raise TypeError("Type obtained from redis {} after conversion isn't a dictionary.".format(Type.KEY_PREFIX + type_name))
+    #         content_as_string = self.db.get(Type.KEY_PREFIX + type_name)
+    #         content_as_dict = ast.literal_eval(content_as_string.decode('utf-8'))
+    #         if type(content_as_dict) != dict:
+    #             raise TypeError("Type obtained from redis {} after conversion isn't a dictionary.".format(Type.KEY_PREFIX + type_name))
             
-            ret_type = Type()
-            ret_type.from_set(type_dict=content_as_dict)
-            return ret_type
+    #         ret_type = Type()
+    #         ret_type.from_set(type_dict=content_as_dict)
+    #         return ret_type
 
-        raise DataNotFoundError("Type whose name is {} hasn't been found in the db.".format(type_name))
+    #     raise DataNotFoundError("Type whose name is {} hasn't been found in the db.".format(type_name))
 
-    def fetch_types(self):
-        """
-        Returns all types registered in the database so far.
-        :return: A list containing all types in the database.
-        :raise DataNotFoundError: the db query returns None instead of a list.
-        """
+    # def fetch_types(self):
+    #     """
+    #     Returns all types registered in the database so far.
+    #     :return: A list containing all types in the database.
+    #     :raise DataNotFoundError: the db query returns None instead of a list.
+    #     """
 
-        self.typesListMutex.acquire()
+    #     self.typesListMutex.acquire()
 
-        ret_list = []
+    #     ret_list = []
 
-        type_list = self.db.lrange("Types:", 0, -1)
+    #     type_list = self.db.lrange("Types:", 0, -1)
 
-        if type_list is None:
-            self.typesListMutex.release()
-            raise DataNotFoundError("An error occurred while fetching the types from the database.")
+    #     if type_list is None:
+    #         self.typesListMutex.release()
+    #         raise DataNotFoundError("An error occurred while fetching the types from the database.")
 
-        for type_key in type_list:
-            type_name = Type.get_name_from_key(type_key)
-            if type_name != '':
-                ret_list.append(self.get_type_by_name(type_name.decode("utf-8")))
+    #     for type_key in type_list:
+    #         type_name = Type.get_name_from_key(type_key)
+    #         if type_name != '':
+    #             ret_list.append(self.get_type_by_name(type_name.decode("utf-8")))
 
-        self.typesListMutex.release()
+    #     self.typesListMutex.release()
 
-        return ret_list
+    #     return ret_list
 
     def fetch_nodes_from_sector(self, sector="1"):
         """
@@ -305,23 +306,23 @@ class RedisPersistence(metaclass=Singleton):
         self.nodesListMutex.release()
         return ret_nodes
 
-    def remove_type_by_name(self, type_name):
-        """
-        Removes a type from the database.
-        :param type_name: the type's name.
-        """
-        count = 0
+    # def remove_type_by_name(self, type_name):
+    #     """
+    #     Removes a type from the database.
+    #     :param type_name: the type's name.
+    #     """
+    #     count = 0
 
-        self.typesListMutex.acquire()
+    #     self.typesListMutex.acquire()
 
-        type_name = Type.KEY_PREFIX + type_name
-        if self.db.exists(type_name):
-            self.db.delete(type_name)
-            count = self.db.lrem(name="Types:", value=type_name, count=0)
+    #     type_name = Type.KEY_PREFIX + type_name
+    #     if self.db.exists(type_name):
+    #         self.db.delete(type_name)
+    #         count = self.db.lrem(name="Types:", value=type_name, count=0)
 
-        self.typesListMutex.release()
+    #     self.typesListMutex.release()
 
-        return count
+    #     return count
 
     def remove_node_from_sector(self, node: Node):
         """

@@ -14,7 +14,7 @@ class EditNodeForm(FlaskForm):
     submit = SubmitField("Save Changes")
     rc_local_path = StringField("Path to rc.local", validators=[DataRequired()], id='rc_local_path')
 
-    pv_prefix = TextAreaField("PV Prefix", validators=[DataRequired()])
+    # pv_prefix = TextAreaField("PV Prefix", validators=[DataRequired()])
 
     def set_initial_values(self, node: Node):
         if node is not None:
@@ -28,7 +28,7 @@ class EditNodeForm(FlaskForm):
                 self.type.data = node.type.name
 
             self.sector.data = node.sector
-            self.pv_prefix.data = Node.get_prefix_string(node.pvPrefix)
+            # self.pv_prefix.data = Node.get_prefix_string(node.pvPrefix)
 
 
 class EditTypeForm(FlaskForm):

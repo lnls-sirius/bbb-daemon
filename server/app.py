@@ -98,14 +98,13 @@ def edit_nodes(node=None):
             pass
         elif action == '':
             # Insert new  node
-
             if edit_nodes_form.validate_on_submit():
                 _type = controller.find_type_by_name(edit_nodes_form.type.data)
                 if _type:
                     try:
-                        res_1, message_1 = controller.validate_repository(
-                            rc_path=edit_nodes_form.rc_local_path.data,
-                            git_url=_type.repoUrl, check_rc_local=True)
+                        # res_1, message_1 = controller.validate_repository(
+                        #     rc_path=edit_nodes_form.rc_local_path.data,
+                        #     git_url=_type.repoUrl, check_rc_local=True)
 
                         res_2, message_2 = controller.check_ip_available(
                             ip=edit_nodes_form.ip_address.data,
@@ -115,8 +114,7 @@ def edit_nodes(node=None):
                                     ip=edit_nodes_form.ip_address.data,
                                     sector=edit_nodes_form.sector.data,
                                     pv_prefixes=Node.get_prefix_array(edit_nodes_form.pv_prefix.data),
-                                    type_node=_type,
-                                    rc_local_path=edit_nodes_form.rc_local_path.data)
+                                    type_node=_type)
                         controller.append_node(node)
                         flash('Successfully edited node {} !'.format(node), 'success')
                         return redirect(url_for("view_nodes"))
@@ -167,42 +165,44 @@ def view_types():
     return render_template("type/view_types.html", edit_url=edit_url, refresh_url=refresh_url, types=types)
 
 
-@app.route("/edit_types/", methods=['GET', 'POST'])
-def edit_types(_type=None):
-    edit_types_form = EditTypeForm()
+# @app.route("/edit_types/", methods=['GET', 'POST'])
+# def edit_types(_type=None):
+#     edit_types_form = EditTypeForm()
 
-    if request.method == 'GET':
-        type_name = request.args.get('type_name', '')
-        if type_name is not '':
-            _type = controller.find_type_by_name(type_name)
-            edit_types_form.set_initial_values(_type)
+#     if request.method == 'GET':
+#         type_name = request.args.get('type_name', '')
+#         if type_name is not '':
+#             _type = controller.find_type_by_name(type_name)
+#             edit_types_form.set_initial_values(_type)
 
-    if request.method == 'POST':
-        action = request.form.get('action', '')
+#     if request.method == 'POST':
+#         action = request.form.get('action', '')
 
-        if action == 'VALIDATE':
-            git_url = request.form.get('gitUrl')
-            success, message = controller.validate_repository(git_url=git_url)
-            return jsonify(success=success, message=message)
+#         if action == 'VALIDATE':
+#             pass
+#             # git_url = request.form.get('gitUrl')
+#             # success, message = controller.validate_repository(git_url=git_url)
+#             # return jsonify(success=success, message=message)
 
-        elif action == '':
-            if edit_types_form.validate_on_submit():
-                success, message_sha = controller.clone_repository(
-                    git_url=edit_types_form.repo_url.data)
-                if success:
-                    new_type = Type(name=edit_types_form.name.data,
-                                    repo_url=edit_types_form.repo_url.data,
-                                    description=edit_types_form.description.data, sha=message_sha)
-                    controller.append_type(new_type)
+#         elif action == '':
+#             # if edit_types_form.validate_on_submit():
+#             #     success, message_sha = controller.clone_repository(
+#             #         git_url=edit_types_form.repo_url.data)
+#             #     if success:
+#             #         new_type = Type(name=edit_types_form.name.data,
+#             #                         repo_url=edit_types_form.repo_url.data,
+#             #                         description=edit_types_form.description.data, sha=message_sha)
+#             #         controller.append_type(new_type)
 
-                    flash('Successfully edited type {} !'.format(new_type), 'success')
-                    return redirect(url_for("view_types"))
-                else:
-                    flash('Failed to edit/insert type {} !'.format(message_sha), 'danger')
-        else:
-            return 'Invalid Command'
+#             #         flash('Successfully edited type {} !'.format(new_type), 'success')
+#             #         return redirect(url_for("view_types"))
+#             #     else:
+#             #         flash('Failed to edit/insert type {} !'.format(message_sha), 'danger')
+#             pass
+#         else:
+#             return 'Invalid Command'
 
-    return render_template("type/edit_type.html", type=_type, form=edit_types_form, url=url_for('edit_types'))
+#     return render_template("type/edit_type.html", type=_type, form=edit_types_form, url=url_for('edit_types'))
 
 
 def get_wsgi_app():
