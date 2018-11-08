@@ -194,9 +194,9 @@ class BaseRedisEntity:
         return key[BaseRedisEntity.KEY_PREFIX_LEN:]
 
 
-class Type(BaseRedisEntity):
+class Type():
     """
-    This class provides a wrapper for host types.
+    This class provides a wrapper for host types. 
     """
 
     KEY_PREFIX = 'Type:'
@@ -204,6 +204,7 @@ class Type(BaseRedisEntity):
 
     NUM_TYPES = 8
     UNDEFINED, POWER_SUPPLY, COUNTING_PRU, SERIAL_THERMO, MBTEMP, AGILENT4UHV, MKS937B, SPIXCONV = range(NUM_TYPES)
+    TYPES = []
 
     @staticmethod
     def from_code(type_code):
@@ -216,15 +217,32 @@ class Type(BaseRedisEntity):
         """
         Initializes a type instance.
         :param name: a type's name.
-        :param repo_url: the repository address with all files needed to execute its function.
-        :param color: A color to be used to represent the type in visual clients.
         :param description: A brief description of the type
         :param sha: A way to provide error detection.
         """
-        self.repo_url = kwargs.get('repo_url', 'A generic URL.')
-        self.description = kwargs.get('repo_url', 'A generic host.')
-        self.sha = kwargs.get('sha', '')
+        # self.repo_url = kwargs.get('repo_url', 'A generic URL.')
+        # self.description = kwargs.get('repo_url', 'A generic host.')
+        # self.sha = kwargs.get('sha', '')
         self.code = kwargs.get('code', Type.UNDEFINED)
+
+    @property
+    def description(self):
+        if self.code == Type.POWER_SUPPLY:
+            return 'Desc: Power Supply'
+        elif self.code == Type.COUNTING_PRU:
+            return 'Desc: CountingPRU'
+        elif self.code == Type.SERIAL_THERMO:
+            return 'Desc: Thermo Probe'
+        elif self.code == Type.MBTEMP:
+            return 'Desc: MBTemp'
+        elif self.code == Type.AGILENT4UHV:
+            return 'Desc: Agilent 4UHV'
+        elif self.code == Type.MKS937B:
+            return 'Desc: MKS 937b'
+        elif self.code == Type.SPIXCONV:
+            return 'Desc: SPIxCONV'
+        else:
+            return 'Desc: Undefined'
 
     @property
     def name(self):
@@ -249,59 +267,27 @@ class Type(BaseRedisEntity):
     @name.setter
     def name(self, value):
         pass
-
-    @staticmethod
-    def get_name_from_key(key):
-        """
-        Returns the prefix from a type's name.
-        :param key: a type's id key.
-        :return: a type's name without the prefix
-        """
-        if len(key) <= Type.KEY_PREFIX_LEN:
-            return ''
-
-        return key[Type.KEY_PREFIX_LEN:]
-
-    def to_set(self):
-        """
-        Returns the object representation that will be saved on the Redis db.
-        :return: string representation of dict representing a type
-        """
-        type_dict = copy.deepcopy(self.__dict__)
-        return self.get_key(), type_dict
-
-    def get_key(self):
-        """
-        Returns the name concatenated with the Type prefix. To be used to save instances into a Redis db.
-        :return: the name concatenated with the Type prefix.
-        """
-        return Type.KEY_PREFIX + str(self.name)
-
-    def from_set(self, type_dict):
-        """
-        Load values from a redis set.
-        :param type_dict: dictionary representing a Type.
-        :raise TypeError: the dictionary provided is None.
-        """
-        for key in type_dict:
-            setattr(self, key, type_dict[key])
+        
+    @description.setter
+    def description(self, value):
+        pass
 
     def __eq__(self, other):
         """
         A way to compare two types.
         :param other: other type instance.
-        :return: True if the other's name is equal to the self's name, False otherwise.
+        :return: True if the code is equal.
         """
         if other is None:
             return False
 
-        if type(other) != type(self):
-            return False
-
-        return other.to_set() == self.to_set()
+        return other.code == self.code
 
     def __str__(self):
         return '{}\t{}'.format(type(self), str(self.__dict__))
+
+for n in range(Type.NUM_TYPES):
+    Type.TYPES.append(Type(code=n))
 
 
 class Node(BaseRedisEntity):
@@ -309,7 +295,7 @@ class Node(BaseRedisEntity):
     This class represents a Controls group's host. Each host has a symbolic name, a valid IP address, a type
     and the sector where it is located.
     """
-    EXPIRE_TIME = 5.
+    EXPIRE_TIME = 5
 
     KEY_PREFIX = 'Node:'
     KEY_PREFIX_LEN = len(KEY_PREFIX)
@@ -324,8 +310,6 @@ class Node(BaseRedisEntity):
         :param type_node: current node's type.
         :param sector: current node's sector.
         :param counter: heart beat count.
-        :param pv_prefixes: deprecated - a BBB will not provide PVs.
-        :param rc_local_path: rc.local location in the project.
         :param details: details provided by the host
         :param config_time: when the host found it's configuration
         """
@@ -334,7 +318,7 @@ class Node(BaseRedisEntity):
         self.ip_address = kwargs.get('ip_address', '10.128.0.0')
         self.state = kwargs.get('state', NodeState.DISCONNECTED)
         self.state_string = NodeState.to_string(self.state)
-        self.type = kwargs.get('type_node', None);
+        self.type = kwargs.get('type_node', Type(code=Type.UNDEFINED))
         self.sector = kwargs.get('sector', 1)
         self.counter = kwargs.get('counter', 0)
 
@@ -350,22 +334,22 @@ class Node(BaseRedisEntity):
         self.state = state
         self.state_string = NodeState.to_string(state)
 
-    @staticmethod
-    def get_prefix_string(pref):
-        """
-        Array to String !
-        :return:
-        """
-        pref_str = ''
-        if pref:
-            for a_str in pref:
-                pref_str += a_str + '\n'
+    # @staticmethod
+    # def get_prefix_string(pref):
+    #     """
+    #     Array to String !
+    #     :return:
+    #     """
+    #     pref_str = ''
+    #     if pref:
+    #         for a_str in pref:
+    #             pref_str += a_str + '\n'
 
-        if pref_str.endswith('\r\n'):
-            pref_str = pref_str[:-2]
-        elif pref_str.endswith('\n') or pref_str.endswith('\r'):
-            pref_str = pref_str[:-1]
-        return pref_str
+    #     if pref_str.endswith('\r\n'):
+    #         pref_str = pref_str[:-2]
+    #     elif pref_str.endswith('\n') or pref_str.endswith('\r'):
+    #         pref_str = pref_str[:-1]
+    #     return pref_str
 
     @staticmethod
     def get_prefix_array(pref):
@@ -399,12 +383,12 @@ class Node(BaseRedisEntity):
         :return: node's key with prefix, the node's dictionary representation and the type of the node.
         """
         node_dict = copy.deepcopy(self.__dict__)
-        type_dict = None
         if node_dict['type'] is not None:
-            node_dict['type'] = self.type.name
-            type_dict = self.type.to_set()
+            node_dict['type'] = self.type.code
+        else:
+            node_dict['type'] = Type(code=Type.UNDEFINED)
 
-        return self.get_key(), node_dict, type_dict
+        return self.get_key(), node_dict
 
     def get_key(self):
         """
@@ -412,26 +396,32 @@ class Node(BaseRedisEntity):
         """
         return (Node.KEY_PREFIX + str(self.name)).replace(' ', '')
 
-    def from_set(self, node_dict, node_type):
+    def from_set(self, node_dict , **kwargs):
+    # def from_set(self, node_dict , node_type):
         """
         Load the values from a redis set.
         :param node_dict: dictionary representing the node object according to the pattern defined
         in the method get_set() from the Node object.
-        :param node_type: the type object or dictionary that this node shall contain.
         :raise TypeError: the dictionary provided is None.
         """
         for key in node_dict:
-
             if key == 'type':
-                if node_dict[key] is not None:
-                    if type(node_type) == dict:
-                        new_type = Type()
-                        new_type.from_set(node_type)
-                        node_dict[key] = new_type
-                    elif type(node_type) == Type:
-                        node_dict[key] = node_type
+                _type = node_dict[key]
+                if _type is not None:
+                    if type(_type) != Type:
+                        node_dict[key] = Type(code = int(_type))
                     else:
-                        node_dict[key] = None
+                        node_dict[key] = _type
+                    # if type(node_type) == dict:
+                    #     new_type = Type()
+                    #     new_type.from_set(node_type)
+                    #     node_dict[key] = new_type
+                    # elif type(node_type) == Type:
+                    #     node_dict[key] = node_type
+                    # else:
+                    #     node_dict[key] = None
+                else:
+                    node_dict[key] = Type(code=Type.UNDEFINED)
 
             setattr(self, key, node_dict[key])
 

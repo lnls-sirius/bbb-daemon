@@ -39,11 +39,11 @@ if __name__ == '__main__':
                 no_tty()
                 counting_pru()
                 power_supply_pru()
+                spixconv()
                 thermo_probe()
                 mbtemp()
-                mks9376b()
                 agilent4uhv()
-                spixconv()
+                mks9376b()
             except SystemExit:
                 pass
             except:

@@ -68,7 +68,7 @@ class BBB:
         """
         self.check_config_json()
         dict_res = self.node.to_set()
-        return {'comm' : Command.PING, 'n' : dict_res[1], 't' : dict_res[2][1]}
+        return {'comm' : Command.PING, 'n' : dict_res[1]}
 
     def reboot(self):
         """
