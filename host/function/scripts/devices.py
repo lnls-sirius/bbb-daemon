@@ -124,14 +124,14 @@ def mks9376b():
     # logger.info('MKS 937B')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 115200
-        ser = Serial(port=PORT, baudrate=baud, timeout=TIMEOUT)
+        ser = Serial(port=PORT, baudrate=baud, timeout=0.05)
         devices = []
         for mks_addr in range(1, 255):
             msgm = '\@{0:03d}'.format(mks_addr) + "PR1?;FF"
             ser.reset_input_buffer()
             ser.reset_output_buffer()
             ser.write(msgm)
-            res = ser.read()
+            res = ser.read(20)
             if len(res) != 0:
                 devices.append(mks_addr)
         ser.close()
