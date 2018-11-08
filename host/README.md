@@ -2,6 +2,7 @@
 Scripts directly related to the beaglebone black with the following structure:
 ```
 .
+├── daemon
 ├── function
 │   └── scripts
 ├── rsync
