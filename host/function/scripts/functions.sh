@@ -189,7 +189,7 @@ function serial_thermo {
     popd
     overlay_PRUserial485
     # @todo
-    # - Rodar IOC
+    # - Rodar IOC e scripts python
 }
 
 function socat_devices {
@@ -199,6 +199,6 @@ function socat_devices {
     popd
     overlay_PRUserial485
 
-    echo  Starting socat with ${BAUDRATE} baudrate on port ${SOCAT_PORT} and range=${SERVER_IP_ADDR}:${SERVER_MASK}.
-    socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay FILE:${CONN_DEVICE},b${BAUDRATE},rawer
+    echo  "Starting socat with: socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${CONN_DEVICE},b${BAUDRATE},rawer"
+    socat -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${CONN_DEVICE},b${BAUDRATE},rawer
 }
