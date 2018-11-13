@@ -8,11 +8,12 @@ export SOCAT_PORT=4161
 export SERVER_IP_ADDR="10.128.255.5/16"
 
 # Serial port name to be used
-export CONN_DEVICE="/dev/ttyUSB0"
 export PING_CANDIDATES="10.0.6.44 10.0.6.48 10.0.6.51"
+export SOCAT_DEVICE="/dev/ttyUSB0"
 
 # The whoami.py script will use the following environment variables.
 # Do not use spaces!
+export CONN_DEVICE="/dev/ttyUSB0"
 export PRU_POWER_SUPPLY='PRU_POWER_SUPPLY'
 export COUNTING_PRU='COUNTING_PRU'
 export SERIAL_THERMO='SERIAL_THERMO'
