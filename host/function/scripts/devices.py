@@ -33,7 +33,7 @@ def counting_pru():
     """
     CountingPRU
     """
-    # logger.info('Counting PRU')
+    logger.info('Counting PRU')
     if PRUserial485_address() != 21 and not path.isfile(PORT):
         persist_info(Type.COUNTING_PRU, 0, COUNTING_PRU)
 
@@ -42,7 +42,7 @@ def no_tty():
     """
     NO /dev/ttyUSB0
     """
-    # logger.info('No /dev/ttyUSB0')
+    logger.info('No /dev/ttyUSB0')
     if not path.exists(PORT) and PRUserial485_address() == 21:
         persist_info(Type.UNDEFINED, 115200, NOTTY)
 
@@ -51,7 +51,7 @@ def power_supply_pru():
     """
     PRU Power Supply
     """
-    # logger.info('PRU Power Supply')
+    logger.info('PRU Power Supply')
     if GPIO.input(PIN_FTDI_PRU) == PRU and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY)
 
@@ -68,7 +68,7 @@ def thermo_probe():
     """
     Thermo probes
     """
-    # logger.info('Thermo probes')
+    logger.info('Thermo probes')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 19200
         ser = Serial(port=PORT,
@@ -102,7 +102,7 @@ def mbtemp():
     """
     MBTemp
     """
-    # logger.info('MBTemp')
+    logger.info('MBTemp')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 115200
         ser = Serial(PORT, baud, timeout=TIMEOUT)
@@ -121,7 +121,7 @@ def mks9376b():
     """
     MKS 937B
     """
-    # logger.info('MKS 937B')
+    logger.info('MKS 937B')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 115200
         ser = Serial(port=PORT, baudrate=baud, timeout=0.05)
@@ -156,7 +156,7 @@ def agilent4uhv():
     """
     AGILENT 4UHV
     """
-    # logger.info('AGILENT 4UHV')
+    logger.info('AGILENT 4UHV')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 38400
         ser = Serial(port=PORT, baudrate=baud, timeout=.2)
@@ -184,7 +184,7 @@ def spixconv():
     """
     SPIxCONV
     """
-    # logger.info('SPIxCONV')
+    logger.info('SPIxCONV')
     '''
     if PRUserial485_address() == 21:
         #persist_info(Type.SPIXCONV, baud, SPIXCONV, 'SPIXCONV connected {}'.format(devices))
