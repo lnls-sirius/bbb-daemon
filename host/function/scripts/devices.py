@@ -159,7 +159,7 @@ def agilent4uhv():
     logger.info('AGILENT 4UHV')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 38400
-        ser = Serial(port=PORT, baudrate=baud, timeout=.2)
+        ser = Serial(port=PORT, baudrate=baud, timeout=.4)
         devices = []
         for addr in range(0, 32):
             ser.reset_input_buffer()

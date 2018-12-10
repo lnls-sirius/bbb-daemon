@@ -7,7 +7,7 @@ pushd $DAEMON_BASE/host
     export SERVER_ADDR="10.128.255.5"
     export BIND_PORT=9877
     export PING_PORT=9876
-    export PING_CANDIDATES="10.0.6.44 10.0.6.48 10.0.6.51"
+    export PING_CANDIDATES="10.0.6.44 10.0.6.48 10.128.255.5"
 
     pushd daemon
         ./run_daemon.py
