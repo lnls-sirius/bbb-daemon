@@ -16,8 +16,8 @@ parser.add_argument("--ping-port", "-p", nargs='?', default=9876,type=int,
 parser.add_argument("--command-port", "-c", nargs='?', default=9877, type=int,
                     help="The port from which command requests are received.", dest="command_port")
 
-parser.add_argument('--ping-candidades', '-pc', default='10.0.6.44;10.0.6.48;10.128.255.5',
-                    help="Ping IP, separated by a space.", dest='ping_candidades')
+parser.add_argument('--ping-candidates', '-pc', default='10.0.6.44;10.0.6.48;10.128.255.5',
+                    help="Ping IP, separated by a space.", dest='ping_candidates')
 
 parser.add_argument("--configuration-path", "-C", nargs='?', default='/root/bbb-daemon/bbb.bin',
                     help="The configuration file's location", dest="configuration_path")

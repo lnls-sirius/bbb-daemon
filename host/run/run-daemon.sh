@@ -8,7 +8,7 @@ pushd $DAEMON_BASE/host
 
     pushd daemon
         ./run_daemon.py \
-            --ping-candidades ${PING_CANDIDATES} \
+            --ping-candidates ${PING_CANDIDATES} \
             --configuration-path ${CONFIG_PATH}
     popd
 popd
