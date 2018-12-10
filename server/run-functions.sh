@@ -4,11 +4,6 @@ function cleanup {
     if [ -f gunicorn.pid ]; then
         kill $(cat gunicorn.pid)
     fi 
-    if [ $DEV = true ];then
-        if [ -d ${PWD}/../ftp_dev ]; then
-            rm -rd ${PWD}/../ftp_dev
-        fi 
-    fi 
     deactivate
     echo Bye !
 }

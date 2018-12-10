@@ -100,14 +100,7 @@ class Daemon():
 
             self.logger.info("Command {} received from server.".format(Command.command_name(command)))
 
-
-            if command == Command.SWITCH:
-                node = NetUtils.recv_object(connection)
-                self.bbb.update(node)
-                self.stop()
-                self.bbb.reboot()
-
-            elif command == Command.REBOOT:
+            if command == Command.REBOOT:
                 self.stop()
                 self.bbb.reboot()
 
@@ -119,8 +112,10 @@ class Daemon():
 
             elif command == Command.SET_IP:
                 new_ip = NetUtils.recv_object(connection)
+                new_mask = NetUtils.recv_object(connection)
+                new_gateway = NetUtils.recv_object(connection)
                 self.stop()
-                self.bbb.update_ip_address(new_ip)
+                self.bbb.update_ip_address(new_ip, new_mask, new_gateway)
                 self.bbb.reboot()
 
 

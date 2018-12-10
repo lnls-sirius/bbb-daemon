@@ -9,7 +9,7 @@ def dump_node(node):
     if node == None:
         return None
     if type(node) == Node:
-        k, n, t = node.to_set()
+        k, n, t = node.to_dict()
         n['type'] = t
         return n
     elif type(node) == list:
@@ -30,7 +30,7 @@ def dump_type(_type):
     if _type == None:
         return None
     if type(_type) == Type:
-        k, t = _type.to_set()
+        k, t = _type.to_dict()
         return t
     elif type(_type) == list:
         res = []

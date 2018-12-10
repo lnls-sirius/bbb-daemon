@@ -31,33 +31,18 @@ class ServerController(metaclass=Singleton):
                                   "unconfigured": []}
             self.updateNodesLockList[sector] = threading.Lock()
 
-        self.logger = logging.getLogger('ServerController')
+        self.logger = logging.getLogger()
+        # self.logger = logging.getLogger('ServerController')
 
         self.scan_nodes = True
         self.updateNodesThread = threading.Thread(target=self.scan_nodes_worker)
         self.updateNodesThread.start()
+ 
+    def get_types(self):
+        return Type.get_types()  
 
-    def fetch_types(self):
-        """
-        :return: a list containing all types registered in the db.
-        """
-        return Type.TYPES
-        # return self.db.fetch_types()
-
-    # def append_type(self, new_type):
-    #     """
-    #     Appends a new type into the db.
-    #     :param new_type: the new type's instance.
-    #     :return: True is it succeeds and False, otherwise.
-    #     """
-    #     return self.db.append_type(new_type)
-
-    # def remove_type(self, t):
-    #     """
-    #     Removes a type from the db.
-    #     :param t: Type instance to be removed.
-    #     """
-    #     return self.db.remove_type_by_name(t)
+    def get_sectors_dict(self):
+        return Sector.get_sectors_dict()
 
     def find_type_by_name(self, type_name):
         """
@@ -242,7 +227,7 @@ class ServerController(metaclass=Singleton):
         DaemonHostListener.get_instance().send_command(command=Command.SET_IP, address=kwargs['ip'], ip_new=kwargs['ip_new'])
 
 
-    def reboot_node(self, node: Node = None, **kwargs):
+    def reboot_node(self, **kwargs):
         """
         Reboots a given node.
         :param node: a Node instance object.
@@ -280,6 +265,9 @@ class ServerController(metaclass=Singleton):
                                                 address=old_node.ip_address, node=new_node)
         self.reboot_node(old_node)
 
+    def get_ping_nodes(self):
+        return self.db.get_ping_nodes()
+
     def update_ping_hosts(self, **kwargs): 
         """
         Updates a given node's counter.
@@ -292,13 +280,13 @@ class ServerController(metaclass=Singleton):
         #     return
         
         # t = Type()
-        # t.from_set(type_dict)
+        # t.from_dict(type_dict)
 
         node = Node()
-        node.from_set(node_dict)
-        # node.from_set(node_dict, t)
+        node.from_dict(node_dict)
+        # node.from_dict(node_dict, t)
         # print(node, ' ACQUIRE')
-        self.db.update_ping_node_list(node = node)
+        self.db.update_ping_node_list(node=node)
         # print(' RELEASE')
 
         # sector = Sector.get_sector_by_ip_address(node.ip_address)
