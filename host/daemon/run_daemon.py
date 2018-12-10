@@ -16,7 +16,7 @@ parser.add_argument("--ping-port", "-p", nargs='?', default=9876,type=int,
 parser.add_argument("--command-port", "-c", nargs='?', default=9877, type=int,
                     help="The port from which command requests are received.", dest="command_port")
 
-parser.add_argument('--ping-candidades', '-pc', default='10.0.6.44 10.0.6.48 10.128.255.5',
+parser.add_argument('--ping-candidades', '-pc', default='10.0.6.44;10.0.6.48;10.128.255.5',
                     help="Ping IP, separated by a space.", dest='ping_candidades')
 
 parser.add_argument("--configuration-path", "-C", nargs='?', default='/root/bbb-daemon/bbb.bin',
@@ -27,15 +27,17 @@ parser.add_argument('--log-path', '-l', nargs='?', default='/var/log/bbb-daemon.
 
 args = vars(parser.parse_args())
 
-PING_CANDIDATES = args.ping_candidates.split(';')
+PING_CANDIDATES = args['ping_candidates'].split(';')
 
-handler = RotatingFileHandler(filename=args['log_path'],
-                            maxBytes=5000000,
-                            backupCount=2)
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)-15s %(message)s',
+                    datefmt='%d/%m/%Y %H:%M:%S')
+
+handler = RotatingFileHandler(filename=args['log_path'], maxBytes=5000000, backupCount=2)
 handler.setFormatter(logging.Formatter('%(asctime)-15s %(levelname)s %(name)s %(message)s'))
 handler.setLevel(logging.DEBUG)
 logger = logging.getLogger()
-logger.addHandler(handler) 
+logger.addHandler(handler)
 
 if __name__ == '__main__':
     logger.info('Init params: {}'.format(args))
