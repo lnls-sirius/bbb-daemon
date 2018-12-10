@@ -4,7 +4,7 @@
 # Socat Welcome Port
 export SOCAT_PORT=4161
 # Wich ip/mask that are allowed to connect to socat. It's not important and can be removed if necessary (make sure to edit the init.sh if you choose so).
-export SERVER_IP_ADDR="10.128.255.5/16"
+export SERVER_IP_ADDR="10.128.255.5/24"
 # Serial port name to be used
 export SOCAT_DEVICE="/dev/ttyUSB0"
 
