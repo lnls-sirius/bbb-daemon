@@ -17,11 +17,10 @@ class Daemon():
     """
     A class to monitor and update.
     """
-    def __init__(self, server_address, ping_port, bind_port, path, ping_candidates):
+    def __init__(self, ping_port, bind_port, path, ping_candidates):
         """
         Initializes a new Daemon object.
-
-        :param server_address:
+ 
         :param ping_port:
         :param bind_port:
         :param path:
@@ -32,9 +31,7 @@ class Daemon():
         self.logger = logging.getLogger('Daemon')
 
         self.ping_candidates = ping_candidates
-
-
-        self.server_address = server_address
+ 
         self.ping_port = ping_port
         self.bind_port = bind_port
 
