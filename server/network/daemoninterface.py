@@ -12,7 +12,7 @@ from queue import Empty, Queue
 
 class DaemonHostListener(metaclass=Singleton):
     """
-    This class interfaces the BBB hosts and the serves.
+    This class interfaces the BBB hosts and the server.
     """
 
     def __init__(self, workers: int = 10, bbb_udp_port: int = 9876, bbb_tcp_port: int = 9877):
@@ -32,7 +32,8 @@ class DaemonHostListener(metaclass=Singleton):
 
         self.queueUdp = Queue()
 
-        self.logger = logging.getLogger('DaemonHostListener')
+        self.logger = logging.getLogger()
+        # self.logger = logging.getLogger('DaemonHostListener')
 
         self.listening = True
         self.listenThread = threading.Thread(target=self.listen_udp)
@@ -53,13 +54,18 @@ class DaemonHostListener(metaclass=Singleton):
 
             NetUtils.send_command(command_socket, command)
 
-            if command == Command.SWITCH:
-                node = kargs["node"]
-                NetUtils.send_object(command_socket, node)
-                # pv prefixes ...
+            if command == Command.REBOOT: 
+                pass
+            elif command == Command.SET_HOSTNAME:
+                pass
+            elif command == Command.SET_IP:
+                pass
+                        
             command_socket.close()
             return True
         except socket.error:
+            self.logger.exception("Error when executing command {} {}, address {}.".format(command,
+                Command.command_name(command), address))
             return False
 
     def process_worker_udp(self):
@@ -70,10 +76,9 @@ class DaemonHostListener(metaclass=Singleton):
             try:
                 data = self.queueUdp.get(timeout=5, block=True)
                 payload = NetUtils.compare_checksum(expected_chk=data['chk'], payload=data['payload'])
+                
                 if payload['comm'] == Command.PING:  
                     self.controller.update_ping_hosts(node_dict=payload['n'])
-                    # self.controller.update_ping_hosts(node_dict=payload['n'], type_dict=payload['t'])
-                    
                 elif payload['comm'] == Command.EXIT:
                     self.logger.info("Worker received an EXIT command. Finishing its thread.")
                     return

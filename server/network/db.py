@@ -1,11 +1,10 @@
-from common.entity.entities import Node, Type, PING_NODES, PING_KEY_PREFIX
-from common.entity.metadata import Singleton
-
-import msgpack
 import ast
+import msgpack
 import redis
 import threading
 
+from common.entity.entities import Node, Type, PING_NODES, PING_KEY_PREFIX
+from common.entity.metadata import Singleton
 
 class DifferentSectorNodeError(Exception):
     """
@@ -74,7 +73,7 @@ class RedisPersistence(metaclass=Singleton):
         
         self.pingNodesListMutex.acquire()
 
-        k, n = node.to_set()
+        k, n = node.to_dict()
         pipeline = self.db.pipeline()
         pipeline.sadd("Ping:Nodes", node.get_ping_key())
         pipeline.set(node.get_ping_key(), n)
@@ -82,6 +81,16 @@ class RedisPersistence(metaclass=Singleton):
         pipeline.execute()
 
         self.pingNodesListMutex.release()
+
+    def get_ping_nodes(self, *args, **kwargs):
+        "Get all ping nodes"
+        nodes =  []
+        for node in self.db.smembers("Ping:Nodes"):
+            bin_node = self.db.get(node)
+            if bin_node == None:
+                continue 
+            nodes.append(bin_node.decode('utf-8')) 
+        return nodes
 
     def get_ping_node(self, **kwargs):
         """
@@ -98,8 +107,8 @@ class RedisPersistence(metaclass=Singleton):
             if content_as_string != None:
                 res = ast.literal_eval(content_as_string.decode('utf-8'))
                 node = Node()
-                node.from_set(res['n'])
-                # node.from_set(res['n'], res['t'])
+                node.from_dict(res['n'])
+                # node.from_dict(res['n'], res['t'])
             self.pingNodesListMutex.release()
         return node
 
@@ -137,7 +146,7 @@ class RedisPersistence(metaclass=Singleton):
     #     if not self.db.exists(new_type.get_key()):
     #         self.db.lpush("Types:", new_type.get_key())
 
-    #     key, val = new_type.to_set()
+    #     key, val = new_type.to_dict()
     #     success = self.db.set(key, val)
 
     #     self.typesListMutex.release()
@@ -177,7 +186,7 @@ class RedisPersistence(metaclass=Singleton):
         if not self.db.exists(new_node.get_key()):
             self.db.lpush(new_node.sector, new_node.get_key())
 
-        node_key, node_value = new_node.to_set()
+        node_key, node_value = new_node.to_dict()
 
         self.db.set(node_key, node_value)
         success = self.db.set(str(new_node.ip_address), new_node.get_key())
@@ -226,8 +235,8 @@ class RedisPersistence(metaclass=Singleton):
             if type(content_as_dict) == dict:
                 # node_type = self.get_type_by_name(content_as_dict.get('type', ''))
                 n = Node()
-                n.from_set(node_dict=content_as_dict)
-                # n.from_set(node_dict=content_as_dict, node_type=node_type)
+                n.from_dict(node_dict=content_as_dict)
+                # n.from_dict(node_dict=content_as_dict, node_type=node_type)
                 return n
             else:
                 raise TypeError("Type obtained from redis {} after conversion isn't a dictionary.".format(Node.KEY_PREFIX + node_name))
@@ -250,7 +259,7 @@ class RedisPersistence(metaclass=Singleton):
     #             raise TypeError("Type obtained from redis {} after conversion isn't a dictionary.".format(Type.KEY_PREFIX + type_name))
             
     #         ret_type = Type()
-    #         ret_type.from_set(type_dict=content_as_dict)
+    #         ret_type.from_dict(type_dict=content_as_dict)
     #         return ret_type
 
     #     raise DataNotFoundError("Type whose name is {} hasn't been found in the db.".format(type_name))
@@ -288,23 +297,24 @@ class RedisPersistence(metaclass=Singleton):
         :return: A list containing all nodes in the sector passed as parameter.
         :raise DataNotFoundError: the db query returns None instead of a list.
         """
-        self.nodesListMutex.acquire()
-        ret_nodes = []
+        pass
+        # self.nodesListMutex.acquire()
+        # ret_nodes = []
 
-        nodes_db = self.db.lrange(sector, 0, -1)
+        # nodes_db = self.db.lrange(sector, 0, -1)
 
-        if nodes_db is None:
-            self.nodesListMutex.release()
-            raise DataNotFoundError("An error occurred while fetching the nodes from the database.")
+        # if nodes_db is None:
+        #     self.nodesListMutex.release()
+        #     raise DataNotFoundError("An error occurred while fetching the nodes from the database.")
 
-        for node_key in nodes_db:
-            node_name = Node.get_name_from_key(node_key.decode("utf-8"))
-            node = self.get_node_by_name(node_name)
-            if node:
-                ret_nodes.append(node)
+        # for node_key in nodes_db:
+        #     node_name = Node.get_name_from_key(node_key.decode("utf-8"))
+        #     node = self.get_node_by_name(node_name)
+        #     if node:
+        #         ret_nodes.append(node)
 
-        self.nodesListMutex.release()
-        return ret_nodes
+        # self.nodesListMutex.release()
+        # return ret_nodes
 
     # def remove_type_by_name(self, type_name):
     #     """
