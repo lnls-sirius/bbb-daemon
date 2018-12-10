@@ -67,7 +67,7 @@ class BBB:
         :return: message representing the current configuration.
         """
         self.check_config_json()
-        dict_res = self.node.to_set()
+        dict_res = self.node.to_dict()
         return {'comm' : Command.PING, 'n' : dict_res[1]}
 
     def reboot(self):
@@ -94,40 +94,17 @@ class BBB:
                 hostnameFile.write(new_hostname)
                 hostnameFile.close()
 
-    def update_ip_address(self, new_ip_address):
+    def update_ip_address(self, new_ip_address, new_mask, new_gateway):
         """
         Updates the host with a new ip address
         """
         if self.node.ip_address != new_ip_address:
-            self.logger.info("Updating current ip address from {} to {}.".format(self.node.ip_address, new_ip_address))
+            self.logger.info("Updating current ip address from {} to {}, mask {}, default gateway {}.".format(
+                self.node.ip_address, new_ip_address, new_mask, new_gateway))
 
-            network_address = Sector.get_network_address_from_ip_address(new_ip_address)
-            self.change_ip_address(new_ip_address=new_ip_address, net_address=network_address)
+            self.change_ip_address(new_ip_address, new_gateway, new_mask)
             self.node.ip_address = self.get_ip_address()[0]
 
-
-    def update(self, new_config_node=None):
-        """
-        @todo : NODE! Update Code !!!!
-        Updates the bbb with new data and refreshes the project.
-        :return:
-        """
-        try:
-
-            self.logger.info("Updating current configuration from {} to {}.".format(self.node, new_config_node))
-
-            self.node = new_config_node
-
-            self.update_ip_address(self.node.ip_address)
-
-            self.update_hostname(self.node.name)
-
-            self.write_node_configuration()
-
-            self.logger.info("Current configuration updated successfully.")
-
-        except IOError:
-            self.logger.exception("Could not update hostname file.")
 
     def read_node_parameters(self):
         """
@@ -177,36 +154,25 @@ class BBB:
         return ipaddress.IPv4Address(address_line[0:address_line.index('/')]), \
                ipaddress.IPv4Network(address_line, strict=False)
 
-    def change_ip_address(self, new_ip_address, net_address, default_gateway_address = None):
+    def change_ip_address(self, new_ip_address, new_mask, new_gateway):
         """
         Execute the connmanclt tool to change the host' IP address.
         :param new_ip_address: the new IP address. An ipaddress.IPv4Address object.
         :param net_address: new sub-network address. An ipaddress.IPv4Network object.
         :param default_gateway_address: the new default gateway
         :raise TypeError: new_ip_address or net_address are None or are neither ipaddress nor string objects.
-        """
-        if not new_ip_address:
-            raise TypeError("The provided IP address is none.")
-        elif type(new_ip_address) is not ipaddress.IPv4Address or type(new_ip_address) is not str:
-            raise TypeError("The provided IP address is neither a string nor a ipaddress.IPv4Address object.")
-
-        if not net_address:
-            raise TypeError("The provided sub-network's address is none.")
-        elif type(net_address) is not ipaddress.IPv4Address or type(net_address) is not str:
-            raise TypeError("The provided sub-network's address is neither a "
-                            "string nor a ipaddress.IPv4Address object.")
-
+        """ 
         self.logger.info('Changing current IP address from {} to {}'.format(self.get_ip_address()[0], new_ip_address))
 
         service = self.get_connman_service_name()
         self.logger.debug("Service for interface {} is {}.".format(self.interface_name, service))
 
-        if default_gateway_address is None:
-            default_gateway_address = Sector.get_default_gateway_of_address(new_ip_address)
+        if new_gateway is None:
+            new_gateway = Sector.get_default_gateway_of_address(new_ip_address)
 
         subprocess.check_output(
-            ['connmanctl config {} ipv4 manual {} {} {}'.format(service, new_ip_address, net_address,
-                                                                default_gateway_address)],
+            ['connmanctl config {} --ipv4 manual {} {} {}'.format(service, new_ip_address, new_mask,
+                                                                new_gateway)],
             shell=True)
 
         self.logger.debug('IP address after update is {}'.format(self.get_ip_address()[0]))
