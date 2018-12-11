@@ -144,11 +144,11 @@ def Agilent4UHV_CRC(string):
     i = 0
     for b in string:
         if i > 0:
-            counter ^= b
+            counter ^= ord(b)
         i += 1
 
-    string.append(int(bin(counter)[6:], 2))
-    string.append(int(bin(counter)[2:6], 2))
+    string += chr(int(bin(counter)[2:6], 2)+48)
+    string += chr(int(bin(counter)[6:], 2)+48)
     return(string)
 
 
@@ -156,22 +156,22 @@ def agilent4uhv():
     """
     AGILENT 4UHV
     """
-    logger.info('AGILENT 4UHV')
+    # logger.info('AGILENT 4UHV')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 38400
-        ser = Serial(port=PORT, baudrate=baud, timeout=.4)
+        ser = Serial(port=PORT, baudrate=baud, timeout=.6)
         devices = []
         for addr in range(0, 32):
             ser.reset_input_buffer()
             ser.reset_output_buffer()
-            pl = bytearray()
-            pl.append(0x02)
-            pl.append(addr  + 128)
-            pl.append(0x38)
-            pl.append(0x31)
-            pl.append(0x30)
-            pl.append(0x30)
-            pl.append(0x03)
+            pl = ""
+            pl += "\x02"
+            pl += chr(addr  + 128)
+            pl += "\x38"
+            pl += "\x31"
+            pl += "\x30"
+            pl += "\x30"
+            pl += "\x03"
             ser.write(Agilent4UHV_CRC(pl))
             res = ser.read(15)
             if len(res) != 0:
