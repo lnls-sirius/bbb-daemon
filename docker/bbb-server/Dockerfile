@@ -4,24 +4,12 @@ MAINTAINER Claudio Carneiro <claudio.carneiro@lnls.br>
 
 WORKDIR /root/
 
-COPY requirements.txt ./
+RUN git clone https://github.com/lnls-sirius/bbb-daemon.git 
 
-RUN apt-get update && pip3 install --no-cache-dir -r requirements.txt
+WORKDIR /root/bbb-daemon/server
+RUN make -C /root/bbb-daemon/server install
 
-RUN cd /root/
+WORKDIR /root/bbb-daemon
+CMD ["sh", "-c", "/root/bbb-daemon/docker/bbb-server/run.sh"]
 
-RUN git clone https://github.com/vishnubob/wait-for-it.git
-RUN git clone https://github.com/lnls-sirius/bbb-daemon.git
-
-RUN cd /root/bbb-daemon/docker/bbb-server/
-
-CMD ["sh", "-c", "/root/bbb-daemon/docker/bbb-server/wait.sh"]
-
-EXPOSE \
-    1026 \
-    6789 \
-    9876 \
-    1026 \
-    4850 \
-    3000-3010 \
-    9877
+EXPOSE 9877 9876 4850 

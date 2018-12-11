@@ -1,13 +1,6 @@
-marshmallow==2.15.3
 Flask==1.0.2
-Flask-Bootstrap==3.3.7.1
-flask-nav==0.6
 Flask-RESTful==0.3.6
-Flask-WTF==0.14.2
-pyftpdlib==1.5.4
-ftputil==3.4
-gitdb2==2.0.3
-GitPython==2.1.9
+Flask-Cors==3.0.7
 redis==2.10.6
 sip==4.19.8
 msgpack==0.5.6

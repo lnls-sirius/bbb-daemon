@@ -1,30 +1,35 @@
-version: '3.3'
+version: '3.2'
 services:
-  redis:
-    image: redis:latest 
-    container_name: redis_bbb
+  redis-db:
+    image: redis:latest
+    container_name: redis-db
     ports:
-      -  "6379:6379"
+      -  "6379:6379/tcp"
+    dns:
+      - 10.0.0.71
+      - 10.0.0.72
     volumes:
-      - bbb-redis-data:/data
-    restart: always
+      - /storage/epics-services/daemon/db/:/data
+    networks:
+      - bbb_daemon_network
 
-  bbb-server-service:
-    container_name: bbb-serv-cont
-    image: lnlscon/bbb-daemon-container:latest
+  bbb-daemon:
+    container_name: cons-bbb-daemon 
+    image: lnlscon/cons-bbb-daemon:latest
     ports:
       -  "4850:4850"
-      -  "6789:6789/tcp"
       -  "9877:9877/tcp"
       -  "9876:9876/udp"
     dns:
       - 10.0.0.71
       - 10.0.0.72
-    env_file:
-      -  /root/bbb-daemon/docker/bbb-server/bbb-server.env
+    networks:
+      - bbb_daemon_network
     depends_on:
-      -  redis
-    restart: always
+      - redis
 
-volumes:
-  bbb-redis-data:
+networks:
+  bbb_daemon_network:
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
