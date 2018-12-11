@@ -21,6 +21,8 @@ services:
   bbb-daemon:
     hostname: cons-bbb-daemon
     image: lnlscon/cons-bbb-daemon:latest
+    env_file:
+      - ../bbb-server.env
     ports:
       -  "4850:4850"
       -  "9877:9877/tcp"
