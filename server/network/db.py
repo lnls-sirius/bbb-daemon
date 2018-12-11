@@ -88,8 +88,8 @@ class RedisPersistence(metaclass=Singleton):
         for node in self.db.smembers("Ping:Nodes"):
             bin_node = self.db.get(node)
             if bin_node == None:
-                continue 
-            nodes.append(bin_node.decode('utf-8')) 
+                continue
+            nodes.append(ast.literal_eval(bin_node.decode('utf-8')))
         return nodes
 
     def get_ping_node(self, **kwargs):
