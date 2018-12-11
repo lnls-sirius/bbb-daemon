@@ -1,9 +1,9 @@
 .PHONY: install cert
 
 install:
-	apt-get -y install python3-pip python3-dev nginx
-	pip3 install virtualenv==16.0.0
-	virtualenv bbb-daemon-virtualenv
+	apt-get -y install python3-pip python3-dev &&\
+	pip3 install virtualenv==16.0.0 && \
+	virtualenv bbb-daemon-virtualenv && \
 	cd install && ./setup-env.sh
 
 install-docker:
