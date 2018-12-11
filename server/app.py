@@ -2,8 +2,6 @@
 import logging
 
 from flask import Flask, render_template, flash, redirect, url_for, request, jsonify, json
-from flask_nav import Nav
-from flask_nav.elements import Navbar, View
 from flask_restful import Api
 from flask_cors import CORS
 
