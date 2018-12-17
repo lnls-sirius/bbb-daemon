@@ -24,6 +24,10 @@ pushd ${DAEMON_BASE}/host/rsync
     # Updating bbb-daemon files
     echo Synchronizing bbb-daemon files
     ./rsync_beaglebone.sh bbb-daemon
+    if [ $? -eq 0 ]; then
+        echo Rebooting BBB...
+        shutdown -r now
+    fi
 popd
 
 pushd ${DAEMON_BASE}/host/function
