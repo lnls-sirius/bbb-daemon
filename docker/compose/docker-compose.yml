@@ -14,7 +14,8 @@ services:
       - bbb_daemon_network
 
   bbb-daemon:
-    container_name: cons-bbb-daemon 
+    container_name: cons-bbb-daemon
+    hostname: cons-bbb-daemon
     image: lnlscon/cons-bbb-daemon:latest
     env_file:
       - ../bbb-server.env
