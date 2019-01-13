@@ -8,7 +8,6 @@ export LANG=en_US.UTF-8
 # export REDIS_SERVER_IP=0.0.0.0
 # export REDIS_SERVER_PORT=6379
 export LOG_PATH=$(dirname $PWD)/log/server.log
-
 source run-functions.sh
 
 trap cleanup EXIT

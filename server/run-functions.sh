@@ -1,9 +1,6 @@
 #!/bin/bash
 
 function cleanup {
-    if [ -f gunicorn.pid ]; then
-        kill $(cat gunicorn.pid)
-    fi 
     deactivate
     echo Bye !
 }
