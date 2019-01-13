@@ -24,3 +24,5 @@ api.add_resource(Sectors, '/sectors')
 
 def start_webserver(port):
     app.run(debug=False, use_reloader=False, port=port, host="0.0.0.0")
+
+application = app

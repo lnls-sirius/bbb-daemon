@@ -2,9 +2,12 @@ import ast
 import msgpack
 import redis
 import threading
+import logging
 
 from common.entity.entities import Node, Type, PING_NODES, PING_KEY_PREFIX
 from common.entity.metadata import Singleton
+
+logger = logging.getLogger()
 
 class DifferentSectorNodeError(Exception):
     """
@@ -36,19 +39,19 @@ class RedisPersistence(metaclass=Singleton):
     + [node_name_m, node_value_m]
     """
 
-    def __init__(self, host: str, port: int):
+    def __init__(self, host: str, port: int, redis_db = 0):
         """
         Constructor method. Receives host's address and port.
         :param host: Host's address.
         :param port: Host's TCP port.
         """
-
-        self.db = redis.StrictRedis(host=host, port=port, db=0)
+        self.db = redis.StrictRedis(host=host, port=port, db=redis_db)
         # The following mutexes control the concurrent access to the database. Many clients can
         # request data at the same time.
         # self.typesListMutex = threading.Lock()
         self.nodesListMutex = threading.Lock()
         self.pingNodesListMutex = threading.Lock()
+        logger.info('Connected to redis at %s:%s using db %s' % (host, port, redis_db))
 
     def clear_ping_node_list(self):
         """
