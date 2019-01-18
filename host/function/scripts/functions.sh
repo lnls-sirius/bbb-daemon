@@ -168,8 +168,14 @@ function pru_power_supply {
     echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
     echo Synchronizing pru-serial485 and ponte-py files.
     pushd ${DAEMON_BASE}/host/rsync
+        # Base files: PRU library and ethernet/serial bridge
         ./rsync_beaglebone.sh pru-serial485
         ./rsync_beaglebone.sh ponte-py
+        # FAC IOC files and constants
+        ./rsync_beaglebone.sh mathphys
+        ./rsync_beaglebone.sh dev-packages
+        sed -i -e '/sirius/d' /etc/hosts
+        sed -i -e '$a\'"#"' sirius-consts server alias' -e '$a\10.128.1.225 sirius-consts.lnls.br' /etc/hosts
     popd
     overlay_PRUserial485
     echo Running Ponte-py at port 4000
