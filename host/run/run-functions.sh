@@ -3,8 +3,10 @@
 export DAEMON_BASE=/root/bbb-daemon
 export PYTHONPATH=${DAEMON_BASE}
 export RSYNC_SERVER="10.128.255.5"
+sed -i -e 's/RSYNC_SERVER.*$/RSYNC_SERVER="10.128.255.5"/' /root/.bashrc
 export RSYNC_LOCAL="/root"
 export RSYNC_PORT="873"
+export FAC_PATH="/home/fac_files/lnls-sirius"
 
 # Generate the initial device.json
 pushd ${DAEMON_BASE}/host/function/scripts/
@@ -25,8 +27,9 @@ pushd ${DAEMON_BASE}/host/rsync
     echo Synchronizing bbb-daemon files
     ./rsync_beaglebone.sh bbb-daemon
     if [ $? -eq 0 ]; then
-        echo Rebooting BBB...
-        shutdown -r now
+        echo New version of bbb-daemon. Restarting services...
+        systemctl restart bbb-daemon
+        systemctl restart bbb-function
     fi
 popd
 
