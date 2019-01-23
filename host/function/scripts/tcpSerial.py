@@ -46,6 +46,6 @@ if __name__ == '__main__':
                             logger.info('No data...')
                             break
                         conn.sendall(res if res else zb)
-                        logger.info('In %s Out %s %s' % (data, res, len(res)))
+                        # logger.info('In %s Out %s %s' % (data, res, len(res)))
             except ConnectionError:
                 logger.exception('Connection Error !')
