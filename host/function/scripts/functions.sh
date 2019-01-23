@@ -198,6 +198,10 @@ function serial_thermo {
     # - Rodar IOC e scripts python
 }
 
+function mks {
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -serb 1024 -t 0.1
+}
+
 function socat_devices {
     echo Synchronizing pru-serial485 files
     pushd ${DAEMON_BASE}/host/rsync
