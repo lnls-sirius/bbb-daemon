@@ -16,7 +16,10 @@ if __name__ == '__main__':
     parser.add_argument("--ser-buffer","-serb", default=1024,type=int, help='Serial port read buffer', dest="ser_buffer")
     parser.add_argument("--timeout","-t", default=0.1, type=float, help='Serial port timeout', dest="timeout")
     parser.add_argument("--device","-d", default='/dev/ttyUSB0', help='Serial port full path', dest="device")
+    parser.add_argument("--zero-bytes","-zb", default='ZB', help='What to return when a zero lengh response is returned from the serial port.', dest="zero_bytes")
     args = parser.parse_args()
+
+    zb = args.zero_bytes.encode('utf-8')
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)-15s [%(levelname)s] %(message)s',
@@ -42,7 +45,7 @@ if __name__ == '__main__':
                         if not data:
                             logger.info('No data...')
                             break
-                        conn.sendall(res)
+                        conn.sendall(res if res else zb)
                         logger.info('In %s Out %s %s' % (data, res, len(res)))
             except ConnectionError:
                 logger.exception('Connection Error !')
