@@ -38,25 +38,25 @@ pushd ${DAEMON_BASE}/host/function/scripts
 	BAUDRATE=$(awk NR==1 baudrate)
 
 	if [[ ${CONN_DEVICE} = "${SPIXCONV}" ]]; then
-        startup_blinkingLED
         spixconv
+        startup_blinkingLED
 
 	elif [[ ${CONN_DEVICE} = "${PRU_POWER_SUPPLY}" ]]; then
-        startup_blinkingLED
         pru_power_supply
+        startup_blinkingLED
 
 	elif [[ ${CONN_DEVICE} = "${COUNTING_PRU}" ]]; then
-        echo CountingPRU
-        startup_blinkingLED
         counting_pru
+        startup_blinkingLED
 
 	elif [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
-        startup_blinkingLED
         serial_thermo
+        startup_blinkingLED
 
 	elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ] || [ $CONN_DEVICE == "${MKS937B}" ]; }; then
-        startup_blinkingLED
         socat_devices
+        startup_blinkingLED
+
 	else
         if [[ ${CONN_DEVICE} = "${NOTTY}" ]]; then
 		    echo No matching device has been found. ttyUSB0 is disconnected.
