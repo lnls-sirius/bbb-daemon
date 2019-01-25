@@ -14,7 +14,7 @@ if [ ! -z ${PROJECT} ]; then
     # -------------------------------------------------------------------------
     # Check whether Rsync Server is available - First item in rsync.conf must be "online"
     # -------------------------------------------------------------------------
-    SYNC_AVAILABLE=`rsync -n $RSYNC_SERVER::`;
+    SYNC_AVAILABLE=`rsync -n --contimeout=10 $RSYNC_SERVER::`;
     if [ "${SYNC_AVAILABLE%% *}" = "online" ]; then
         # ---------------------------------------------------------------------
         #  Server is available. Check if there are updates
