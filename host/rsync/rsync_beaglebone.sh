@@ -59,6 +59,10 @@ if [ ! -z ${PROJECT} ]; then
                         popd
                     elif [ "${PROJECT}" = "mathphys" ]; then
                         python-sirius setup.py install
+                    elif [ "${PROJECT}" = "machine-applications" ]; then
+                        pushd as-ps
+                            python-sirius setup.py install
+                        popd
                     fi
                 popd
             # -----------------------------------------------------------------
