@@ -174,6 +174,7 @@ function pru_power_supply {
         # FAC IOC files and constants
         ./rsync_beaglebone.sh mathphys
         ./rsync_beaglebone.sh dev-packages
+        ./rsync_beaglebone.sh machine-applications
         sed -i -e '/sirius/d' /etc/hosts
         sed -i -e '$a\'"#"' sirius-consts server alias' -e '$a\10.128.1.225 sirius-consts.lnls.br' /etc/hosts
     popd

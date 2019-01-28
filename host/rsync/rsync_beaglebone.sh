@@ -25,7 +25,7 @@ if [ ! -z ${PROJECT} ]; then
             UPDATES=`rsync -ainO $RSYNC_SERVER::$PROJECT /etc`;
         # ---------------------------------------------------------------------
         # FAC files
-        elif [ "${PROJECT}" = "dev-packages" ] || [ "$PROJECT" = "mathphys" ]; then
+        elif [ "${PROJECT}" = "dev-packages" ] || [ "$PROJECT" = "mathphys" ] || [ "$PROJECT" = "machine-applications" ]; then
             UPDATES=`rsync -ainO $RSYNC_SERVER::$PROJECT $FAC_PATH/$PROJECT`;
         # ---------------------------------------------------------------------
         # Project files
@@ -47,7 +47,7 @@ if [ ! -z ${PROJECT} ]; then
                 rsync -a $RSYNC_SERVER::$PROJECT /etc > /tmp/rsync.log;
             # -----------------------------------------------------------------
             # FAC files - Also build libraries
-            elif [ "${PROJECT}" = "dev-packages" ] || [ "$PROJECT" = "mathphys" ]; then
+        elif [ "${PROJECT}" = "dev-packages" ] || [ "$PROJECT" = "mathphys" ] || [ "$PROJECT" = "machine-applications" ]; then
                 if [ ! -d "$DIRECTORY" ]; then
                     mkdir -p $FAC_PATH
                 fi
