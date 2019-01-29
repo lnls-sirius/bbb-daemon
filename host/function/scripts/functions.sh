@@ -183,8 +183,12 @@ function pru_power_supply {
     pushd /root/ponte-py
         python-sirius Ponte.py &
     popd
-    # @todo
-    # - Rodar IOC FAC
+    echo Running FAC PS IOC
+    pushd
+        mkdir -p /root/sirius-ioc-as-ps
+        DATE=`date '+%Y-%m-%d_%Hh%Mm%Ss'`
+        sirius-ioc-as-ps.py --hostname >> /root/sirius-ioc-as-ps/$DATE.log 2>&1 &
+    popd
 }
 
 function serial_thermo {
