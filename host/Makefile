@@ -25,13 +25,11 @@ install:
 
 	systemctl daemon-reload
 
-	systemctl stop ${DAEMON_SERVICE_NAME}
-	systemctl start ${DAEMON_SERVICE_NAME}
 	systemctl enable ${DAEMON_SERVICE_NAME}
+	systemctl restart ${DAEMON_SERVICE_NAME}
 
-	systemctl stop ${FUNCTION_SERVICE_NAME}
-	systemctl start ${FUNCTION_SERVICE_NAME}
 	systemctl enable ${FUNCTION_SERVICE_NAME}
+	systemctl restart ${FUNCTION_SERVICE_NAME}
 
 uninstall:
 	systemctl stop ${DAEMON_SERVICE_NAME}

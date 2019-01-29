@@ -27,9 +27,10 @@ pushd ${DAEMON_BASE}/host/rsync
     echo Synchronizing bbb-daemon files
     ./rsync_beaglebone.sh bbb-daemon
     if [ $? -eq 0 ]; then
-        echo New version of bbb-daemon. Restarting services...
-        systemctl restart bbb-daemon
-        systemctl restart bbb-function
+        echo New version of bbb-daemon. Making and restarting services...
+        pushd ${DAEMON_BASE}/host
+            make install
+        popd
     fi
 popd
 

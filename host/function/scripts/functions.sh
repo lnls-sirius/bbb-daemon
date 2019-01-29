@@ -189,7 +189,7 @@ function pru_power_supply {
         mkdir -p /root/sirius-ioc-as-ps
     fi
     DATE=`date '+%Y-%m-%d_%Hh%Mm%Ss'`
-    sirius-ioc-as-ps.py --hostname >> /root/sirius-ioc-as-ps/$DATE.log 2>&1 &
+#    sirius-ioc-as-ps.py --hostname >> /root/sirius-ioc-as-ps/$DATE.log 2>&1 &
 }
 
 function serial_thermo {
