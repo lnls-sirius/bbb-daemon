@@ -53,7 +53,11 @@ pushd ${DAEMON_BASE}/host/function/scripts
         serial_thermo
         startup_blinkingLED
 
-	elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ] || [ $CONN_DEVICE == "${MKS937B}" ]; }; then
+	elif [[ ${CONN_DEVICE} = "${MKS937B}" ]]; then
+        mks
+        startup_blinkingLED
+
+	elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ]; }; then
         socat_devices
         startup_blinkingLED
 
