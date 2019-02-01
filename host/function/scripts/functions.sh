@@ -205,6 +205,12 @@ function serial_thermo {
 }
 
 function mks {
+    echo Synchronizing pru-serial485 files
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+    popd
+    overlay_PRUserial485
+
     ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -serb 1024 -t 0.1
 }
 
