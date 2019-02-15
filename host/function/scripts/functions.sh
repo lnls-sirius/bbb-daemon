@@ -152,6 +152,7 @@ function startup_HardReset {
 }
 
 function spixconv {
+    # :1 address:
     echo SPIXCONV detected.
     echo Synchronizing pru-serial485 and spixconv files
     pushd ${DAEMON_BASE}/host/rsync
@@ -160,24 +161,37 @@ function spixconv {
     popd
     overlay_PRUserial485
     overlay_SPIxCONV
-    # @todo
-    # - Rodar aplicação SPIxCONV
+
+    cd /root/SPIxCONV/software/scripts
+    ./spixconv_unix_socket.py ${1} --tcp
 }
 
 function pru_power_supply {
     echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
     echo Synchronizing pru-serial485 and ponte-py files.
     pushd ${DAEMON_BASE}/host/rsync
+        # Base files: PRU library and ethernet/serial bridge
         ./rsync_beaglebone.sh pru-serial485
         ./rsync_beaglebone.sh ponte-py
+        # FAC IOC files and constants
+        ./rsync_beaglebone.sh mathphys
+        ./rsync_beaglebone.sh dev-packages
+        ./rsync_beaglebone.sh machine-applications
+        sed -i -e '/sirius/d' /etc/hosts
+        sed -i -e '$a\'"#"' sirius-consts server alias' -e '$a\10.128.1.225 sirius-consts.lnls.br' /etc/hosts
     popd
     overlay_PRUserial485
     echo Running Ponte-py at port 4000
     pushd /root/ponte-py
         python-sirius Ponte.py &
     popd
-    # @todo
-    # - Rodar IOC FAC
+    
+    echo Running FAC PS IOC
+    if [ ! -d "/root/sirius-ioc-as-ps" ]; then
+        mkdir -p /root/sirius-ioc-as-ps
+    fi
+    DATE=`date '+%Y-%m-%d_%Hh%Mm%Ss'`
+#    sirius-ioc-as-ps.py --hostname >> /root/sirius-ioc-as-ps/$DATE.log 2>&1 &
 }
 
 function serial_thermo {
@@ -190,6 +204,16 @@ function serial_thermo {
     overlay_PRUserial485
     # @todo
     # - Rodar IOC e scripts python
+}
+
+function mks {
+    echo Synchronizing pru-serial485 files
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+    popd
+    overlay_PRUserial485
+
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -serb 1024 -t 0.1
 }
 
 function socat_devices {
