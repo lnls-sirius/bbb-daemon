@@ -1,22 +1,34 @@
 #!/bin/bash
-# --------------------------------------------------
+# -----------------------------------------------------------------------------
 # Sirius Control System - Beaglebone Black
 # Remote Sync Files and Libraries
-# --------------------------------------------------
+# -----------------------------------------------------------------------------
 # October, 2018
 # Patricia H Nallin
-# --------------------------------------------------
+# -----------------------------------------------------------------------------
 
 PROJECT=$1
 
 # Proceed if a project was requested
 if [ ! -z ${PROJECT} ]; then
+    # -------------------------------------------------------------------------
     # Check whether Rsync Server is available - First item in rsync.conf must be "online"
-    SYNC_AVAILABLE=`rsync -n $RSYNC_SERVER::`;
+    # -------------------------------------------------------------------------
+    SYNC_AVAILABLE=`rsync -n --contimeout=10 $RSYNC_SERVER::`;
     if [ "${SYNC_AVAILABLE%% *}" = "online" ]; then
-        # Server is available. Check if there are updates
+        # ---------------------------------------------------------------------
+        #  Server is available. Check if there are updates
+        # ---------------------------------------------------------------------
+        # ---------------------------------------------------------------------
+        # etc-folder files
         if [ "${PROJECT}" = "etc-folder" ]; then
             UPDATES=`rsync -ainO $RSYNC_SERVER::$PROJECT /etc`;
+        # ---------------------------------------------------------------------
+        # FAC files
+        elif [ "${PROJECT}" = "dev-packages" ] || [ "$PROJECT" = "mathphys" ] || [ "$PROJECT" = "machine-applications" ]; then
+            UPDATES=`rsync -ainO $RSYNC_SERVER::$PROJECT $FAC_PATH/$PROJECT`;
+        # ---------------------------------------------------------------------
+        # Project files
         else
             UPDATES=`rsync -ainO $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT`;
         fi
@@ -25,11 +37,36 @@ if [ ! -z ${PROJECT} ]; then
         if [ -z "$UPDATES" ]; then
             echo "No updates found.";
             exit 1
-
-        # There are updates for the project, sync files and build libraries
+        # ---------------------------------------------------------------------
+        #  Synchronizing files. There are updates for the project.
+        # ---------------------------------------------------------------------
         else
+            # -----------------------------------------------------------------
+            # etc-folder files
             if [ "${PROJECT}" = "etc-folder" ]; then
                 rsync -a $RSYNC_SERVER::$PROJECT /etc > /tmp/rsync.log;
+            # -----------------------------------------------------------------
+            # FAC files - Also build libraries
+        elif [ "${PROJECT}" = "dev-packages" ] || [ "$PROJECT" = "mathphys" ] || [ "$PROJECT" = "machine-applications" ]; then
+                if [ ! -d "$DIRECTORY" ]; then
+                    mkdir -p $FAC_PATH
+                fi
+                rsync -a --delete-after $RSYNC_SERVER::$PROJECT $FAC_PATH/$PROJECT > /tmp/rsync.log;
+                pushd $FAC_PATH/$PROJECT;
+                    if [ "${PROJECT}" = "dev-packages" ]; then
+                        pushd siriuspy
+                            python-sirius setup.py install
+                        popd
+                    elif [ "${PROJECT}" = "mathphys" ]; then
+                        python-sirius setup.py install
+                    elif [ "${PROJECT}" = "machine-applications" ]; then
+                        pushd as-ps
+                            python-sirius setup.py install
+                        popd
+                    fi
+                popd
+            # -----------------------------------------------------------------
+            # Project files - Also build libraries
             else
                 rsync -a --delete-after $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT > /tmp/rsync.log;
             fi
@@ -54,7 +91,3 @@ else
     echo "No project selected for updating.";
     exit 1
 fi
-
-# rsync -av 10.0.6.51::bbb-daemon/.gitignore /root/temp.ignore
-# --exclude
-# echo \' >> /root/temp.ignore | << echo \' | cat /root/temp.ignore | sed '/^#/ d' | tr '\n' ' '
