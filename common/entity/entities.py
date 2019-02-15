@@ -8,7 +8,14 @@ import json
 import copy
 
 PING_KEY_PREFIX = 'Ping:'
+MISSING_KEY_PREFIX = 'Missing:'
+EXPECTED_KEY_PREFIX = 'Expected:'
+
+
+
 PING_NODES = 'Ping:Nodes'
+MISSING_NODES  = 'Missing:Nodes'
+EXPECTED_NODES = 'Expected:Nodes'
 
 class Command:
     """
@@ -51,26 +58,39 @@ class Sector:
     """
     A static class providing helper functions to manage sectors.
     """
-    SECTORS = [('Sala' + str(i).zfill(2)) for i in range(1, 21)] + ["Conectividade", "LINAC", "RF", "Fontes", "Outros"]
+    # SECTORS = [('Sala' + str(i).zfill(2)) for i in range(1, 21)] + ["LTS", "Conectividade", "LINAC", "RF", "Fontes", "Sala de Controle", "Outros"]
 
-    SUBNETS = [[ipaddress.ip_network(u'10.128.1.0/24'),
-                ipaddress.ip_network(u'10.128.255.0/24')]] + \
-              [ipaddress.ip_network(u'10.128.{}.0/24'.format(i)) for i in range(101, 122)] + \
-              [ipaddress.ip_network(u'10.128.{}.0/24'.format(i)) for i in range(201, 222)] + \
-              [ipaddress.ip_network(u'10.128.{}.0/24'.format(i)) for i in range(150, 153)]
+    # SUBNETS = [[ipaddress.ip_network(u'10.128.1.0/24'),
+    #             ipaddress.ip_network(u'10.128.255.0/24')]] + \
+    #           [ipaddress.ip_network(u'10.128.{}.0/24'.format(i)) for i in range(101, 122)] + \
+    #           [ipaddress.ip_network(u'10.128.{}.0/24'.format(i)) for i in range(201, 222)] + \
+    #           [ipaddress.ip_network(u'10.128.{}.0/24'.format(i)) for i in range(150, 153)]
 
-    # SECTORS_LIST = []
     SECTORS_DICT = {}
-    for i in range(1,22):
-        SECTORS_DICT[str(ipaddress.ip_network(u'10.128.{}.0/24'.format(i + 100)))] = 'CON-RACK{}'.format(str(i).zfill(2))
-    for i in range(1,22):
-        SECTORS_DICT[str(ipaddress.ip_network(u'10.128.{}.0/24'.format(i + 200))) ] = 'DIG-BPM-RACK{}'.format(str(i).zfill(2))
-    # for key in sorted(SECTORS_DICT.keys()):
-    #     SECTORS_LIST.append({key: SECTORS_DICT[key]})
-    
+
+    SECTORS_DICT['LINAC'] = ipaddress.ip_network(u'10.128.1.0/24')
+
+    for i in range(1,21):
+        SECTORS_DICT['Sala-{}'.format(str(i).zfill(2))] = ipaddress.ip_network(u'10.128.{}.0/24'.format(i + 100))
+    for i in range(1,21):
+        SECTORS_DICT['DIG-BPM-Sala-{}'.format(str(i).zfill(2))] =ipaddress.ip_network(u'10.128.{}.0/24'.format(i + 200))
+
+    SECTORS_DICT['LTB'] = ipaddress.ip_network(u'10.128.121.0/24')
+    SECTORS_DICT['Conectividade'] = ipaddress.ip_network(u'10.128.122.0/24')
+    SECTORS_DICT['Fontes'] = ipaddress.ip_network(u'10.128.123.0/24')
+    SECTORS_DICT['RF'] = ipaddress.ip_network(u'10.128.124.0/24')
+
+    SECTORS_DICT['DIG-Outros'] = ipaddress.ip_network(u'10.128.150.0/24')
+    SECTORS_DICT['DIG-Cameras'] = ipaddress.ip_network(u'10.128.151.0/24')
+    SECTORS_DICT['DIG-Galil'] = ipaddress.ip_network(u'10.128.152.0/24')
+    SECTORS_DICT['DIG-Servidores-Dell'] = ipaddress.ip_network(u'10.128.153.0/24')
+
+    SECTORS_DICT['Sala de Controle'] = ipaddress.ip_network(u'10.128.254.0/24')
+    SECTORS_DICT['Rede de Servidores'] = ipaddress.ip_network(u'10.128.254.0/24')
+
     @staticmethod
     def subnets():
-        return Sector.SUBNETS
+        return [str(subnet) for subnet in Sector.SECTORS_DICT.values()]
 
     @staticmethod
     def get_sectors_dict():
@@ -78,7 +98,7 @@ class Sector:
 
     @staticmethod
     def sectors():
-        return Sector.SECTORS
+        return Sector.SECTORS_DICT.keys()
 
     @staticmethod
     def get_sector_by_ip_address(ip_address=None):
@@ -88,15 +108,13 @@ class Sector:
         :return: the sector that contains the given IP address.
         :raise SectorNotFoundError: IP address is not contained in any sub-network.
         """
-        for idx, subnet in enumerate(Sector.SUBNETS):
-            if type(subnet) is list:
-                for s in subnet:
-                    if ip_address in s.hosts():
-                        return Sector.SECTORS[idx]
-            elif ip_address in subnet.hosts():
-                return Sector.SECTORS[idx]
+        if type(ip_address) == str:
+            ip_address = ipaddress.ip_address(ip_address)
 
-        return Sector.SECTORS[-1]
+        for sector, ip_network  in Sector.SECTORS_DICT.items():
+            if ip_address in ip_network:
+                return sector
+        return 'Outros'
 
     @staticmethod
     def get_default_gateway_of_address(ip_address=None):
@@ -106,15 +124,14 @@ class Sector:
         :return: the default gateway of that host. An ipaddress.IPv4Address object.
         :raise SectorNotFoundError: IP address is not contained in any sub-network.
         """
-        for subnet in Sector.SUBNETS:
-            if type(subnet) is list:
-                for s in subnet:
-                    if ip_address in s.hosts():
-                        return s.network_address + 1
-            elif ip_address in subnet.hosts():
-                return subnet.network_address + 1
+        if type(ip_address) == str:
+            ip_address = ipaddress.ip_address(ip_address)
 
-        return Sector.SUBNETS[-1].network_address + 1
+        for sector, ip_network  in Sector.SECTORS_DICT.items():
+            if ip_address in ip_network:
+                return ip_network.network_address + 1
+
+        raise SectorNotFoundError()
 
     @staticmethod
     def get_network_address_from_ip_address(ip_address):
@@ -204,7 +221,7 @@ class BaseRedisEntity:
 
 class Type():
     """
-    This class provides a wrapper for host types. 
+    This class provides a wrapper for host types.
     """
 
     KEY_PREFIX = 'Type:'
@@ -218,10 +235,10 @@ class Type():
     def from_code(type_code):
         if type_code not in range(Type.NUM_TYPES):
             raise ValueError("type_code {} invalid.".format(type_code))
-        
+
         return Type(code=type_code)
-        
-    def __init__(self,  **kwargs):
+
+    def __init__(self, **kwargs):
         """
         Initializes a type instance.
         :param name: a type's name.
@@ -254,7 +271,6 @@ class Type():
 
     @property
     def name(self):
-
         if self.code == Type.POWER_SUPPLY:
             return 'Power Supply'
         elif self.code == Type.COUNTING_PRU:
@@ -275,7 +291,7 @@ class Type():
     @name.setter
     def name(self, value):
         pass
-        
+
     @description.setter
     def description(self, value):
         pass
@@ -307,6 +323,11 @@ class Type():
 for n in range(Type.NUM_TYPES):
     Type.TYPES.append(Type(code=n))
 
+class ConfiguredNode:
+    def __init__(self,  ip_address, ip_network ,type_code):
+        self.ip_address = ipaddress.ip_address(ip_address)
+        self.ip_network = ipaddress.ip_network(ip_network)
+        self.type_code = type_code
 
 class Node(BaseRedisEntity):
     """
@@ -332,7 +353,7 @@ class Node(BaseRedisEntity):
         :param config_time: when the host found it's configuration
         """
 
-        self.name = kwargs.get('name', 'r0n0')
+        self.name = kwargs.get('name', 'Node-With-No-Name')
         self.ip_address = kwargs.get('ip_address', '10.128.0.0')
         self.state = kwargs.get('state', NodeState.DISCONNECTED)
         self.state_string = NodeState.to_string(self.state)
@@ -351,23 +372,6 @@ class Node(BaseRedisEntity):
         """
         self.state = state
         self.state_string = NodeState.to_string(state)
-
-    # @staticmethod
-    # def get_prefix_string(pref):
-    #     """
-    #     Array to String !
-    #     :return:
-    #     """
-    #     pref_str = ''
-    #     if pref:
-    #         for a_str in pref:
-    #             pref_str += a_str + '\n'
-
-    #     if pref_str.endswith('\r\n'):
-    #         pref_str = pref_str[:-2]
-    #     elif pref_str.endswith('\n') or pref_str.endswith('\r'):
-    #         pref_str = pref_str[:-1]
-    #     return pref_str
 
     @staticmethod
     def get_prefix_array(pref):
@@ -407,6 +411,10 @@ class Node(BaseRedisEntity):
             node_dict['type'] = Type(code=Type.UNDEFINED)
         return self.get_key(), node_dict
 
+    @staticmethod
+    def get_key_static(ip_address):
+        return (Node.KEY_PREFIX + str(ip_address)).replace(' ', '')
+
     def get_key(self):
         """
         :return: returns the node's key with prefix
@@ -414,7 +422,6 @@ class Node(BaseRedisEntity):
         return (Node.KEY_PREFIX + str(self.ip_address)).replace(' ', '')
 
     def from_dict(self, node_dict , **kwargs):
-    # def from_dict(self, node_dict , node_type):
         """
         Load the values from a redis set.
         :param node_dict: dictionary representing the node object according to the pattern defined
@@ -429,14 +436,6 @@ class Node(BaseRedisEntity):
                         node_dict[key] = Type(code = int(_type))
                     else:
                         node_dict[key] = _type
-                    # if type(node_type) == dict:
-                    #     new_type = Type()
-                    #     new_type.from_dict(node_type)
-                    #     node_dict[key] = new_type
-                    # elif type(node_type) == Type:
-                    #     node_dict[key] = node_type
-                    # else:
-                    #     node_dict[key] = None
                 else:
                     node_dict[key] = Type(code=Type.UNDEFINED)
 
@@ -447,36 +446,6 @@ class Node(BaseRedisEntity):
         :return: True if the state is NodeState.CONNECTED. False, otherwise.
         """
         return self.state != NodeState.DISCONNECTED
-
-    # def __eq__(self, other):
-    #     """
-    #     Overrides == operator. Compares two Node objects.
-    #     :param other: a other node instance.
-    #     :return: True if the other instance has the same name or IP address.
-    #     """
-    #     if type(other) is not Node:
-
-    #         if type(other) is ipaddress.IPv4Address:
-    #             return self.ip_address == other
-
-    #         if type(other) is str:
-    #             return self.name == other
-
-    #         return False
-
-    #     return self.name == other.name or self.ip_address == other.ip_address
-
-    # def is_strictly_equal(self, other):
-    #     """
-    #     Checks if both name and IP address are equal on both object.
-    #     :param other: a other node instance.
-    #     :return: True if the other instance has the same name and IP address.
-    #     """
-
-    #     if type(other) is not Node.__class__:
-    #         return False
-
-    #     return self.name == other.name and self.ip_address == other.ipAddress
 
     def __str__(self):
         """
