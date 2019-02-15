@@ -51,16 +51,20 @@ class DaemonHostListener(metaclass=Singleton):
 
         try:
             command_socket.connect((address, self.bbbTcpPort))
-
+            # todo: Redo this netutils thing !
+            # just send the data ......
             NetUtils.send_command(command_socket, command)
 
-            if command == Command.REBOOT: 
+            if command == Command.REBOOT:
+                # Do nothing more ...
                 pass
             elif command == Command.SET_HOSTNAME:
+                # Send more stufff?
                 pass
             elif command == Command.SET_IP:
+                # Send more stufff?
                 pass
-                        
+
             command_socket.close()
             return True
         except socket.error:
@@ -75,14 +79,15 @@ class DaemonHostListener(metaclass=Singleton):
         while self.listening:
             try:
                 data = self.queueUdp.get(timeout=5, block=True)
+                # todo: Remove this !
                 payload = NetUtils.compare_checksum(expected_chk=data['chk'], payload=data['payload'])
-                
-                if payload['comm'] == Command.PING:  
-                    self.controller.update_ping_hosts(node_dict=payload['n'])
+
+                if payload['comm'] == Command.PING:
+                    self.controller.update_ping_hosts(node_dict=payload['n'], ip=data['ip'])
                 elif payload['comm'] == Command.EXIT:
                     self.logger.info("Worker received an EXIT command. Finishing its thread.")
                     return
-                    
+
             except KeyError:
                 self.logger.exception("Worker UDP wrong payload format.")
             except ValueError:
@@ -108,12 +113,15 @@ class DaemonHostListener(metaclass=Singleton):
                 data, ip_address = self.ping_socket.recvfrom(1024)  # buffer size is 1024 bytes
                 if type(data) != bin:
                     pass
-                    
+
                 data = msgpack.unpackb(data, raw=False)
 
                 if len(data) == 1 and int(data) == Command.EXIT:
-                    self.logger.info("Stopping pinging thread's inner loop")
-                    break 
+                    self.logger.info("Stopping pinging thread's inner loop. Command from {}.".format(ip_address))
+                    break
+
+                if type(data) == dict:
+                    data['ip'] = ip_address
 
                 self.queueUdp.put(data)
             except msgpack.exceptions.ExtraData:

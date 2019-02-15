@@ -1,13 +1,27 @@
 from common.entity.definition import MAX_LOST_PING, PING_INTERVAL
-from common.entity.entities import Command, NodeState, Sector, Node, Type
+from common.entity.entities import Command, NodeState, Sector, Node, Type, ConfiguredNode
 from common.entity.metadata import Singleton
 from common.util.git import cloneRepository, checkUrlFunc
+from common.network.utils import get_valid_address
 from server.network.daemoninterface import DaemonHostListener
 
 import logging
 import threading
 import time
+import os
+import sys
+import ipaddress
 
+device_list_path = sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../device-list'))
+ip_type_dict = {}
+ip_set = set()
+missing_ips = set()
+
+with open(device_list_path, 'r') as f:
+    for line in f:
+        ip, network, type_code = line.split(' ')
+        ip_type_dict['ip'] = ConfiguredNode(ip_address=ip, ip_network=network, type_code=type_code)
+        ip_set.add(ip)
 
 class ServerController(metaclass=Singleton):
     """
@@ -30,16 +44,18 @@ class ServerController(metaclass=Singleton):
             self.nodes[sector] = {"configured": self.fetch_nodes_from_sector(sector),
                                   "unconfigured": []}
             self.updateNodesLockList[sector] = threading.Lock()
-
+        self.missing_ips_lock = threading.RLock()
         self.logger = logging.getLogger()
         # self.logger = logging.getLogger('ServerController')
 
         self.scan_nodes = True
         self.updateNodesThread = threading.Thread(target=self.scan_nodes_worker)
         self.updateNodesThread.start()
- 
+
+        self.db.update_expected_node_list(expected_nodes=ip_type_dict)
+
     def get_types(self):
-        return Type.get_types()  
+        return Type.get_types()
 
     def get_sectors_dict(self):
         return Sector.get_sectors_dict()
@@ -58,51 +74,58 @@ class ServerController(metaclass=Singleton):
         return None
         # return self.db.get_type_by_name(type_name)
 
+    def update_ping_hosts(self, **kwargs):
+        """
+        Updates a given node's counter.
+        :param node_dict: Node dictionary representation.
+        :param ip: IpAddress.
+        """
+        node_dict = kwargs.get('node_dict', None)
+        ip_address = kwargs.get('ip', None)
+
+        node = Node()
+        node.from_dict(node_dict)
+
+        self.db.update_ping_node_list(node=node)
+
+        if ip_address == None:
+            return
+
+        if type(ip_address) == str:
+            ip_address = ipaddress.ip_address(ip_address)
+
+        with self.missing_ips_lock:
+            match = []
+            # Check if this ip is at the same network as one of the missing ones
+            for missing_ip in missing_ips:
+                if ip_address in ip_type_dict[missing_ip].ip_network:
+                    # Check the type received and the expected
+                    if node.type.code == ip_type_dict[missing_ip].type_code:
+                        match.append(ip_address)
+            
+            # Find the lowest match
+            # Set the new ip
+            
+
+            # Remove the missing ip from redis and from the missing ip list
+            pass
+
     def scan_nodes_worker(self):
         """
         It will loop though the ping nodes and update the configured nodes accordingly.
         """
+        global missing_ips
 
         self.logger.info("Starting node scanning thread.")
 
         while self.scan_nodes:
             self.db.clear_ping_node_list()
+
+            nodes = self.db.get_ping_nodes()
             keys = self.db.get_node_keys()
 
-            if keys:
-                for key in keys:
-                    ping_node = self.db.get_ping_node(key=key)
-                    if ping_node:
-                        # @todo: Check if is configured or not! 
-                        pass
-                    else:
-                        # The configured node is disconnected !S
-                        pass
-                    pass
-            # for sector in self.sectors:
-
-            #     self.updateNodesLockList[sector].acquire()
-            #     # Verify if there is an unregistered node
-            #     for configured_node in self.nodes[sector]["configured"]:
-
-            #         configured_node = self.nodes[sector]["configured"][self.nodes[sector]["configured"].index(configured_node)]
-            #         configured_node.counter = max(Node.REBOOT_COUNTER_PERIOD - 1, configured_node.counter - 1)
-            #         # A host is considered disconnected if its internal counter reaches 0 (connected)
-            #         #  or REBOOT_COUNTER_PERIOD(rebooting)
-            #         if (configured_node.state != NodeState.REBOOTING and configured_node.counter <= 0) or \
-            #                 (configured_node.state == NodeState.REBOOTING and
-            #                  configured_node.counter <= Node.REBOOT_COUNTER_PERIOD):
-            #             configured_node.update_state(NodeState.DISCONNECTED)
-            #         else:
-            #             configured_node.update_state(configured_node.state)
-
-            #     # Verify unregistered nodes and remove from the list if they are disconnected
-            #     for unconfigured_node in self.nodes[sector]["unconfigured"]:
-            #         unconfigured_node.counter = max(0, unconfigured_node.counter - 1)
-            #         if unconfigured_node.counter <= 0:
-            #             self.nodes[sector]["unconfigured"].remove(unconfigured_node)
-
-            #     self.updateNodesLockList[sector].release()
+            with self.missing_ips_lock:
+                missing_ips = ip_set - set(keys)
 
             time.sleep(PING_INTERVAL)
 
@@ -198,7 +221,7 @@ class ServerController(metaclass=Singleton):
 
         return DataNotFoundError("Node whose IP address is {} not found in sector {}".format(
             ip_address, Sector.get_sector_by_ip_address(ip_address)))
-    
+
     def get_node_by_name(self, node_name):
         """
         Return a node by it's name.
@@ -209,7 +232,7 @@ class ServerController(metaclass=Singleton):
 
     def is_ip_address_available(self, ip_address=None):
         return not (ip_address in self.get_node_by_address(ip_address=ip_address))
-    
+
     def set_hostname(self, **kwargs):
         """
         Set the node hostname. Can raise an exception.
@@ -218,14 +241,34 @@ class ServerController(metaclass=Singleton):
         """
         DaemonHostListener.get_instance().send_command(command=Command.SET_HOSTNAME, address=kwargs['ip'], hostname=kwargs['hostname'])
 
-    def set_ip(self, **kwargs):
+    def set_ip(self, ip, ip_new, gateway = None, mask : str = None, network : ipaddress.ip_network = None):
         """
         Set the node hostname. Can raise an exception.
         :param ip: Target Ip.
         :param ip_new: New IP.
+        :param mask: Mask.
+        :param network: Network.
+        :param gateway: Gateway.
         """
-        DaemonHostListener.get_instance().send_command(command=Command.SET_IP, address=kwargs['ip'], ip_new=kwargs['ip_new'])
+        if mask == None and network == None:
+            raise ValueError('No network mask information.')
+        if gateway == None and network == None:
+            raise ValueError('No gateway information.')
+        if ip == None:
+            raise ValueError('No target ip.')
+        if ip_new == None:
+            raise ValueError('No new ip.')
 
+        if gateway == None:
+            gateway = network.network_address + 1
+        if mask == None and network != None:
+            mask = network.netmask
+
+        DaemonHostListener.get_instance().send_command(
+            command=Command.SET_IP,
+            address=get_valid_address(ip),
+            ip_new=get_valid_address(ip_new),
+            mask=get_valid_address(mask))
 
     def reboot_node(self, **kwargs):
         """
@@ -233,27 +276,6 @@ class ServerController(metaclass=Singleton):
         :param node: a Node instance object.
         """
         DaemonHostListener.get_instance().send_command(command=Command.REBOOT, address=kwargs['ip'])
-
-        # sector = node.sector
-
-        # self.updateNodesLockList[sector].acquire()
-
-        # if node in self.nodes[sector]["configured"]:
-        #     index = self.nodes[sector]["configured"].index(node)
-        #     self.nodes[sector]["configured"][index].update_state(NodeState.REBOOTING)
-        # elif node in self.nodes[sector]["unconfigured"]:
-        #     index = self.nodes[sector]["unconfigured"].index(node)
-        #     self.nodes[sector]["unconfigured"][index].update_state(NodeState.REBOOTING)
-
-        # self.updateNodesLockList[sector].release()
-
-    # def update_ping_node(self, **kwargs):
-    #     """
-    #     Update the ping list.
-    #     :param node: The node
-    #     """
-    #     self.db.
-    #     pass
 
     def update_node(self, old_node: Node = None, new_node: Node = None):
         """
@@ -268,74 +290,6 @@ class ServerController(metaclass=Singleton):
     def get_ping_nodes(self):
         return self.db.get_ping_nodes()
 
-    def update_ping_hosts(self, **kwargs): 
-        """
-        Updates a given node's counter.
-        :param node_dict: Node dictionary representation.
-        """ 
-        node_dict = kwargs.get('node_dict', None)
-        # type_dict = kwargs.get('type_dict', None)
-        
-        # if not node_dict:
-        #     return
-        
-        # t = Type()
-        # t.from_dict(type_dict)
-
-        node = Node()
-        node.from_dict(node_dict)
-        # node.from_dict(node_dict, t)
-        # print(node, ' ACQUIRE')
-        self.db.update_ping_node_list(node=node)
-        # print(' RELEASE')
-
-        # sector = Sector.get_sector_by_ip_address(node.ip_address)
-
-        # self.updateNodesLockList[sector].acquire()
-
-        # is_host_connected = False
-        # conflicted_host = False
-
-        # if node.get_key() in self.nodes[sector]["configured"]:
-
-        #     old_node = self.nodes[sector]["configured"][node.get_key()]
-        #     old_node.counter = MAX_LOST_PING
-
-        #     if node.name == old_node.name and node.type  == t:
-        #         node.update_state(NodeState.CONNECTED)
-        #         is_host_connected = True
-        #     else:
-        #         node.update_state(NodeState.MIS_CONFIGURED)
-        #         conflicted_host = True
-
-        # if not is_host_connected:
-
-        #     available_type = self.find_type_by_name(host_type)
-
-        #     if not available_type:
-        #         available_type = Type(name=host_type, description="Unknown type.")
-
-        #     if address in self.nodes[sector]["unconfigured"]:
-
-        #         un_configured_node = self.nodes[sector]["unconfigured"][self.nodes[sector]["unconfigured"].index(address)]
-        #         un_configured_node.counter = MAX_LOST_PING
-        #         un_configured_node.name = name
-        #         un_configured_node.type = available_type
-
-        #         if conflicted_host:
-        #             un_configured_node.update_state(NodeState.MIS_CONFIGURED)
-        #         else:
-        #             un_configured_node.update_state(NodeState.CONNECTED)
-
-        #     else:
-        #         new_unconfigured_node = Node(name=name, ip_address=address, state=NodeState.CONNECTED, type_node=available_type,
-        #                                      sector=sector, counter=MAX_LOST_PING)
-        #         if conflicted_host:
-        #             new_unconfigured_node.update_state(NodeState.MIS_CONFIGURED)
-
-        #         self.nodes[sector]["unconfigured"].append(new_unconfigured_node)
-
-        # self.updateNodesLockList[sector].release()
 
     def stop_all(self):
         """
@@ -351,7 +305,7 @@ class ServerController(metaclass=Singleton):
         :return (bool: True/False, str: A simple text)
         @todo: this method deserver some love.
         """
-        
+
         if ip is None or name is None:
             raise ValueError("Node name/ip is not defined.")
 
@@ -364,19 +318,3 @@ class ServerController(metaclass=Singleton):
                 return True, "The {} already belong to this node ({})".format(ip, name)
 
         raise ValueError("This ip {} is linked to another node ({})".format(ip, node.name))
-
-    # def validate_repository(self, rc_path: str = None, git_url: str = None, check_rc_local: bool = False):
-    #     """
-    #     Verify if the repository is valid.
-    #     :param git_url:
-    #     :param check_rc_local defaults to False. If true the existence of the rc.local file will be checked.
-    #     :return: (True or False), ("Message")
-    #     """
-    #     return checkUrlFunc(git_url=git_url, rc_local_path=rc_path, check_rc_local=check_rc_local)
-
-    # def clone_repository(self, git_url=None, rc_local_path=None):
-    #     """
-    #     Clone the repository from git to the ftp server.
-    #     :return: (True or False) , (message in case of Failure, SHA of the HEAD commit)
-    #     """
-    #     return cloneRepository(git_url=git_url, rc_local_path=rc_local_path, ftp_serv_location=self.sftp_home_dir)
