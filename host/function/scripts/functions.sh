@@ -174,7 +174,7 @@ function pru_power_supply {
         # FAC IOC files and constants
         ./rsync_beaglebone.sh ps-ioc-config-files
         pushd ${FAC_PATH}/ps-ioc-config-files
-            ./sync_fac_files.sh
+            ./sync-fac-files.sh
         popd
     popd
     overlay_PRUserial485
@@ -185,7 +185,7 @@ function pru_power_supply {
 
     echo Running FAC PS IOC
     pushd ${FAC_PATH}/ps-ioc-config-files
-        ./run_fac_ps_ioc.sh
+        ./run-fac-ps-ioc.sh
     popd
 }
 
