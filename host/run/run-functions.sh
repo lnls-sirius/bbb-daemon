@@ -3,7 +3,9 @@
 export DAEMON_BASE=/root/bbb-daemon
 export PYTHONPATH=${DAEMON_BASE}
 export RSYNC_SERVER="10.128.255.5"
+export RSYNC_FAC_SERVER="10.128.254.203"
 sed -i -e 's/RSYNC_SERVER.*$/RSYNC_SERVER="10.128.255.5"/' /root/.bashrc
+sed -i -e 's/RSYNC_FAC_SERVER.*$/RSYNC_FAC_SERVER="10.128.254.203"/' /root/.bashrc
 export RSYNC_LOCAL="/root"
 export RSYNC_PORT="873"
 export FAC_PATH="/home/fac_files/lnls-sirius"
