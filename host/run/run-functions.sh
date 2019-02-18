@@ -21,8 +21,9 @@ pushd ${DAEMON_BASE}/host/rsync
     echo Synchronizing etc folder
     ./rsync_beaglebone.sh etc-folder
     if [ $? -eq 0 ]; then
-        echo Rebooting BBB...
-        shutdown -r now
+        echo "/etc folder is out of sync. Reboot to fix!"
+        # echo Rebooting BBB...
+        # shutdown -r now
     fi
 
     # Updating bbb-daemon files
