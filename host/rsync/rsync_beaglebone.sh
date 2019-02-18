@@ -16,7 +16,7 @@ echo
 if [ ! -z ${PROJECT} ]; then
     # ---------------------------------------------------------------------
     # FAC files
-    if [ "${PROJECT}" = "dev-packages" ] || [ "$PROJECT" = "mathphys" ] || [ "$PROJECT" = "machine-applications" ]; then
+    if [ "${PROJECT}" = "dev-packages" ] || [ "${PROJECT}" = "ps-ioc-config-files" ] || [ "$PROJECT" = "mathphys" ] || [ "$PROJECT" = "machine-applications" ]; then
         SYNC_AVAILABLE=`rsync -n --contimeout=10 $RSYNC_FAC_SERVER::`;
         if [ "${SYNC_AVAILABLE%% *}" = "online" ]; then
             UPDATES=`rsync -ainO $RSYNC_FAC_SERVER::$PROJECT $FAC_PATH/$PROJECT`;
