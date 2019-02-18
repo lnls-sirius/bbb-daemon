@@ -1,13 +1,30 @@
 #!/usr/bin/python
 import logging
 import time
-from os import environ, path
-from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
+import os
+import subprocess
+import sys
 import Adafruit_BBIO.GPIO as GPIO
 from PRUserial485 import PRUserial485_address
+from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
+
+logger = logging.getLogger('Whoami')
+
+if os.path.exists('/root/SPIxCONV/software/scripts'):
+    sys.path.append('/root/SPIxCONV/software/scripts')
+    import init
+    import flash
+    import selection
+
+    SPIxCONV = True
+else:
+    logger.error('/root/SPIxCONV/software/scripts does not exist, SPIxCONV will always be false !')
+    SPIxCONV = False
 
 from persist import persist_info
 from consts import *
+
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../../'))
 from common.entity.entities import Type
 
 PIN_FTDI_PRU = "P8_11"      # 0: FTDI / 1: PRU
@@ -34,7 +51,7 @@ def counting_pru():
     CountingPRU
     """
     logger.info('Counting PRU')
-    if PRUserial485_address() != 21 and not path.isfile(PORT):
+    if PRUserial485_address() != 21 and not os.path.isfile(PORT) and GPIO.input(PIN_FTDI_PRU) == PRU:
         persist_info(Type.COUNTING_PRU, 0, COUNTING_PRU)
 
 
@@ -43,7 +60,7 @@ def no_tty():
     NO /dev/ttyUSB0
     """
     logger.info('No /dev/ttyUSB0')
-    if not path.exists(PORT) and PRUserial485_address() == 21:
+    if not os.path.exists(PORT) and PRUserial485_address() == 21:
         persist_info(Type.UNDEFINED, 115200, NOTTY)
 
 
@@ -156,7 +173,7 @@ def agilent4uhv():
     """
     AGILENT 4UHV
     """
-    # logger.info('AGILENT 4UHV')
+    logger.info('AGILENT 4UHV')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 38400
         ser = Serial(port=PORT, baudrate=baud, timeout=.6)
@@ -185,8 +202,21 @@ def spixconv():
     SPIxCONV
     """
     logger.info('SPIxCONV')
-    '''
-    if PRUserial485_address() == 21:
-        #persist_info(Type.SPIXCONV, baud, SPIXCONV, 'SPIXCONV connected {}'.format(devices))
-    '''
-    pass
+
+    if not SPIxCONV:
+        return
+
+    subprocess.call('config-pin P9_17 spi_cs', shell=True)   # CS
+    subprocess.call('config-pin P9_21 spi', shell=True)      # DO
+    subprocess.call('config-pin P9_18 spi', shell=True)      # DI
+    subprocess.call('config-pin P9_22 spi_sclk', shell=True) # CLK
+
+    subprocess.call('config-pin P8_37 gpio', shell=True)     # BUSY
+    subprocess.call('config-pin P9_24 gpio', shell=True)     # LDAC / CNVST
+    subprocess.call('config-pin P9_26 gpio', shell=True)     # RS
+
+    for addr in range(1, 30):
+        logger.info('Addr {}\tBoard ID {}\tFlash ID Read {}.'.format(addr, selection.board_ID(addr), flash.ID_read(addr)))
+
+        if addr == selection.board_ID(addr):
+            persist_info(Type.SPIXCONV, addr, SPIXCONV, 'SPIXCONV connected {}'.format(addr))

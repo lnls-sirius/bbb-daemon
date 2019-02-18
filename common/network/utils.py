@@ -1,6 +1,10 @@
 import pickle
 import struct
 from common.entity.entities import Command
+import ipaddress
+
+def get_valid_address(ip):
+    return str(ip) if type(ip) == ipaddress.ip_address else str(ipaddress.ip_address(ip))
 
 class NetUtils():
     @staticmethod

@@ -73,7 +73,7 @@ function overlay_SPIxCONV {
     fi
 
     pushd /root/SPIxCONV/init
-    ./SPIxCONV_config-pin.sh
+    	./SPIxCONV_config-pin.sh
     popd
 }
 
@@ -152,6 +152,7 @@ function startup_HardReset {
 }
 
 function spixconv {
+    # :1 address:
     echo SPIXCONV detected.
     echo Synchronizing pru-serial485 and spixconv files
     pushd ${DAEMON_BASE}/host/rsync
@@ -160,8 +161,9 @@ function spixconv {
     popd
     overlay_PRUserial485
     overlay_SPIxCONV
-    # @todo
-    # - Rodar aplicação SPIxCONV
+
+    cd /root/SPIxCONV/software/scripts
+    ./spixconv_unix_socket.py ${1} --tcp
 }
 
 function pru_power_supply {

@@ -38,8 +38,9 @@ pushd ${DAEMON_BASE}/host/function/scripts
 	BAUDRATE=$(awk NR==1 baudrate)
 
 	if [[ ${CONN_DEVICE} = "${SPIXCONV}" ]]; then
-        spixconv
+        # Using variable BAUDRATE to store the board address
         startup_blinkingLED
+        spixconv ${BAUDRATE}
 
 	elif [[ ${CONN_DEVICE} = "${PRU_POWER_SUPPLY}" ]]; then
         pru_power_supply
