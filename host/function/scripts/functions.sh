@@ -73,7 +73,7 @@ function overlay_SPIxCONV {
     fi
 
     pushd /root/SPIxCONV/init
-    ./SPIxCONV_config-pin.sh
+    	./SPIxCONV_config-pin.sh
     popd
 }
 
