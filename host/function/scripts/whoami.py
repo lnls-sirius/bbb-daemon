@@ -37,16 +37,21 @@ if __name__ == '__main__':
         # Loop until detect something
         while not path.isfile(RES_FILE) or not path.isfile(BAUDRATE_FILE):
             try:
-                no_tty()
-                counting_pru()
-                power_supply_pru()
+
                 spixconv()
+
+                #@todo: This should be more robust !
+                counting_pru()
+
+                power_supply_pru()
                 thermo_probe()
                 mbtemp()
                 agilent4uhv()
                 mks9376b()
+                # no_tty()
             except SystemExit:
-                pass
+                exit()
+                #pass
             except:
                 logger.exception('Something wrong happened !')
 
