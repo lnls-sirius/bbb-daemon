@@ -3,6 +3,7 @@ import logging
 import time
 import os
 import subprocess
+import sys
 import Adafruit_BBIO.GPIO as GPIO
 from PRUserial485 import PRUserial485_address
 from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
@@ -50,7 +51,7 @@ def counting_pru():
     CountingPRU
     """
     logger.info('Counting PRU')
-    if PRUserial485_address() != 21 and not os.path.isfile(PORT):
+    if PRUserial485_address() != 21 and not os.path.isfile(PORT) and GPIO.input(PIN_FTDI_PRU) == PRU:
         persist_info(Type.COUNTING_PRU, 0, COUNTING_PRU)
 
 
@@ -218,4 +219,4 @@ def spixconv():
         logger.info('Addr {}\tBoard ID {}\tFlash ID Read {}.'.format(addr, selection.board_ID(addr), flash.ID_read(addr)))
 
         if addr == selection.board_ID(addr):
-            persist_info(Type.SPIXCONV, addr, SPIXCONV, 'SPIXCONV connected {}'.format(devices))
+            persist_info(Type.SPIXCONV, addr, SPIXCONV, 'SPIXCONV connected {}'.format(addr))
