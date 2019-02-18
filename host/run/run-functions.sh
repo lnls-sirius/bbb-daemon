@@ -32,7 +32,8 @@ pushd ${DAEMON_BASE}/host/rsync
     if [ $? -eq 0 ]; then
         echo New version of bbb-daemon. Making and restarting services...
         pushd ${DAEMON_BASE}/host
-            make install
+            echo "host out of sync"
+            # make install
         popd
     fi
 popd
