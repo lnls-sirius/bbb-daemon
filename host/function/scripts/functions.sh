@@ -146,7 +146,7 @@ function startup_HardReset {
         fi
 
         pushd /root/startup-scripts
-        ./HardReset.py &
+            ./HardReset.py &
         popd
     fi
 }
@@ -160,8 +160,9 @@ function spixconv {
     popd
     overlay_PRUserial485
     overlay_SPIxCONV
-    # @todo
-    # - Rodar aplicação SPIxCONV
+
+    cd /root/SPIxCONV/software/scripts
+    ./spixconv_unix_socket.py ${1} --tcp
 }
 
 function pru_power_supply {
