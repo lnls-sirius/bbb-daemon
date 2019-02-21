@@ -29,9 +29,9 @@ where:
 
 `https://${2}/bbb-daemon/api/` is the api address and may change in the future.
 
-${1} is the target ip address.
+`${1}` is the target ip address.
 
-${2} is the CONS server ip address.
+`${2}` is the CONS server ip address.
 
 
 # Docker
