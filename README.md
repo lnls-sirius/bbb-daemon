@@ -20,7 +20,7 @@ Flask is the framework of choice for development.
 Flask is a microframework for Python based on Werkzeug, Jinja 2 and good intentions. 
 
 ## Rest API
-In order to reboot a bbb send a POST accordind to this pattern:
+In order to reboot a bbb send a POST according to this pattern:
 ```
 curl --header "Content-Type: application/json" -k --request POST --data "{\"ip\":\"${1}\"}" https://${2}/bbb-daemon/api/node/reboot
 
