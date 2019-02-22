@@ -35,7 +35,8 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)-15s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
 
-handler = RotatingFileHandler(filename=args['log_path'],
+handler = RotatingFileHandler(
+                            args['log_path'],
                             maxBytes=10000000,
                             backupCount=3)
 handler.setFormatter(logging.Formatter('%(asctime)-15s %(levelname)s %(name)s %(message)s'))
