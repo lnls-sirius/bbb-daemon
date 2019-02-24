@@ -46,6 +46,10 @@ if [ ! -z ${PROJECT} ]; then
                         elif [ "${PROJECT}" = "machine-applications" ]; then
                             pushd as-ps
                                 python-sirius setup.py install
+                                # instal AS-PS IOC as service
+                                cp -rf ./systemd/sirius-bbb-ioc-ps.service /etc/systemd/system/
+	                              mkdir -p /root/sirius-iocs
+	                              systemctl daemon-reload
                             popd
                         fi
                     popd
