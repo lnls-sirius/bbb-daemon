@@ -1,26 +1,17 @@
+import logging
+
+logger = logging.getLogger()
+
 from flask import request, json
 from flask.json import jsonify
 from flask_restful import Resource, reqparse
 
 from flask_restful import reqparse, abort, Api, Resource
-
 from common.entity.entities import NodeState, Sector
 from common.serialization.models import dump_node, dump_type
 from server.control.controller import ServerController
 
 controller = ServerController.get_instance()
-
-# node_schema = NodeSchema()
-# nodes_schema = NodeSchema(many=True)
-
-# type_schema = TypeSchema()
-# types_schema = TypeSchema(many=True)
-
-parser = reqparse.RequestParser()
-parser.add_argument('ip', type=str, help='Node\'s IP address.')
-parser.add_argument('new_ip', type=str, help='Node\'s new IP.')
-parser.add_argument('new_mask', type=str, help='Node\'s new Mask.')
-parser.add_argument('new_gateway', type=str, help='Node\'s new Gateway.')
 
 class Action(Resource):
     "Actions ..."
@@ -30,9 +21,23 @@ class Sectors(Resource):
     def get(self):
         return controller.get_sectors_dict()
 
-class Nodes(Resource):
+class NodesAll(Resource):
     def get(self):
         return controller.get_ping_nodes()
+
+class Nodes(Resource):
+    def get(self, command):
+        if command == 'all':
+            # Return all active nodes
+            return controller.get_ping_nodes()
+        elif command == 'missing':
+            # Return missing nodes.
+            pass
+        elif command == 'expected':
+            # Return expected nodes
+            pass
+        else:
+            abort(404, message='Command is not supported.')
 
 class Types(Resource):
     def get(self):
@@ -43,11 +48,33 @@ class Node(Resource):
         pass
 
     def post(self, command):
-        args = parser.parse_args()
-        if not command:
-            abort(404, message="Command is required")
+        parser = reqparse.RequestParser()
+        try:
+            parser.add_argument('ip', type=str, help='Node\'s IP address.')
 
-        if command == 'reboot':
-            controller.reboot_node(ip=args['ip'])
+            if not command:
+                abort(404, message="Command is required")
 
-        return 'Message received. Command: {} args: {}'.format(command,args)
+            if command == 'reboot':
+                args = parser.parse_args()
+                controller.reboot_node(args.ip)
+
+            elif command == 'ip':
+                parser.add_argument('ip_new', type=str, help='New node\'s IP address.')
+                parser.add_argument('ip_network', type=str, help='Node\'s network using the pattern xxxx.xxxx.xxxx.xxxx/xx.')
+                parser.add_argument('ip_gateway', type=str, help='Node\'s default gateway.')
+                args = parser.parse_args()
+                controller.set_ip(args.ip, args.ip_new, args.ip_network, args.ip_gateway)
+
+            elif command == 'hostname':
+                parser.add_argument('hostname', type=str, help='New hostname.')
+                args = parser.parse_args()
+                controller.set_hostname(ip=args.ip, hostname=args.hostname)
+
+            elif command == 'nameservers':
+                parser.add_argument('nameservers', type=str, help='Node nameservers separated by spaces.')
+                controller.set_nameservers(ip=args.ip, nameservers=args.nameservers)
+            return 'Message received. Command: {} args: {}'.format(command,args)
+        except:
+            logger.exception('RestApi Exception')
+            abort(404, message='Failed to execute command {} with args {}.'.format(command, args))

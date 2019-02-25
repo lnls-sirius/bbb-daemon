@@ -5,9 +5,10 @@ from flask import Flask, render_template, flash, redirect, url_for, request, jso
 from flask_restful import Api
 from flask_cors import CORS
 
-from common.entity.entities import Sector, Type, Node, NodeState  
-from server.network.db import DataNotFoundError 
-from server.restful.resources import Nodes,Node as rNode, Types, Sectors
+from common.entity.entities import Sector, Type, Node, NodeState
+from server.network.db import DataNotFoundError
+from server.restful.resources import Nodes as rNodes, Node as rNode, NodesAll as rNodesAll, \
+    Types, Sectors
 
 logger = logging.getLogger()
 
@@ -17,10 +18,14 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 api = Api(app)
 
-api.add_resource(Nodes, '/nodes')
+# Node related
+api.add_resource(rNodesAll, '/nodes')
+api.add_resource(rNodes, '/nodes/<command>')
 api.add_resource(rNode, '/node/<command>')
+
+# Etc ...
 api.add_resource(Types, '/types')
-api.add_resource(Sectors, '/sectors') 
+api.add_resource(Sectors, '/sectors')
 
 def start_webserver(port):
     app.run(debug=False, use_reloader=False, port=port, host="0.0.0.0")
