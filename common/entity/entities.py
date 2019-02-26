@@ -1,7 +1,6 @@
 """
 This module contains all entity classes of the project.
 """
-
 import ast
 import ipaddress
 import json
@@ -17,13 +16,35 @@ PING_NODES = 'Ping:Nodes'
 MISSING_NODES  = 'Missing:Nodes'
 EXPECTED_NODES = 'Expected:Nodes'
 
+class NewIp():
+    def __init__(self, ip, ip_new, ip_network, ip_gateway):
+        self.ip = ipaddress.ip_address(ip)
+        self.ip_new = ipaddress.ip_address(ip_new)
+        self.ip_gateway = ipaddress.ip_address(ip_gateway)
+        self.ip_network = ipaddress.ip_network(ip_network)
+
+        if not self.ip_new in self.ip_network:
+            raise ValueError('new_ip: The ip {} does not belong to the network {}.'.format(self.ip, self.ip_network))
+
+        if not self.ip_gateway in self.ip_network:
+            raise ValueError('gateway: The ip {} does not belong to the network {}.'.format(self.ip_gateway, self.ip_network))
+
+        self.netmask = self.ip_network.netmask
+
+    def __str__(self):
+        return 'Original IP: {}. New IP {}. GW {}. Network {}. Mask {}'\
+            .format(self.ip, self.ip_new, self.ip_gateway, self.ip_network, self.netmask)
+
 class Command:
     """
     A simple class to wrap command codes.
     """
+    PING = 0
+    EXIT = 1
 
     PING, REBOOT, EXIT, END, TYPE, APPEND_TYPE, REMOVE_TYPE, NODE, APPEND_NODE, REMOVE_NODE, SWITCH, \
-    GET_TYPES, GET_UNREG_NODES_SECTOR, GET_REG_NODES_SECTOR, GET_REG_NODE_BY_IP, OK, FAILURE, SET_IP, SET_HOSTNAME= range(19)
+    GET_TYPES, GET_UNREG_NODES_SECTOR, GET_REG_NODES_SECTOR, GET_REG_NODE_BY_IP, OK, FAILURE, SET_IP, \
+    SET_HOSTNAME, NAMESERVERS = range(20)
 
     @staticmethod
     def command_name(command):
@@ -233,6 +254,9 @@ class Type():
 
     @staticmethod
     def from_code(type_code):
+        if type(type_code) == str:
+            type_code = int(type_code)
+
         if type_code not in range(Type.NUM_TYPES):
             raise ValueError("type_code {} invalid.".format(type_code))
 
@@ -242,12 +266,7 @@ class Type():
         """
         Initializes a type instance.
         :param name: a type's name.
-        :param description: A brief description of the type
-        :param sha: A way to provide error detection.
         """
-        # self.repo_url = kwargs.get('repo_url', 'A generic URL.')
-        # self.description = kwargs.get('repo_url', 'A generic host.')
-        # self.sha = kwargs.get('sha', '')
         self.code = kwargs.get('code', Type.UNDEFINED)
 
     @property
@@ -324,10 +343,36 @@ for n in range(Type.NUM_TYPES):
     Type.TYPES.append(Type(code=n))
 
 class ConfiguredNode:
+    expected_configured_nodes = {}
+    expected_configured_nodes_dict = []
+
+    @staticmethod
+    def refresh_expected_configured_nodes_dict():
+        """
+        Refresh the content of configured nodes dict!
+        """
+        for node in ConfiguredNode.expected_configured_nodes.values():
+            ConfiguredNode.expected_configured_nodes_dict.append(node.to_dict())
+
+    @staticmethod
+    def load_expected_device_list(path):
+        with open(path, 'r') as f:
+            for line in f:
+                ip, network, type_code = line.split(' ')
+                ConfiguredNode.expected_configured_nodes[ip] = ConfiguredNode(ip_address=ip, ip_network=network, type_code=type_code)
+        ConfiguredNode.refresh_expected_configured_nodes_dict()
+
     def __init__(self,  ip_address, ip_network ,type_code):
         self.ip_address = ipaddress.ip_address(ip_address)
         self.ip_network = ipaddress.ip_network(ip_network)
         self.type_code = type_code
+
+    def to_dict(self):
+        return {
+            'ip_address': self.ip_address.__str__(),
+            'ip_network': self.ip_network.__str__(),
+            **Type.from_code(self.type_code).to_dict()
+        }
 
 class Node(BaseRedisEntity):
     """

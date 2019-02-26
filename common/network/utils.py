@@ -1,7 +1,12 @@
 import pickle
 import struct
-from common.entity.entities import Command
+import re
 import ipaddress
+
+from common.entity.entities import Command
+
+ip_regex = re.compile('[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+
 
 def get_valid_address(ip):
     return str(ip) if type(ip) == ipaddress.ip_address else str(ipaddress.ip_address(ip))
@@ -76,10 +81,9 @@ class NetUtils():
     @staticmethod
     def checksum(data_str):
         if type(data_str) != bytes:
-            packet = data_str.strip().encode('utf-8') 
-            
+            packet = data_str.strip().encode('utf-8')
         else:
-            packet = data_str 
+            packet = data_str
         total = 0
         # Add up 16-bit words
         num_words = len(packet) // 2
