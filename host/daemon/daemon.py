@@ -20,7 +20,7 @@ class Daemon():
     def __init__(self, ping_port, bind_port, path, ping_candidates):
         """
         Initializes a new Daemon object.
- 
+
         :param ping_port:
         :param bind_port:
         :param path:
@@ -31,7 +31,7 @@ class Daemon():
         self.logger = logging.getLogger('Daemon')
 
         self.ping_candidates = ping_candidates
- 
+
         self.ping_port = ping_port
         self.bind_port = bind_port
 
@@ -102,17 +102,15 @@ class Daemon():
                 self.bbb.reboot()
 
             elif command == Command.SET_HOSTNAME:
-                new_hostname = NetUtils.recv_object(connection)
+                new_hostname = NetUtils.recv_data(connection).decode('utf-8')
                 self.stop()
                 self.bbb.update_hostname(new_hostname)
                 self.bbb.reboot()
 
             elif command == Command.SET_IP:
-                new_ip = NetUtils.recv_object(connection)
-                new_mask = NetUtils.recv_object(connection)
-                new_gateway = NetUtils.recv_object(connection)
+                new_ip_obj = NetUtils.recv_object(connection)
                 self.stop()
-                self.bbb.update_ip_address(new_ip, new_mask, new_gateway)
+                self.bbb.update_ip_address(new_ip_obj)
                 self.bbb.reboot()
 
 
