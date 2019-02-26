@@ -17,7 +17,7 @@ install:
 	cp --preserve=mode services/${DAEMON_SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
 	cp --preserve=mode services/${FUNCTION_SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
 
-	sudo apt-get install python3-pip
+	apt-get install python3-pip
 	pip3 install --no-cache-dir -r requirements.txt
 	pip3 install Adafruit_BBIO
 	apt-get install socat

@@ -215,8 +215,8 @@ def spixconv():
     subprocess.call('config-pin P9_24 gpio', shell=True)     # LDAC / CNVST
     subprocess.call('config-pin P9_26 gpio', shell=True)     # RS
 
-    for addr in range(1, 30):
-        logger.info('Addr {}\tBoard ID {}\tFlash ID Read {}.'.format(addr, selection.board_ID(addr), flash.ID_read(addr)))
-
-        if addr == selection.board_ID(addr):
-            persist_info(Type.SPIXCONV, addr, SPIXCONV, 'SPIXCONV connected {}'.format(addr))
+    for addr in range(0, 255):
+        if flash.ID_read(addr) == 4:
+            spi_addr = 8 if flash.address_read(addr) == 0 else flash.address_read(addr)
+            logger.info('{}'.format('Addr code',addr,'Selection Board ID', selection.board_ID(addr), 'Flash address', flash.address_read(addr),'SPI Addr',spi_addr))
+            persist_info(Type.SPIXCONV, spi_addr, SPIXCONV, 'SPIXCONV connected {}'.format(spi_addr))

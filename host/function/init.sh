@@ -1,4 +1,4 @@
-    #!/bin/bash
+#!/bin/bash
 # -*- coding: utf-8 -*-
 source ${DAEMON_BASE}/host/function/scripts/functions.sh
 source ${DAEMON_BASE}/host/function/envs.sh
