@@ -12,16 +12,15 @@ SERVICE_FILE_DEST = /etc/systemd/system
 
 all:
 
-dependencies:
-	# Dependencies
-	apt-get install python3
-	apt-get install python3-pip
-	pip3 install --no-cache-dir -r requirements.txt
-
 install:
 	# Services
 	cp --preserve=mode services/${DAEMON_SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
 	cp --preserve=mode services/${FUNCTION_SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
+
+	apt-get install python3-pip
+	pip3 install --no-cache-dir -r requirements.txt
+	pip3 install Adafruit_BBIO
+	apt-get install socat
 
 	systemctl daemon-reload
 

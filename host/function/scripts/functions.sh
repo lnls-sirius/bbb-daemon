@@ -27,12 +27,12 @@ function overlay_PRUserial485 {
     echo Initializing PRUserial485 overlay.
 
     if [ ! -d /root/pru-serial485 ]; then
-        echo "ERROR! The folder /root/pru-serial485 doesn\'t exist."
+        echo "[ERROR] PRUserial485: The folder /root/pru-serial485 doesn\'t exist."
         exit 1
     fi
 
     if [ ! -f /root/pru-serial485/src/overlay.sh ]; then
-        echo "ERROR! The file /root/pru-serial485/src/overlay.sh doesn\'t exist."
+        echo "[ERROR] PRUserial485: The file /root/pru-serial485/src/overlay.sh doesn\'t exist."
         exit 1
     fi
 
@@ -45,12 +45,12 @@ function overlay_CountingPRU {
     echo Initializing CountingPRU overlay.
 
     if [ ! -d /root/counting-pru ]; then
-        echo "ERROR! The folder /root/counting-pru doesn\'t exist."
+        echo "[ERROR] counting-pru: The folder /root/counting-pru doesn\'t exist."
         exit 1
     fi
 
     if [ ! -f /root/counting-pru/src/DTO_CountingPRU.sh ]; then
-        echo "ERROR! The file /root/counting-pru/src/DTO_CountingPRU.sh doesn\'t exist."
+        echo "[ERROR] counting-pru:  The file /root/counting-pru/src/DTO_CountingPRU.sh doesn\'t exist."
         exit 1
     fi
 
@@ -63,12 +63,12 @@ function overlay_SPIxCONV {
     echo "Initializing SPIxCONV overlay."
 
     if [ ! -d /root/SPIxCONV ]; then
-        echo "ERROR! The folder /root/SPIxCONV doesn\'t exist."
+        echo "[ERROR] SPIxCONV: The folder /root/SPIxCONV doesn\'t exist."
         exit 1
     fi
 
     if [ ! -f /root/SPIxCONV/init/SPIxCONV_config-pin.sh ]; then
-        echo "ERROR! The file /root/SPIxCONV/init/SPIxCONV_config-pin.sh doesn\'t exist."
+        echo "[ERROR] SPIxCONV: The file /root/SPIxCONV/init/SPIxCONV_config-pin.sh doesn\'t exist."
         exit 1
     fi
 
@@ -90,12 +90,12 @@ function counting_pru {
     echo "Initializing CountingPRU ..."
 
     if [ ! -d /root/counting-pru ]; then
-        echo "ERROR! The folder /root/counting-pru doesn\'t exist."
+        echo "[ERROR] CountingPRU: The folder /root/counting-pru doesn\'t exist."
         exit 1
     fi
 
     if [ ! -f /root/counting-pru/IOC/SI-CountingPRU_Socket.py ]; then
-        echo "ERROR! The file /root/counting-pru/IOC/SI-CountingPRU_Socket.py doesn\'t exist."
+        echo "[ERROR] CountingPRU: The file /root/counting-pru/IOC/SI-CountingPRU_Socket.py doesn\'t exist."
         exit 1
     fi
 
@@ -113,13 +113,13 @@ function startup_blinkingLED {
         echo "Startup LED blinking..."
 
         if [ ! -d /root/startup-scripts ]; then
-            echo "ERROR! The folder /root/startup-scripts doesn\'t exist."
-            exit 1
+            echo "[ERROR] blinkingLED: The folder /root/startup-scripts doesn\'t exist."
+            return 1
         fi
 
         if [ ! -f /root/startup-scripts/HeartBeat.py ]; then
-            echo "ERROR! The file /root/startup-scripts/HeartBeat.py doesn\'t exist."
-            exit 1
+            echo "[ERROR] blinkingLED: The file /root/startup-scripts/HeartBeat.py doesn\'t exist."
+            return 1
         fi
 
         pushd /root/startup-scripts
@@ -136,23 +136,22 @@ function startup_HardReset {
         echo "Startup HardReset..."
 
         if [ ! -d /root/startup-scripts ]; then
-            echo "ERROR! The folder /root/startup-scripts doesn\'t exist."
-            exit 1
+            echo "[ERROR] HardReset: The folder /root/startup-scripts doesn\'t exist."
+            return 1
         fi
 
         if [ ! -f /root/startup-scripts/HardReset.py ]; then
-            echo "ERROR! The file /root/startup-scripts/HardReset.py doesn\'t exist."
-            exit 1
+            echo "[ERROR] HardReset: The file /root/startup-scripts/HardReset.py doesn\'t exist."
+            return 1
         fi
 
         pushd /root/startup-scripts
-        ./HardReset.py &
+            ./HardReset.py &
         popd
     fi
 }
 
 function spixconv {
-    # :1 address:
     echo SPIXCONV detected.
     echo Synchronizing pru-serial485 and spixconv files
     pushd ${DAEMON_BASE}/host/rsync
@@ -174,24 +173,21 @@ function pru_power_supply {
         ./rsync_beaglebone.sh pru-serial485
         ./rsync_beaglebone.sh ponte-py
         # FAC IOC files and constants
-        ./rsync_beaglebone.sh mathphys
-        ./rsync_beaglebone.sh dev-packages
-        ./rsync_beaglebone.sh machine-applications
-        sed -i -e '/sirius/d' /etc/hosts
-        sed -i -e '$a\'"#"' sirius-consts server alias' -e '$a\10.128.1.225 sirius-consts.lnls.br' /etc/hosts
+        ./rsync_beaglebone.sh ps-ioc-config-files
+        pushd ${FAC_PATH}/ps-ioc-config-files
+            ./sync-fac-files.sh
+        popd
     popd
     overlay_PRUserial485
     echo Running Ponte-py at port 4000
     pushd /root/ponte-py
         python-sirius Ponte.py &
     popd
-    
+
     echo Running FAC PS IOC
-    if [ ! -d "/root/sirius-ioc-as-ps" ]; then
-        mkdir -p /root/sirius-ioc-as-ps
-    fi
-    DATE=`date '+%Y-%m-%d_%Hh%Mm%Ss'`
-#    sirius-ioc-as-ps.py --hostname >> /root/sirius-ioc-as-ps/$DATE.log 2>&1 &
+    pushd ${FAC_PATH}/ps-ioc-config-files
+        ./run-fac-ps-ioc.sh
+    popd
 }
 
 function serial_thermo {

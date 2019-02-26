@@ -27,7 +27,7 @@ def persist_info(device, baud, exit_code, details='No details.'):
 
     logger.info('Device Identified !')
     write_info(DEVICE_JSON, json.dumps(device_info))
-    exit()
+    exit(0)
 
 
 def write_info(file_name, data):
