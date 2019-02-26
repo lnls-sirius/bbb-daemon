@@ -32,10 +32,10 @@ class Nodes(Resource):
             return controller.get_ping_nodes()
         elif command == 'missing':
             # Return missing nodes.
-            pass
+            return controller.get_missing_nodes()
         elif command == 'expected':
             # Return expected nodes
-            pass
+            return controller.get_expected_nodes()
         else:
             abort(404, message='Command is not supported.')
 
