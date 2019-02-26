@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser("A program to manage and monitor each "
 
 parser.add_argument("--ping-port", "-p", nargs='?', default=9876,type=int,
                     help='The port to which ping request are sent.', dest="ping_port")
-                    
+
 parser.add_argument("--command-port", "-c", nargs='?', default=9877, type=int,
                     help="The port from which command requests are received.", dest="command_port")
 
