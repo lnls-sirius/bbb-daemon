@@ -1,26 +1,25 @@
-    #!/bin/bash
+#!/bin/bash
 # -*- coding: utf-8 -*-
 source ${DAEMON_BASE}/host/function/scripts/functions.sh
 source ${DAEMON_BASE}/host/function/envs.sh
 
 pushd ${DAEMON_BASE}/host/function/scripts
 
-	function cleanup {
-            # Reset the detected device
-            resetDeviceJson
+        function cleanup {
+                # Reset the detected device
+                resetDeviceJson
+                if [ -f res ]; then
+                                rm -rf res
+                fi
 
-			if [ -f res ]; then
-					rm -rf res
-			fi
+                if [ -f baudrate ]; then
+                        rm -rf baudrate
+                fi
 
-			if [ -f baudrate ]; then
-				rm -rf baudrate
-			fi
+        }
 
-	}
-
-	trap cleanup EXIT
-	cleanup
+        trap cleanup EXIT
+        cleanup
 
     # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
     synchronize_common
@@ -43,33 +42,27 @@ pushd ${DAEMON_BASE}/host/function/scripts
         spixconv ${BAUDRATE}
 
 	elif [[ ${CONN_DEVICE} = "${PRU_POWER_SUPPLY}" ]]; then
-        pru_power_supply
         startup_blinkingLED
+        pru_power_supply
 
 	elif [[ ${CONN_DEVICE} = "${COUNTING_PRU}" ]]; then
-        counting_pru
         startup_blinkingLED
+        counting_pru
 
 	elif [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
-        serial_thermo
         startup_blinkingLED
+        serial_thermo
 
 	elif [[ ${CONN_DEVICE} = "${MKS937B}" ]]; then
-        mks
         startup_blinkingLED
+        mks
 
 	elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ]; }; then
-        socat_devices
         startup_blinkingLED
+        socat_devices
 
 	else
-        if [[ ${CONN_DEVICE} = "${NOTTY}" ]]; then
-		    echo No matching device has been found. ttyUSB0 is disconnected.
-        else
-		    echo  Unknown device. Nothing has been done.
-        fi
+        echo  Unknown device. Nothing has been done.
         exit 1
     fi
 popd
-
-startup_loop
