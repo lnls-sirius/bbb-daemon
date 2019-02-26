@@ -59,11 +59,11 @@ class DaemonHostListener(metaclass=Singleton):
                 # Do nothing more ...
                 pass
             elif command == Command.SET_HOSTNAME:
-                # Send more stufff?
-                pass
+                # Send an 'utf-8' encoded string containing the new hostname
+                NetUtils.send_data(command_socket, kargs['hostname'].encode('utf-8'))
             elif command == Command.SET_IP:
-                # Send more stufff?
-                pass
+                # Send a common.entity.entities.NewIp object
+                NetUtils.send_object(command_socket, kargs['new_ip'])
 
             command_socket.close()
             return True
