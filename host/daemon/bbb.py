@@ -8,7 +8,7 @@ import subprocess
 import time
 import json
 
-from common.entity.entities import Command, Node, Sector, Type, NodeState
+from common.entity.entities import Command, Node, Sector, Type, NodeState, NewIp
 
 class BBB:
     """
@@ -85,7 +85,7 @@ class BBB:
         Updates the host with anew hostname.
         """
         old_hostname = self.node.name.replace(':', '-')
-        new_hostname = new_hostname.replace(':','-')
+        new_hostname = new_hostname.replace(':','-').replace(' ', '')
 
         if old_hostname != new_hostname:
             self.logger.info("Updating current hostname from {} to {}.".format(old_hostname, new_hostname))
@@ -94,16 +94,18 @@ class BBB:
                 hostnameFile.write(new_hostname)
                 hostnameFile.close()
 
-    def update_ip_address(self, new_ip_address, new_mask, new_gateway):
+    def update_ip_address(self, new_ip: NewIp):
         """
         Updates the host with a new ip address
         """
-        if self.node.ip_address != new_ip_address:
-            self.logger.info("Updating current ip address from {} to {}, mask {}, default gateway {}.".format(
-                self.node.ip_address, new_ip_address, new_mask, new_gateway))
+        if self.node.ip_address == new_ip.ip_new.__str__():
+            return
 
-            self.change_ip_address(new_ip_address, new_gateway, new_mask)
-            self.node.ip_address = self.get_ip_address()[0]
+        self.logger.info("Updating current ip address from {} to {}.".format(self.node.ip_address, new_ip))
+
+        self.change_ip_address(new_ip.ip_new.__str__(), new_ip.netmask.__str__(), new_ip.ip_gateway.__str__())
+
+        self.node.ip_address = self.get_ip_address()[0]
 
 
     def read_node_parameters(self):
@@ -161,7 +163,7 @@ class BBB:
         :param net_address: new sub-network address. An ipaddress.IPv4Network object.
         :param default_gateway_address: the new default gateway
         :raise TypeError: new_ip_address or net_address are None or are neither ipaddress nor string objects.
-        """ 
+        """
         self.logger.info('Changing current IP address from {} to {}'.format(self.get_ip_address()[0], new_ip_address))
 
         service = self.get_connman_service_name()
