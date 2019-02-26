@@ -2,7 +2,7 @@
 
 function cleanup {
     deactivate
-    echo Bye !
+    echo "Python virtual environment deactivated."
 }
 
 function wait-for-redis {
