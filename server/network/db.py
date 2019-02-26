@@ -27,7 +27,7 @@ class RedisPersistence(metaclass=Singleton):
     """
     A class to persist data to a Redis DB instance. The database architecture is composed of the following
     lists [key, [...]] and key-value pairs:
- 
+
     + [sector_id_1, [node_name_1, node_name_3, ...]]
     + [sector_id_2, [node_name_2, node_name_8, ...]]
     + ...
@@ -56,12 +56,11 @@ class RedisPersistence(metaclass=Singleton):
         logger.info('Connected to redis at %s:%s using db %s' % (host, port, redis_db))
 
 
-    def update_expected_node_list(self,**kwargs):
+    def update_expected_node_list(self, expected_nodes):
         """
         Receives a dictionary of ip_address and type_code. Add to redis.
         :expected_nodes Dictionary: Dictionary, key(str: ip_address) value(int: Type)
         """
-        expected_nodes = kwargs.get('expected_nodes', None)
         if expected_nodes:
             with self.expectedNodesListMutex:
                 pipeline = self.db.pipeline()
@@ -91,7 +90,7 @@ class RedisPersistence(metaclass=Singleton):
         node = kwargs.get('node', None)
         if node is None or node.name is None or node.name == "":
             raise TypeError("Node given as parameter is None or its name is not valid.")
-        
+
         self.pingNodesListMutex.acquire()
 
         k, n = node.to_dict()
@@ -122,7 +121,7 @@ class RedisPersistence(metaclass=Singleton):
         node = None
         if key:
             self.pingNodesListMutex.acquire()
-            # if exists ... 
+            # if exists ...
             self.db.sismember(PING_NODES, key)
             content_as_string = self.db.get(key)
             if content_as_string != None:
