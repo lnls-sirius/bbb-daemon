@@ -102,6 +102,7 @@ function counting_pru {
     pushd /root/counting-pru/IOC
         ./SI-CountingPRU_Socket.py
         echo "SI-CountingPRU_Socket.py Terminated !"
+	exit 1
     popd
 }
 
