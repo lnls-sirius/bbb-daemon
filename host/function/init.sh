@@ -43,24 +43,24 @@ pushd ${DAEMON_BASE}/host/function/scripts
         spixconv ${BAUDRATE}
 
 	elif [[ ${CONN_DEVICE} = "${PRU_POWER_SUPPLY}" ]]; then
+	startup_blinkingLED
         pru_power_supply
-        startup_blinkingLED
 
 	elif [[ ${CONN_DEVICE} = "${COUNTING_PRU}" ]]; then
-        counting_pru
         startup_blinkingLED
+	counting_pru
 
 	elif [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
-        serial_thermo
         startup_blinkingLED
+        serial_thermo
 
 	elif [[ ${CONN_DEVICE} = "${MKS937B}" ]]; then
-        mks
         startup_blinkingLED
+        mks
 
 	elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ] || [ $CONN_DEVICE == "${AGILENT4UHV}" ]; }; then
-        socat_devices
         startup_blinkingLED
+        socat_devices
 
 	else
         if [[ ${CONN_DEVICE} = "${NOTTY}" ]]; then
