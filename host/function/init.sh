@@ -1,5 +1,6 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
+set -x
 source ${DAEMON_BASE}/host/function/scripts/functions.sh
 source ${DAEMON_BASE}/host/function/envs.sh
 

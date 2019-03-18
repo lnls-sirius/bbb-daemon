@@ -211,7 +211,17 @@ function mks {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -serb 1024 -t 0.1
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200 -serb 1024 -t 0.1
+}
+
+function uhv {
+    echo Synchronizing pru-serial485 files
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+    popd
+    overlay_PRUserial485
+
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400 -t 0.2
 }
 
 function socat_devices {
@@ -221,6 +231,8 @@ function socat_devices {
     popd
     overlay_PRUserial485
 
-    echo  "Starting socat with: socat TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE},rawer"
+    echo  "Starting socat with:"
+    set -x
     socat TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE},rawer
+    set +x
 }
