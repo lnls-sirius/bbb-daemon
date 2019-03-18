@@ -181,7 +181,7 @@ function pru_power_supply {
             ./sync-fac-files.sh
         popd
     popd
-    
+
     echo Running Ponte-py at port 4000
     pushd /root/ponte-py
         python-sirius Ponte.py &
@@ -233,7 +233,5 @@ function socat_devices {
     overlay_PRUserial485
 
     echo  "Starting socat with:"
-    set -x
     socat TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE},rawer
-    set +x
 }
