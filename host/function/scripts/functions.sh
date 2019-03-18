@@ -174,13 +174,14 @@ function pru_power_supply {
         # Base files: PRU library and ethernet/serial bridge
         ./rsync_beaglebone.sh pru-serial485
         ./rsync_beaglebone.sh ponte-py
+	overlay_PRUserial485
         # FAC IOC files and constants
         ./rsync_beaglebone.sh ps-ioc-config-files
         pushd ${FAC_PATH}/ps-ioc-config-files
             ./sync-fac-files.sh
         popd
     popd
-    overlay_PRUserial485
+    
     echo Running Ponte-py at port 4000
     pushd /root/ponte-py
         python-sirius Ponte.py &
