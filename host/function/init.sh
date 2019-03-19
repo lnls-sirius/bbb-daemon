@@ -44,14 +44,12 @@ pushd ${DAEMON_BASE}/host/function/scripts
         spixconv ${BAUDRATE}
 
 	elif [[ ${CONN_DEVICE} = "${PRU_POWER_SUPPLY}" ]]; then
-	    startup_blinkingLED
+	startup_blinkingLED
         pru_power_supply
-        startup_loop
 
 	elif [[ ${CONN_DEVICE} = "${COUNTING_PRU}" ]]; then
         startup_blinkingLED
-	    counting_pru
-        startup_loop
+	counting_pru
 
 	elif [[ ${CONN_DEVICE} = "${SERIAL_THERMO}" ]]; then
         startup_blinkingLED
