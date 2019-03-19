@@ -102,8 +102,6 @@ function counting_pru {
 
     pushd /root/counting-pru/IOC
         ./SI-CountingPRU_Socket.py
-        echo "SI-CountingPRU_Socket.py Terminated !"
-	exit 1
     popd
 }
 
@@ -182,14 +180,14 @@ function pru_power_supply {
         popd
     popd
 
-    echo Running Ponte-py at port 4000
-    pushd /root/ponte-py
-        python-sirius Ponte.py &
-    popd
-
     echo Running FAC PS IOC
     pushd ${FAC_PATH}/ps-ioc-config-files
         ./run-fac-ps-ioc.sh
+    popd
+
+    echo Running Ponte-py at port 4000
+    pushd /root/ponte-py
+        python-sirius Ponte.py
     popd
 }
 
