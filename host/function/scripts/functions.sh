@@ -12,8 +12,8 @@ function synchronize_common {
 function startup_loop {
     echo "Starting infinite loop ..."
     while [ true ]; do
-		sleep 2
-	done
+        sleep 2
+    done
 }
 
 function resetDeviceJson {
