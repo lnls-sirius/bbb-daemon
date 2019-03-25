@@ -10,6 +10,7 @@ from serial import Serial
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser("TCP - Serial Bind")
+    parser.add_argument('--debug', dest='debug', action='store_true')
     parser.add_argument("--port","-p", default=4161,type=int, help='TCP Server port', dest="port")
     parser.add_argument("--tcp-buffer","-tcpb", default=1024,type=int, help='TCP recv buffer', dest="tcp_buffer")
     parser.add_argument("--baudrate","-b", default=115200,type=int, help='Serial port baudrate', dest="baudrate")
@@ -21,9 +22,8 @@ if __name__ == '__main__':
 
     zb = args.zero_bytes.encode('utf-8')
 
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)-15s [%(levelname)s] %(message)s',
-                        datefmt='%d/%m/%Y %H:%M:%S')
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO,
+            format='[%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
     logger = logging.getLogger()
 
 
@@ -46,6 +46,6 @@ if __name__ == '__main__':
                             logger.info('No data...')
                             break
                         conn.sendall(res if res else zb)
-                        # logger.info('In %s Out %s %s' % (data, res, len(res)))
+                        logger.debug('In=%s Out=%s len=%s' % (data, res, len(res)))
             except ConnectionError:
                 logger.exception('Connection Error !')
