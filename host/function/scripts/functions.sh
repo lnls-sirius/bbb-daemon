@@ -11,6 +11,7 @@ function synchronize_common {
 
 function startup_loop {
     echo "Starting infinite loop ..."
+    set +x
     while [ true ]; do
         sleep 2
     done
@@ -220,7 +221,7 @@ function uhv {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400 -t 0.2
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400 -t 0.25
 }
 
 function socat_devices {
