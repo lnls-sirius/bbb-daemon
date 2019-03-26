@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import argparse
 import logging
+import logging.handlers
 import socket
 import struct
 import select
@@ -26,6 +27,8 @@ if __name__ == '__main__':
             format='[%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
     logger = logging.getLogger()
 
+    socketHandler = logging.handlers.SocketHandler('10.128.255.5', logging.handlers.DEFAULT_TCP_LOGGING_PORT)
+    logger.addHandler(socketHandler)
 
     ser = Serial(args.device, args.baudrate, timeout=args.timeout)
     while True:

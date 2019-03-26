@@ -173,7 +173,7 @@ function pru_power_supply {
         # Base files: PRU library and ethernet/serial bridge
         ./rsync_beaglebone.sh pru-serial485
         ./rsync_beaglebone.sh ponte-py
-	overlay_PRUserial485
+        overlay_PRUserial485
         # FAC IOC files and constants
         ./rsync_beaglebone.sh ps-ioc-config-files
         pushd ${FAC_PATH}/ps-ioc-config-files
@@ -221,7 +221,9 @@ function uhv {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400 -t 0.25
+    #socat -d -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE},rawer
+
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400 -t 0.23 --debug
 }
 
 function socat_devices {
