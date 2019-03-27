@@ -211,7 +211,7 @@ function mks {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200 -serb 1024 -t 0.1
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200 -t 0.10 --debug --serial-buffer-timeout 0.075
 }
 
 function uhv {
@@ -221,9 +221,7 @@ function uhv {
     popd
     overlay_PRUserial485
 
-    #socat -d -d -d TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE},rawer
-
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400 -t 0.23 --debug
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400  -t 0.23 --debug --serial-buffer-timeout 0.050
 }
 
 function socat_devices {
