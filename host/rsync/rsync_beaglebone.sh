@@ -51,8 +51,8 @@ if [ ! -z ${PROJECT} ]; then
                                 rm -rf dist build */*.egg-info *.egg-info
                                 # instal AS-PS IOC as service
                                 cp -rf ./systemd/sirius-bbb-ioc-ps.service /etc/systemd/system/
-	                              mkdir -p /root/sirius-iocs
-	                              systemctl daemon-reload
+                                mkdir -p /root/sirius-iocs
+                                systemctl daemon-reload
                             popd
                         fi
                     popd
