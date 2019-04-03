@@ -40,12 +40,15 @@ if [ ! -z ${PROJECT} ]; then
                         if [ "${PROJECT}" = "dev-packages" ]; then
                             pushd siriuspy
                                 python-sirius setup.py install
+                                rm -rf dist build */*.egg-info *.egg-info
                             popd
                         elif [ "${PROJECT}" = "mathphys" ]; then
                             python-sirius setup.py install
+                            rm -rf dist build */*.egg-info *.egg-info
                         elif [ "${PROJECT}" = "machine-applications" ]; then
                             pushd as-ps
                                 python-sirius setup.py install
+                                rm -rf dist build */*.egg-info *.egg-info
                                 # instal AS-PS IOC as service
                                 cp -rf ./systemd/sirius-bbb-ioc-ps.service /etc/systemd/system/
 	                              mkdir -p /root/sirius-iocs
