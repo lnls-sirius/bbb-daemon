@@ -211,7 +211,7 @@ function mks {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200 -t 0.10 --debug --serial-buffer-timeout 0.075
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200 -t 0.10 --debug --serial-buffer-timeout 0.090
 }
 
 function uhv {
