@@ -224,6 +224,17 @@ function uhv {
     ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400  -t 0.23 --debug --serial-buffer-timeout 0.050
 }
 
+function mbtemp {
+    echo Synchronizing pru-serial485 files
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+    popd
+    overlay_PRUserial485
+
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200  -t 0.05 --debug --serial-buffer-timeout 0.001
+}
+
+
 function socat_devices {
     echo Synchronizing pru-serial485 files
     pushd ${DAEMON_BASE}/host/rsync
