@@ -4,6 +4,7 @@ import logging
 import logging.handlers
 import socketserver
 import struct
+import os
 
 
 class LogRecordStreamHandler(socketserver.StreamRequestHandler):
@@ -77,7 +78,10 @@ class LogRecordSocketReceiver(socketserver.ThreadingTCPServer):
             abort = self.abort
 
 def main():
-    handler = logging.handlers.RotatingFileHandler('bbb.log', maxBytes=1000000000, backupCount=5)
+    if not os.path.exists('log'):
+        os.makedirs('log')
+
+    handler = logging.handlers.RotatingFileHandler('log/bbb.log', maxBytes=50000000, backupCount=5)
     handler.setFormatter(logging.Formatter('%(asctime)-15s %(relativeCreated)5d %(name)-5s %(levelname)-8s %(message)s'))
     logging.basicConfig(format='%(asctime)-15s %(relativeCreated)5d %(name)-5s %(levelname)-8s %(message)s')
     logging.getLogger().addHandler(handler)
