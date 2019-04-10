@@ -13,6 +13,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser("TCP - Serial Bind")
     parser.add_argument('--debug', dest='debug', action='store_true')
+    parser.add_argument("--logging-ip", default='10.128.255.5', help='Remote logging server ip.', dest="logging_ip")
     parser.add_argument("--port","-p", default=4161,type=int, help='TCP Server port', dest="port")
     parser.add_argument("--tcp-buffer","-tcpb", default=1024,type=int, help='TCP recv buffer', dest="tcp_buffer")
     parser.add_argument("--baudrate","-b", default=115200,type=int, help='Serial port baudrate', dest="baudrate")
@@ -24,12 +25,23 @@ if __name__ == '__main__':
 
     zb = args.zero_bytes.encode('utf-8')
 
-    logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO,
-            format='[%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S.%f')
     logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
 
-    socketHandler = logging.handlers.SocketHandler('10.128.255.5', logging.handlers.DEFAULT_TCP_LOGGING_PORT)
-    logger.addHandler(socketHandler)
+    formatter = logging.Formatter('[%(levelname)s] %(message)s', datefmt='%d/%m/%Y %H:%M:%S.%f')
+
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(formatter)
+    consoleHandler.setLevel(logging.INFO)
+    logger.addHandler(consoleHandler)
+
+
+    if args.debug:
+        socketHandler = logging.handlers.SocketHandler(args.logging_ip, logging.handlers.DEFAULT_TCP_LOGGING_PORT)
+        socketHandler.setFormatter(formatter)
+        socketHandler.setLevel(logging.DEBUG)
+        logger.addHandler(socketHandler)
+        logger.info('Network logging enable {}.'.format(args.logging_ip))
 
 
     ser = Serial(args.device, args.baudrate, timeout=args.timeout)
