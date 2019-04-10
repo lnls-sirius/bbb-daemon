@@ -181,15 +181,16 @@ function pru_power_supply {
         popd
     popd
 
-    echo Running FAC PS IOC
+    echo "Running FAC PS IOC"
     pushd ${FAC_PATH}/ps-ioc-config-files
         ./run-fac-ps-ioc.sh
     popd
 
-    echo Running Ponte-py at port 4000
+    echo "Running Ponte-py at port 4000"
     pushd /root/ponte-py
         python-sirius Ponte.py
     popd
+
 }
 
 function serial_thermo {
@@ -211,7 +212,7 @@ function mks {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200 -t 0.10 --debug --serial-buffer-timeout 0.075
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200 -t 0.15 --debug --serial-buffer-timeout 0.100
 }
 
 function uhv {
@@ -221,7 +222,7 @@ function uhv {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400  -t 0.23 --debug --serial-buffer-timeout 0.050
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400  -t 0.23 --debug --serial-buffer-timeout 0.065
 }
 
 function socat_devices {
