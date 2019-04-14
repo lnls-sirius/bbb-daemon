@@ -35,11 +35,11 @@ class Daemon():
         self.ping_port = ping_port
         self.bind_port = bind_port
 
-        self.ping_thread = threading.Thread(target=self.ping_udp)
+        self.ping_thread = threading.Thread(target=self.ping_udp, daemon=True)
         self.pinging = True
         self.ping_thread.start()
 
-        self.command_thread = threading.Thread(target=self.listen)
+        self.command_thread = threading.Thread(target=self.listen, daemon=True)
         self.listening = True
         self.command_thread.start()
 
