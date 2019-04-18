@@ -74,7 +74,9 @@ class Node(Resource):
             elif command == 'nameservers':
                 parser.add_argument('nameservers', type=str, help='Node nameservers separated by spaces.')
                 controller.set_nameservers(ip=args.ip, nameservers=args.nameservers)
-            return 'Message received. Command: {} args: {}'.format(command,args)
+            else:
+                args = parser.parse_args()
+                return 'Message received. Command: {} args: {}'.format(command, args)
         except:
             logger.exception('RestApi Exception')
-            abort(404, message='Failed to execute command {} with args {}.'.format(command, args))
+            abort(404, message='Failed to execute command {}.'.format(command))
