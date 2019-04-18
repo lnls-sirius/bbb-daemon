@@ -51,7 +51,7 @@ def counting_pru():
     CountingPRU
     """
     logger.info('Counting PRU')
-    if PRUserial485_address() != 21 and not os.path.isfile(PORT) and GPIO.input(PIN_FTDI_PRU) == PRU:
+    if PRUserial485_address() != 21 and not os.path.isfile(PORT):
         persist_info(Type.COUNTING_PRU, 0, COUNTING_PRU)
 
 

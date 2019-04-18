@@ -32,12 +32,7 @@ PING_CANDIDATES = args['ping_candidates'].split(';')
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)-15s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
-
-handler = RotatingFileHandler(filename=args['log_path'], maxBytes=5000000, backupCount=2)
-handler.setFormatter(logging.Formatter('%(asctime)-15s %(levelname)s %(name)s %(message)s'))
-handler.setLevel(logging.DEBUG)
 logger = logging.getLogger()
-logger.addHandler(handler)
 
 if __name__ == '__main__':
     logger.info('Init params: {}'.format(args))

@@ -11,9 +11,10 @@ function synchronize_common {
 
 function startup_loop {
     echo "Starting infinite loop ..."
+    set +x
     while [ true ]; do
-		sleep 2
-	done
+        sleep 2
+    done
 }
 
 function resetDeviceJson {
@@ -73,7 +74,8 @@ function overlay_SPIxCONV {
     fi
 
     pushd /root/SPIxCONV/init
-    ./SPIxCONV_config-pin.sh
+        chmod +x SPIxCONV_config-pin.sh
+       ./SPIxCONV_config-pin.sh
     popd
 }
 
@@ -101,7 +103,6 @@ function counting_pru {
 
     pushd /root/counting-pru/IOC
         ./SI-CountingPRU_Socket.py
-        echo "SI-CountingPRU_Socket.py Terminated !"
     popd
 }
 
@@ -172,22 +173,24 @@ function pru_power_supply {
         # Base files: PRU library and ethernet/serial bridge
         ./rsync_beaglebone.sh pru-serial485
         ./rsync_beaglebone.sh ponte-py
+        overlay_PRUserial485
         # FAC IOC files and constants
         ./rsync_beaglebone.sh ps-ioc-config-files
         pushd ${FAC_PATH}/ps-ioc-config-files
             ./sync-fac-files.sh
         popd
     popd
-    overlay_PRUserial485
-    echo Running Ponte-py at port 4000
-    pushd /root/ponte-py
-        python-sirius Ponte.py &
-    popd
 
-    echo Running FAC PS IOC
+    echo "Running FAC PS IOC"
     pushd ${FAC_PATH}/ps-ioc-config-files
         ./run-fac-ps-ioc.sh
     popd
+
+    echo "Running Ponte-py at port 4000"
+    pushd /root/ponte-py
+        python-sirius Ponte.py
+    popd
+
 }
 
 function serial_thermo {
@@ -209,7 +212,17 @@ function mks {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -serb 1024 -t 0.1
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200 -t 0.15 --debug --serial-buffer-timeout 0.100
+}
+
+function uhv {
+    echo Synchronizing pru-serial485 files
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+    popd
+    overlay_PRUserial485
+
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400  -t 0.23 --debug --serial-buffer-timeout 0.065
 }
 
 function socat_devices {
@@ -219,6 +232,6 @@ function socat_devices {
     popd
     overlay_PRUserial485
 
-    echo  "Starting socat with: socat TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE},rawer"
+    echo  "Starting socat with:"
     socat TCP-LISTEN:${SOCAT_PORT},reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE},rawer
 }
