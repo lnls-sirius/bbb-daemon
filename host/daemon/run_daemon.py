@@ -2,6 +2,7 @@
 import argparse
 import logging
 import os
+import time
 
 from logging.handlers import RotatingFileHandler
 
@@ -12,7 +13,7 @@ parser = argparse.ArgumentParser("A program to manage and monitor each "
 
 parser.add_argument("--ping-port", "-p", nargs='?', default=9876,type=int,
                     help='The port to which ping request are sent.', dest="ping_port")
-                    
+
 parser.add_argument("--command-port", "-c", nargs='?', default=9877, type=int,
                     help="The port from which command requests are received.", dest="command_port")
 
@@ -40,3 +41,5 @@ if __name__ == '__main__':
            bind_port=args['command_port'],
            path=args['configuration_path'],
            ping_candidates=PING_CANDIDATES)
+    while True:
+        time.sleep(1.0)
