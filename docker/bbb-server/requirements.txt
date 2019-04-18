@@ -1,7 +1,0 @@
-mod_wsgi==4.6.5
-Flask==1.0.2
-Flask-RESTful==0.3.6
-Flask-Cors==3.0.7
-redis==2.10.6
-sip==4.19.8
-msgpack==0.5.6
