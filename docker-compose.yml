@@ -1,0 +1,47 @@
+version: '3.2'
+services:
+  redis-db:
+    image: redis:latest
+    container_name: redis-db
+    ports:
+      -  "6379:6379/tcp"
+    dns:
+      - 10.0.0.71
+      - 10.0.0.72
+    volumes:
+      - /storage/epics-services/daemon/db/:/data
+    networks:
+      - bbb_daemon_network
+
+  bbb-daemon:
+    container_name: cons-bbb-daemon
+    hostname: cons-bbb-daemon
+    build: .
+    image: cons-bbb-daemon:latest
+    ports:
+      -  "4850:4850"
+      -  "9877:9877/tcp"
+      -  "9876:9876/udp"
+    environment:
+        # Redis server related
+        - REDIS_SERVER_IP=redis-db
+        - REDIS_SERVER_PORT=6379
+        - BBB_UDP=9876
+        - BBB_TCP=9877
+        # Number of worker threads
+        - WORKERS_NUM=10
+        # Webserver
+        - FLASK_PORT=4850
+    dns:
+      - 10.0.0.71
+      - 10.0.0.72
+    networks:
+      - bbb_daemon_network
+    depends_on:
+      - redis-db
+
+networks:
+  bbb_daemon_network:
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24

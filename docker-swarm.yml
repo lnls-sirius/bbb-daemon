@@ -1,0 +1,48 @@
+version: '3.2'
+services:
+  redis-db:
+    image: redis:latest
+    hostname: redis-db
+    ports:
+      -  "6379:6379/tcp"
+    dns:
+      - 10.0.0.71
+      - 10.0.0.72
+    volumes:
+      - /storage/epics-services/daemon/db/:/data
+    networks:
+      - bbb_daemon_network
+    deploy:
+      resources:
+          limits:
+            cpus: "1"
+            memory: 512M
+
+  bbb-daemon:
+    hostname: cons-bbb-daemon
+    image: lnlscon/cons-bbb-daemon:latest
+    env_file:
+      - ../bbb-server.env
+    ports:
+      -  "4850:4850"
+      -  "9877:9877/tcp"
+      -  "9876:9876/udp"
+    dns:
+      - 10.0.0.71
+      - 10.0.0.72
+    networks:
+      - bbb_daemon_network
+    depends_on:
+      - redis
+    deploy:
+      replicas: 1
+      resources:
+          limits:
+            cpus: "4"
+            memory: 512M
+
+networks:
+  bbb_daemon_network:
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
