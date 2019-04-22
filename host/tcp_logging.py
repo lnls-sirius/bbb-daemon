@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import argparse
 import pickle
 import logging
 import logging.handlers
@@ -78,16 +79,26 @@ class LogRecordSocketReceiver(socketserver.ThreadingTCPServer):
             abort = self.abort
 
 def main():
-    if not os.path.exists('log'):
-        os.makedirs('log')
-
-    handler = logging.handlers.RotatingFileHandler('log/bbb.log', maxBytes=50000000, backupCount=5)
-    handler.setFormatter(logging.Formatter('%(asctime)-15s %(relativeCreated)5d %(name)-5s %(levelname)-8s %(message)s'))
-    logging.basicConfig(format='%(asctime)-15s %(relativeCreated)5d %(name)-5s %(levelname)-8s %(message)s')
-    logging.getLogger().addHandler(handler)
     tcpserver = LogRecordSocketReceiver(host='0.0.0.0')
     print('About to start TCP server...')
     tcpserver.serve_until_stopped()
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Beaglebone Black serial comm log.')
+    parser.add_argument('--folder', '-f', dest='folder', required=True)
+    args = parser.parse_args()
+
+    if not os.path.exists(args.folder):
+        os.makedirs(args.folder)
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    handler = logging.handlers.RotatingFileHandler(os.path.join(args.folder, 'bbb.log'), maxBytes=100000000, backupCount=10)
+    handler.setFormatter(logging.Formatter('%(asctime)-15s %(relativeCreated)5d %(name)-5s %(levelname)-8s %(message)s'))
+    handler.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    logger.info('Starting logging server ... ')
+    # Start ...
     main()
+
