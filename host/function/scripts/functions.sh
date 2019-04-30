@@ -222,7 +222,7 @@ function uhv {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400  -t 0.23 --debug --serial-buffer-timeout 0.065
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400  -t 0.23 --debug --serial-buffer-timeout 0.075
 }
 
 function socat_devices {

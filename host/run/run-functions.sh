@@ -29,6 +29,7 @@ pushd ${DAEMON_BASE}/host/rsync
     # Updating bbb-daemon files
     echo Synchronizing bbb-daemon files
     ./rsync_beaglebone.sh bbb-daemon
+    apt-get install wait-for-it -y
     if [ $? -eq 0 ]; then
         echo New version of bbb-daemon. Making and restarting services...
         pushd ${DAEMON_BASE}/host
