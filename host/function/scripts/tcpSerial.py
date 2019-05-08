@@ -73,7 +73,7 @@ if __name__ == '__main__':
                             logger.info('No data from ioc ...')
                             break
 
-                        data = data.split(terminator)
+                        data = data.split(terminator) if terminator != b'' else [data]
                         for d in data:
                             if not d or d == b'':
                                 continue
