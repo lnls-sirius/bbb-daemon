@@ -11,10 +11,10 @@ from serial import Serial
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser("TCP - Serial Bind")
+    parser = argparse.ArgumentParser("TCP - Serial Bind", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--debug', dest='debug', action='store_true')
 
-    parser.add_argument("--terminator", default='', help='Termination string.', dest="terminator")
+    parser.add_argument("--terminator", default='\r\n', help='Termination string. This string will NOT be send to the serial device. It\'s only used to control the data flow. The terminator will be appended to the response just before it\' sent via TCP and stripped from the input command before it goes to the serial network', dest="terminator")
 
     parser.add_argument("--logging-ip", default='10.128.255.5', help='Remote logging server ip.', dest="logging_ip")
     parser.add_argument("--port", "-p", default=4161,type=int, help='TCP Server port', dest="port")
@@ -73,17 +73,21 @@ if __name__ == '__main__':
                             logger.info('No data from ioc ...')
                             break
 
-                        ser.reset_input_buffer()
-                        ser.reset_output_buffer()
+                        data = data.split(terminator)
+                        for d in data:
+                            if not d or d == b'':
+                                continue
+                            ser.reset_input_buffer()
+                            ser.reset_output_buffer()
 
-                        ser.write(data)
-                        res = ser.read(1)
-                        time.sleep(args.ser_buff_tout)
-                        if ser.in_waiting > 0:
-                            res += ser.read_all()
-                        res = res + terminator if res else zb + terminator
+                            ser.write(d)
+                            res = ser.read(1)
+                            time.sleep(args.ser_buff_tout)
+                            if ser.in_waiting > 0:
+                                res += ser.read_all()
+                            res = res + terminator if res else zb + terminator
 
-                        conn.sendall(res)
-                        logger.debug('In=%s     Out=%s     len=%s' % (data, res, len(res)))
+                            conn.sendall(res)
+                            logger.debug('Serial in {} Serial out {} TCP Package {}'.format(d, res, data))
             except ConnectionError:
                 logger.exception('Connection Error !')
