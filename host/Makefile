@@ -8,9 +8,22 @@ FUNCTION_SRC_SERVICE_FILE = ${FUNCTION_SERVICE_NAME}.service
 
 SERVICE_FILE_DEST = /etc/systemd/system
 
-.PHONY: all install uninstall dependencies
+.PHONY: all install uninstall daemon dependencies clean
 
 all:
+
+daemon:
+	cp --preserve=mode services/${DAEMON_SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
+	
+	apt-get install python3-pip
+	pip3 install --no-cache-dir -r requirements.txt
+	pip3 install Adafruit_BBIO
+
+	systemctl daemon-reload
+
+	systemctl enable ${DAEMON_SERVICE_NAME}
+	systemctl restart ${DAEMON_SERVICE_NAME}
+
 
 install:
 	# Services
@@ -20,7 +33,6 @@ install:
 	apt-get install python3-pip
 	pip3 install --no-cache-dir -r requirements.txt
 	pip3 install Adafruit_BBIO
-	apt-get install socat
 
 	systemctl daemon-reload
 
@@ -38,3 +50,10 @@ uninstall:
 	rm -f ${SERVICE_FILE_DEST}/${FUNCTION_SRC_SERVICE_FILE}
 
 	systemctl daemon-reload
+
+clean:
+	find . -name '*.pyc' -exec rm --force {} +
+	find . -name '*.pyo' -exec rm --force {} +
+	find . -name '*~'    -exec rm --force {} +
+	find . -name '__pycache__'  -exec rm -rd --force {} +
+
