@@ -1,2 +1,2 @@
 ftputil==3.4
-msgpack==0.5.6
+msgpack==0.6.1
