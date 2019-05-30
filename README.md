@@ -36,3 +36,8 @@ where:
 
 # Docker
 To launch the server application on swarm enter the directory `docker/swarm/ ` and run `sudo docker stack deploy -c docker-swarm.yml bbb-daemon`. To remove the containers `sudo docker stack rm bbb-daemon`.
+
+# Iptables
+```
+iptables -I DOCKER-USER --dport 4850 ! -s 10.128.0.0/16 -j DROP
+```
