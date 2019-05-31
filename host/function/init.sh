@@ -62,7 +62,11 @@ pushd ${DAEMON_BASE}/host/function/scripts
         startup_blinkingLED
         uhv
 
-    elif [ ! -z ${CONN_DEVICE} ] && { [ ${CONN_DEVICE} == "${MBTEMP}" ]; }; then
+    elif [[ ${CONN_DEVICE} = "${MBTEMP}" ]]; then
+        startup_blinkingLED
+        mbtemp
+
+    elif [ ! -z ${CONN_DEVICE} ]; then
         startup_blinkingLED
         socat_devices
 

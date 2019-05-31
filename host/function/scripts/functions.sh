@@ -163,7 +163,7 @@ function spixconv {
     overlay_SPIxCONV
 
     cd /root/SPIxCONV/software/scripts
-    ./spixconv_unix_socket.py ${1} --tcp
+    ./spixconv_unix_socket.py ${1} --tcp -p 5005
 }
 
 function pru_power_supply {
@@ -212,7 +212,7 @@ function mks {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 115200 -t 0.15 --debug --serial-buffer-timeout 0.100
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -p 5002 -b 115200 -t 0.15 --debug --serial-buffer-timeout 0.100
 }
 
 function uhv {
@@ -222,7 +222,18 @@ function uhv {
     popd
     overlay_PRUserial485
 
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -b 38400  -t 0.23 --debug --serial-buffer-timeout 0.075
+    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -p 5004 -b 38400  -t 0.23 --debug --serial-buffer-timeout 0.075
+}
+
+function mbtemp {
+    echo Synchronizing pru-serial485 files
+    pushd ${DAEMON_BASE}/host/rsync
+        ./rsync_beaglebone.sh pru-serial485
+    popd
+    overlay_PRUserial485
+
+    echo  "Starting socat with:"
+    socat TCP-LISTEN:5003,reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE},rawer
 }
 
 function socat_devices {
