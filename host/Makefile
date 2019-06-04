@@ -8,7 +8,7 @@ FUNCTION_SRC_SERVICE_FILE = ${FUNCTION_SERVICE_NAME}.service
 
 SERVICE_FILE_DEST = /etc/systemd/system
 
-.PHONY: all install uninstall daemon dependencies clean
+.PHONY: all install uninstall daemon dependencies clean function
 
 all:
 
@@ -24,6 +24,18 @@ daemon:
 	systemctl enable ${DAEMON_SERVICE_NAME}
 	systemctl restart ${DAEMON_SERVICE_NAME}
 
+function:
+	# Services
+	cp --preserve=mode services/${FUNCTION_SRC_SERVICE_FILE} ${SERVICE_FILE_DEST}
+
+	apt-get install python3-pip
+	pip3 install --no-cache-dir -r requirements.txt
+	pip3 install Adafruit_BBIO
+
+	systemctl daemon-reload
+
+	systemctl enable ${FUNCTION_SERVICE_NAME}
+	systemctl restart ${FUNCTION_SERVICE_NAME}
 
 install:
 	# Services
