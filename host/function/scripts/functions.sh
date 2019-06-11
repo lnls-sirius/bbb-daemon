@@ -173,6 +173,7 @@ function pru_power_supply {
         # Base files: PRU library and ethernet/serial bridge
         ./rsync_beaglebone.sh pru-serial485
         ./rsync_beaglebone.sh ponte-py
+        ./rsync_beaglebone.sh eth-bridge-pru-serial485
         overlay_PRUserial485
         # FAC IOC files and constants
         ./rsync_beaglebone.sh ps-ioc-config-files
@@ -180,6 +181,9 @@ function pru_power_supply {
             ./sync-fac-files.sh
         popd
     popd
+    
+    echo "Running eth-bridge-pru-serial485 on ports 5000 and 6000"
+    systemctl start bridge-pru-serial485-general.service bridge-pru-serial485-rw.service 
 
     echo "Running FAC PS IOC"
     pushd ${FAC_PATH}/ps-ioc-config-files
