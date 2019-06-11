@@ -104,6 +104,11 @@ if [ ! -z ${PROJECT} ]; then
                             ./library_build.sh
                         popd
                     fi
+                    if [ "$PROJECT" = "eth-bridge-pru-serial485" ]; then
+                        pushd $RSYNC_LOCAL/$PROJECT/server
+                            make install
+                        popd
+                    fi
                     exit 0
                 fi
             fi
