@@ -69,8 +69,22 @@ def power_supply_pru():
     PRU Power Supply
     """
     logger.info('PRU Power Supply')
+    ps_model_names = {0:"Empty", 1:"FBP", 2:"FBP_DCLINK", 3:"FAC_ACDC", 4:"FAC_DCDC", 5:"FAC_2S_ACDC",
+                    6:"FAC_2S_DCDC", 7:"FAC_2P4S_ACDC", 8:"FAC_2P4S_DCDC", 9:"FAP", 10:"FAP_4P", 11:"FAC_DCDC_EMA", 31:"UNDEFINED"}
     if GPIO.input(PIN_FTDI_PRU) == PRU and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
-        persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY)
+        baud = 6
+        PRUserial485_open(baud,'M')
+        devices = []
+        for ps_addr in range(1, 32):
+            PRUserial485_write([i for i in BSMPChecksum(chr(ps_addr)+"\x10\x00\x01\x00")], 10)
+            res = PRUserial485_read()
+            if len(res) == 7 and res[1] == "\x11":
+                devices.append(ps_addr)
+                ps_model = ps_model_names[ord(res[4])%32]    # PS model: res[4] (bits 4..0)
+        PRUserial485_close()
+        print(ps_model, devices)
+        persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY, 'PS model {}. UDCs connected: {}'.format(ps_model, devices))
+
 
 
 def thermoIncluirChecksum(entrada):
@@ -104,7 +118,7 @@ def thermo_probe():
             persist_info(Type.SERIAL_THERMO, baud, SERIAL_THERMO)
 
 
-def MBTempChecksum(string):
+def BSMPChecksum(string):
     counter = 0
     i = 0
     while (i < len(string)):
@@ -125,7 +139,7 @@ def mbtemp():
         ser = Serial(PORT, baud, timeout=TIMEOUT)
         devices = []
         for mbt_addr in range(1, 32):
-            ser.write(MBTempChecksum(chr(mbt_addr)+"\x10\x00\x01\x00"))
+            ser.write(BSMPChecksum(chr(mbt_addr)+"\x10\x00\x01\x00"))
             res = ser.read(10)
             if len(res) == 7 and res[1] == "\x11":
                 devices.append(mbt_addr)
