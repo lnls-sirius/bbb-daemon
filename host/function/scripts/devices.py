@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 import Adafruit_BBIO.GPIO as GPIO
-from PRUserial485 import PRUserial485_address
+from PRUserial485 import PRUserial485_open,PRUserial485_write, PRUserial485_read, PRUserial485_close, PRUserial485_address
 from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
 
 logger = logging.getLogger('Whoami')
@@ -80,9 +80,8 @@ def power_supply_pru():
             res = PRUserial485_read()
             if len(res) == 7 and res[1] == "\x11":
                 devices.append(ps_addr)
-                ps_model = ps_model_names[ord(res[4])%32]    # PS model: res[4] (bits 4..0)
+                ps_model = ps_model_names[ord(res[5])%32]    # PS model: res[5] (bits 4..0)
         PRUserial485_close()
-        print(ps_model, devices)
         persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY, 'PS model {}. UDCs connected: {}'.format(ps_model, devices))
 
 
