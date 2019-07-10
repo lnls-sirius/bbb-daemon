@@ -76,11 +76,12 @@ def power_supply_pru():
         PRUserial485_open(baud,'M')
         devices = []
         for ps_addr in range(1, 32):
-            PRUserial485_write([i for i in BSMPChecksum(chr(ps_addr)+"\x10\x00\x01\x00")], 10)
+            PRUserial485_write([i for i in BSMPChecksum(chr(ps_addr)+"\x10\x00\x01\x00")], 100)
             res = PRUserial485_read()
             if len(res) == 7 and res[1] == "\x11":
                 devices.append(ps_addr)
                 ps_model = ps_model_names[ord(res[5])%32]    # PS model: res[5] (bits 4..0)
+                time.sleep(0.1)
         PRUserial485_close()
         persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY, 'PS model {}. Connected: {}'.format(ps_model, devices))
 
