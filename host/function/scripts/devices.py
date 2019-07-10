@@ -82,7 +82,7 @@ def power_supply_pru():
                 devices.append(ps_addr)
                 ps_model = ps_model_names[ord(res[5])%32]    # PS model: res[5] (bits 4..0)
         PRUserial485_close()
-        persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY, 'PS model {}. UDCs connected: {}'.format(ps_model, devices))
+        persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY, 'PS model {}. Connected: {}'.format(ps_model, devices))
 
 
 
