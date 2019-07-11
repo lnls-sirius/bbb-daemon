@@ -84,8 +84,8 @@ class BBB:
         """
         Updates the host with anew hostname.
         """
-        old_hostname = self.node.name.replace(':', '-')
-        new_hostname = new_hostname.replace(':','-')
+        old_hostname = self.node.name.replace(':', '--')
+        new_hostname = new_hostname.replace(':','--')
 
         if old_hostname != new_hostname:
             self.logger.info("Updating current hostname from {} to {}.".format(old_hostname, new_hostname))
@@ -93,6 +93,7 @@ class BBB:
             with open("/etc/hostname", "w") as hostnameFile:
                 hostnameFile.write(new_hostname)
                 hostnameFile.close()
+            os.system("hostname {}".format(new_hostname))
 
     def update_ip_address(self, new_ip_address, new_mask, new_gateway):
         """
