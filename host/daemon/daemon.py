@@ -83,13 +83,14 @@ class Daemon():
 
         self.logger.info("Command listening thread started.")
 
-        command_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        command_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        command_socket.bind(("0.0.0.0", self.bind_port))
-        command_socket.listen(1)
-
         while self.listening:
+
+            command_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            command_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+            command_socket.bind(("0.0.0.0", self.bind_port))
+            command_socket.listen(1)
+
 
             connection, address = command_socket.accept()
 
@@ -103,7 +104,7 @@ class Daemon():
 
             elif command == Command.SET_HOSTNAME:
                 new_hostname = NetUtils.recv_object(connection)
-                self.stop()
+                #self.stop()
                 self.bbb.update_hostname(new_hostname)
                 #self.bbb.reboot()
 
@@ -111,11 +112,11 @@ class Daemon():
                 new_ip = NetUtils.recv_object(connection)
                 new_mask = NetUtils.recv_object(connection)
                 new_gateway = NetUtils.recv_object(connection)
-                self.stop()
+                #self.stop()
                 self.bbb.update_ip_address(new_ip, new_mask, new_gateway)
                 #self.bbb.reboot()
 
 
-        command_socket.close()
+            command_socket.close()
 
         self.logger.info("Command listening thread finished.")
