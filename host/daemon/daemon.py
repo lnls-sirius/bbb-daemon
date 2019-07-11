@@ -105,7 +105,7 @@ class Daemon():
                 new_hostname = NetUtils.recv_object(connection)
                 self.stop()
                 self.bbb.update_hostname(new_hostname)
-                self.bbb.reboot()
+                #self.bbb.reboot()
 
             elif command == Command.SET_IP:
                 new_ip = NetUtils.recv_object(connection)
@@ -113,7 +113,7 @@ class Daemon():
                 new_gateway = NetUtils.recv_object(connection)
                 self.stop()
                 self.bbb.update_ip_address(new_ip, new_mask, new_gateway)
-                self.bbb.reboot()
+                #self.bbb.reboot()
 
 
         command_socket.close()
