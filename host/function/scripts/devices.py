@@ -72,6 +72,7 @@ def power_supply_pru():
     ps_model_names = {0:"Empty", 1:"FBP", 2:"FBP_DCLINK", 3:"FAC_ACDC", 4:"FAC_DCDC", 5:"FAC_2S_ACDC",
                     6:"FAC_2S_DCDC", 7:"FAC_2P4S_ACDC", 8:"FAC_2P4S_DCDC", 9:"FAP", 10:"FAP_4P", 11:"FAC_DCDC_EMA", 31:"UNDEFINED"}
     if GPIO.input(PIN_FTDI_PRU) == PRU and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
+        os.system("/root/pru-serial485/src/overlay.sh")
         baud = 6
         PRUserial485_open(baud,'M')
         devices = []
