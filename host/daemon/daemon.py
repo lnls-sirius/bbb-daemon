@@ -54,16 +54,22 @@ class Daemon():
         ping_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         while self.pinging:
+            try:
+                info = self.bbb.get_current_config()
+                chk = NetUtils.checksum(str(info))
+                payload = {'chk':chk, 'payload':info}
+                pack = msgpack.packb(payload, use_bin_type=True)
 
-            info = self.bbb.get_current_config()
-            chk = NetUtils.checksum(str(info))
-            payload = {'chk':chk, 'payload':info}
-            pack = msgpack.packb(payload, use_bin_type=True)
+                for addr in self.ping_candidates:
+                    ping_socket.sendto(pack, (addr, self.ping_port))
 
-            for addr in self.ping_candidates:
-                ping_socket.sendto(pack, (addr, self.ping_port))
-
-            time.sleep(PING_INTERVAL)
+                time.sleep(PING_INTERVAL)
+            except:
+                # Exception occurs when changing IP address without rebooting
+                # Close and reopen socket
+                ping_socket.close()
+                time.sleep(1)
+                ping_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         ping_socket.close()
 
@@ -104,18 +110,17 @@ class Daemon():
 
             elif command == Command.SET_HOSTNAME:
                 new_hostname = NetUtils.recv_object(connection)
-                #self.stop()
                 self.bbb.update_hostname(new_hostname)
-                #self.bbb.reboot()
 
             elif command == Command.SET_IP:
-                new_ip = NetUtils.recv_object(connection)
-                new_mask = NetUtils.recv_object(connection)
-                new_gateway = NetUtils.recv_object(connection)
-                #self.stop()
-                self.bbb.update_ip_address(new_ip, new_mask, new_gateway)
-                #self.bbb.reboot()
-
+                type = NetUtils.recv_object(connection)
+                if type == 'manual':
+                    new_ip = NetUtils.recv_object(connection)
+                    new_mask = NetUtils.recv_object(connection)
+                    new_gateway = NetUtils.recv_object(connection)
+                    self.bbb.update_ip_address(type, new_ip, new_mask, new_gateway)
+                elif type == 'dhcp':
+                    self.bbb.update_ip_address(type)
 
             command_socket.close()
 
