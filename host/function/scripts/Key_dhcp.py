@@ -29,5 +29,5 @@ GPIO.output("P8_28", GPIO.LOW)
 									                                 #   |on|
 if (GPIO.input("P8_11") == 1 and GPIO.input("P8_12") == 0): #Check if the keys are set to the DHCP position  |dP|
     os.system("echo 'Configurando DHCP'")
-     dhcp()								                                 #   |12|
-     led()
+    dhcp()								                                 #   |12|
+    led()
