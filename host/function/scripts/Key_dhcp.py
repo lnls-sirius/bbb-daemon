@@ -6,7 +6,7 @@ import commands
 import Adafruit_BBIO.GPIO as GPIO
 from time import sleep
 
-os.system("echo 'Verificando condição DHCP em Hardware'")
+os.system("echo 'Verificando condicao DHCP em Hardware'")
 
 def dhcp():		#Set IP to DHCP
      service = commands.getoutput("(connmanctl services |awk '{print $3}')")
