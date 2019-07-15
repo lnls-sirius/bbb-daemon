@@ -76,6 +76,7 @@ def power_supply_pru():
         baud = 6
         PRUserial485_open(baud,'M')
         devices = []
+        ps_model = []
         for ps_addr in range(1, 32):
             PRUserial485_write([i for i in BSMPChecksum(chr(ps_addr)+"\x10\x00\x01\x00")], 100)
             res = PRUserial485_read()
