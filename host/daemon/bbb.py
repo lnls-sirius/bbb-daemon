@@ -105,7 +105,7 @@ class BBB:
                     self.node.ip_address, new_ip_address, new_mask, new_gateway))
             else:
                 self.logger.info("Updating current ip address from {} to DHCP.".format(self.node.ip_address))
-            self.change_ip_address(dhcp_manual, new_ip_address, new_gateway, new_mask)
+            self.change_ip_address(dhcp_manual, new_ip_address, new_mask, new_gateway)
             self.node.ip_address = self.get_ip_address()[0]
 
 
