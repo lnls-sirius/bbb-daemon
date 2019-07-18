@@ -9,7 +9,10 @@ from time import sleep
 os.system("echo 'Verificando condicao DHCP em Hardware'")
 
 def dhcp():		#Set IP to DHCP
-     service = commands.getoutput("(connmanctl services |awk '{print $3}')")
+     service = ""
+     while(service == ""):
+         service = commands.getoutput("(connmanctl services |awk '{print $3}')")
+     os.system("echo 'Ethernet service %s'"%(service))
      os.system("connmanctl config %s --ipv4 dhcp" %(service))
      return()
 
