@@ -17,29 +17,39 @@ pushd ${DAEMON_BASE}/host/function/scripts/
     cat /opt/device.json
 popd
 
-# Updating some contents at etc folder. If so, reboots before continuing
-pushd ${DAEMON_BASE}/host/rsync
-    echo Synchronizing etc folder
-    ./rsync_beaglebone.sh etc-folder
-    if [ $? -eq 0 ]; then
-        echo "/etc folder is out of sync. Reboot to fix!"
-        # echo Rebooting BBB...
-        # shutdown -r now
-    fi
 
-    # Updating bbb-daemon files
-    echo Synchronizing bbb-daemon files
-    ./rsync_beaglebone.sh bbb-daemon
-    apt-get install wait-for-it -y
-    if [ $? -eq 0 ]; then
-        echo New version of bbb-daemon. Making and restarting services...
-        pushd ${DAEMON_BASE}/host
-            echo "host out of sync"
-            # make install
-        popd
-    fi
-popd
+# Install wait-for-it
+apt-get install wait-for-it -y
 
+# Updating etc folder and bbb-daemon if rsync server available.
+wait-for-it ${RSYNC_SERVER}:873 --timeout=10
+if [ $? -eq 0 ]; then
+    pushd ${DAEMON_BASE}/host/rsync
+        echo Synchronizing etc folder
+        ./rsync_beaglebone.sh etc-folder
+        if [ $? -eq 0 ]; then
+            echo "/etc folder is out of sync. Reboot to fix!"
+            # echo Rebooting BBB...
+            # shutdown -r now
+        fi
+
+        # Updating bbb-daemon files
+        echo Synchronizing bbb-daemon files
+        ./rsync_beaglebone.sh bbb-daemon
+        if [ $? -eq 0 ]; then
+            echo New version of bbb-daemon. Making and restarting services...
+            pushd ${DAEMON_BASE}/host
+                echo "New bbb-daemon version! Reinstalling and restarting services..."
+                make install
+            popd
+        fi
+    popd
+else
+    echo "Rsync server not available for bbb-daemon upgrading"
+fi
+
+
+# BBB-function application
 pushd ${DAEMON_BASE}/host/function
     echo Starting BBB Function application
     ./init.sh
