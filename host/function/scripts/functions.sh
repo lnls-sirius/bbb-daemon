@@ -183,7 +183,7 @@ function pru_power_supply {
     popd
     
     echo "Running eth-bridge-pru-serial485 on ports 5000 and 6000"
-    systemctl start bridge-pru-serial485-general.service bridge-pru-serial485-rw.service 
+    systemctl start eth-bridge-pru-serial485.service 
 
     echo "Running FAC PS IOC"
     pushd ${FAC_PATH}/ps-ioc-config-files
