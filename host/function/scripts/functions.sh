@@ -177,7 +177,7 @@ function pru_power_supply {
         overlay_PRUserial485
         # FAC IOC files and constants
         ./rsync_beaglebone.sh ps-ioc-config-files
-        pushd ${FAC_PATH}/ps-ioc-config-files
+        pushd ${DAEMON_BASE}/host/function/scripts/ps-ioc-config-files
             ./sync-fac-files.sh
         popd
     popd
@@ -186,7 +186,7 @@ function pru_power_supply {
     systemctl start eth-bridge-pru-serial485.service 
 
     echo "Running FAC PS IOC"
-    pushd ${FAC_PATH}/ps-ioc-config-files
+    pushd ${DAEMON_BASE}/host/function/scripts/ps-ioc-config-files
         ./run-fac-ps-ioc.sh
     popd
 
