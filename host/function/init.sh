@@ -10,12 +10,12 @@ pushd ${DAEMON_BASE}/host/function/scripts
         # Reset the detected device
         resetDeviceJson
 
-        if [ -f res ]; then
-                rm -rf res
+        if [ -f ${RES_FILE} ]; then
+                rm -rf ${RES_FILE}
         fi
 
-        if [ -f baudrate ]; then
-            rm -rf baudrate
+        if [ -f ${BAUDRATE_FILE} ]; then
+            rm -rf ${BAUDRATE_FILE}
         fi
     }
 
@@ -34,8 +34,8 @@ pushd ${DAEMON_BASE}/host/function/scripts
     ./whoami.py
 
     # Prepare board to its application
-    CONN_DEVICE=$(awk NR==1 res)
-    BAUDRATE=$(awk NR==1 baudrate)
+    CONN_DEVICE=$(awk NR==1 ${RES_FILE})
+    BAUDRATE=$(awk NR==1 ${BAUDRATE_FILE})
 
     if [[ ${CONN_DEVICE} = "${SPIXCONV}" ]]; then
         # Using variable BAUDRATE to store the board address
