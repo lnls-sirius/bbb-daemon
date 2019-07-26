@@ -19,7 +19,7 @@ function startup_loop {
 
 function resetDeviceJson {
     pushd ${DAEMON_BASE}/host/function/scripts/
-        ./whoami.py reset
+        ./whoami.py --reset
         cat /opt/device.json
     popd
 }

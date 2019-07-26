@@ -50,7 +50,7 @@ def counting_pru():
     """
     CountingPRU
     """
-    logger.info('Counting PRU')
+    logger.debug('Counting PRU')
     if PRUserial485_address() != 21 and not os.path.isfile(PORT):
         persist_info(Type.COUNTING_PRU, 0, COUNTING_PRU)
 
@@ -59,7 +59,7 @@ def no_tty():
     """
     NO /dev/ttyUSB0
     """
-    logger.info('No /dev/ttyUSB0')
+    logger.debug('No /dev/ttyUSB0')
     if not os.path.exists(PORT) and PRUserial485_address() == 21:
         persist_info(Type.UNDEFINED, 115200, NOTTY)
 
@@ -68,7 +68,7 @@ def power_supply_pru():
     """
     PRU Power Supply
     """
-    logger.info('PRU Power Supply')
+    logger.debug('PRU Power Supply')
     ps_model_names = {0:"Empty", 1:"FBP", 2:"FBP_DCLINK", 3:"FAC_ACDC", 4:"FAC_DCDC", 5:"FAC_2S_ACDC",
                     6:"FAC_2S_DCDC", 7:"FAC_2P4S_ACDC", 8:"FAC_2P4S_DCDC", 9:"FAP", 10:"FAP_4P", 11:"FAC_DCDC_EMA", 31:"UNDEFINED"}
     if GPIO.input(PIN_FTDI_PRU) == PRU and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
@@ -101,7 +101,7 @@ def thermo_probe():
     """
     Thermo probes
     """
-    logger.info('Thermo probes')
+    logger.debug('Thermo probes')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 19200
         ser = Serial(port=PORT,
@@ -135,7 +135,7 @@ def mbtemp():
     """
     MBTemp
     """
-    logger.info('MBTemp')
+    logger.debug('MBTemp')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 115200
         ser = Serial(PORT, baud, timeout=TIMEOUT)
@@ -154,7 +154,7 @@ def mks9376b():
     """
     MKS 937B
     """
-    logger.info('MKS 937B')
+    logger.debug('MKS 937B')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 115200
         ser = Serial(port=PORT, baudrate=baud, timeout=0.05)
@@ -189,7 +189,7 @@ def agilent4uhv():
     """
     AGILENT 4UHV
     """
-    logger.info('AGILENT 4UHV')
+    logger.debug('AGILENT 4UHV')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 38400
         ser = Serial(port=PORT, baudrate=baud, timeout=.6)
@@ -217,7 +217,7 @@ def spixconv():
     """
     SPIxCONV
     """
-    logger.info('SPIxCONV')
+    logger.debug('SPIxCONV')
 
     if not SPIxCONV:
         return
