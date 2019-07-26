@@ -10,6 +10,9 @@ export SOCAT_DEVICE="/dev/ttyUSB0"
 
 # The whoami.py script will use the following environment variables.
 # Do not use spaces!
+export DEVICE_JSON="/opt/device.json"
+export RES_FILE="/var/tmp/res"
+export BAUDRATE_FILE="/var/tmp/baudrate"
 export CONN_DEVICE="/dev/ttyUSB0"
 export PRU_POWER_SUPPLY='PRU_POWER_SUPPLY'
 export COUNTING_PRU='COUNTING_PRU'
