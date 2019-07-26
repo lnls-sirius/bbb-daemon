@@ -20,7 +20,7 @@ parser.add_argument("--command-port", "-c", nargs='?', default=9877, type=int,
 parser.add_argument('--ping-candidates', '-pc', default='10.0.6.44;10.0.6.48;10.128.255.5',
                     help="Ping IP, separated by a space.", dest='ping_candidates')
 
-parser.add_argument("--configuration-path", "-C", nargs='?', default='/root/bbb-daemon/bbb.bin',
+parser.add_argument("--configuration-path", "-C", nargs='?', default='/var/tmp/bbb.bin',
                     help="The configuration file's location", dest="configuration_path")
 
 parser.add_argument('--log-path', '-l', nargs='?', default='/var/log/bbb-daemon.log',
@@ -31,7 +31,7 @@ args = vars(parser.parse_args())
 PING_CANDIDATES = args['ping_candidates'].split(';')
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)-15s %(message)s',
+                    format='[%(levelname)s] %(asctime)-15s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger()
 

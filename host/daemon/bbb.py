@@ -116,7 +116,7 @@ class BBB:
         try:
             self.read_node_configuration()
         except IOError:
-            self.logger.exception("Configuration file not found. Adopting default values.")
+            self.logger.error("Configuration file not found. Adopting default values.")
 
         name = subprocess.check_output(["hostname"]).decode('utf-8').strip('\n')
         indexes = [i for i, letter in enumerate(name) if letter == "-"]

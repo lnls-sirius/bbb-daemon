@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import time
+import argparse
 
 from sys import argv
 from serial import Serial
@@ -14,47 +15,53 @@ from devices import  mbtemp, counting_pru, no_tty,\
     power_supply_pru, thermo_probe, mks9376b, agilent4uhv, spixconv, reset
 
 logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)-15s %(message)s',
+                    format='[%(levelname)s] %(asctime)-15s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
-
 logger = logging.getLogger('Whoami')
 
 if __name__ == '__main__':
-    if len(argv) == 2 and argv[1] == 'reset':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--reset', action='store_true')
+    args = parser.parse_args()
+
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+
+    if args.reset:
         logger.info('Reseting json file...')
         reset()
-    else:
-        logger.info('Iterating through possible devices ...')
+        exit(0)
+
+    logger.info('Iterating through possible devices ...')
+    try:
+        remove(RES_FILE)
+    except :
+        pass
+    try:
+        remove(BAUDRATE_FILE)
+    except :
+        pass
+
+    # Loop until detect something
+    while not path.isfile(RES_FILE) or not path.isfile(BAUDRATE_FILE):
         try:
-            remove(RES_FILE)
-        except :
-            pass
-        try:
-            remove(BAUDRATE_FILE)
-        except :
-            pass
+            spixconv()
 
-        # Loop until detect something
-        while not path.isfile(RES_FILE) or not path.isfile(BAUDRATE_FILE):
-            try:
+            #@todo: This should be more robust !
+            counting_pru()
 
-                spixconv()
+            power_supply_pru()
+            thermo_probe()
+            mbtemp()
+            agilent4uhv()
+            mks9376b()
+            # no_tty()
+        except SystemExit:
+            exit()
+        except:
+            logger.exception('Something wrong happened !')
 
-                #@todo: This should be more robust !
-                counting_pru()
+        time.sleep(2.)
 
-                power_supply_pru()
-                thermo_probe()
-                mbtemp()
-                agilent4uhv()
-                mks9376b()
-                # no_tty()
-            except SystemExit:
-                exit()
-                #pass
-            except:
-                logger.exception('Something wrong happened !')
-
-            time.sleep(2.)
-
-        logger.info('End of the identification Script ...')
+    logger.info('End of the identification Script ...')

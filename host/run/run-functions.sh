@@ -13,7 +13,7 @@ export FAC_PATH="/home/fac_files/lnls-sirius"
 # Generate the initial device.json
 pushd ${DAEMON_BASE}/host/function/scripts/
     ./Key_dhcp.py   #Verificar se dhcp deve ser configurado
-    ./whoami.py reset
+    ./whoami.py --reset
     cat /opt/device.json
 popd
 
