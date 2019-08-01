@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 pushd /root/bbb-daemon/host/rsync
-    ./rsync_beaglebone.sh mathphys
-    ./rsync_beaglebone.sh dev-packages
-    ./rsync_beaglebone.sh machine-applications
+    # ./rsync_beaglebone.sh mathphys
+    # ./rsync_beaglebone.sh dev-packages
+    # ./rsync_beaglebone.sh machine-applications
     hn=$(hostname)
     # Removing old entries
     sed -i -e '/sirius/d' /etc/hosts
