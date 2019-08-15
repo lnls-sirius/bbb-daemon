@@ -119,12 +119,7 @@ class BBB:
             self.logger.error("Configuration file not found. Adopting default values.")
 
         name = subprocess.check_output(["hostname"]).decode('utf-8').strip('\n')
-        indexes = [i for i, letter in enumerate(name) if letter == "-"]
-        name = list(name)
-        if len(indexes) > 2:
-            name[indexes[1]] = ":"
-
-        self.node.name = "".join(name)
+        self.node.name = name.replace('--',':')
 
     def read_node_configuration(self):
         """
