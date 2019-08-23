@@ -3,7 +3,7 @@ import socket
 import os
 import time
 import sys
-sys.path.append(os.path.abspath(os.pardir))
+sys.path.append(os.path.abspath("../.."))
 from common.network.utils import NetUtils
 from common.entity.entities import Command
 
