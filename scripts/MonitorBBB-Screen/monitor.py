@@ -15,6 +15,14 @@ qtCreatorFile = "redis.ui"
 qtCreator_changefile = "change_bbb.ui"
 
 
+room_names_ip = {"All":"", "TL":"21", "Connect":"22", "Fontes":"23", "RF":"24"}
+for i in range(20):
+    room_names_ip["IA-{:02d}".format(i+1)] = "{:02d}".format(i+1)
+
+print(room_names_ip)
+
+
+
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtCreatorFile)
 Ui_MainWindow_change, QtBaseClass_change = uic.loadUiType(qtCreator_changefile)
 
@@ -197,7 +205,7 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
             self.items_state[item] = False
 
         # Get connected nodes
-        self.items = r.keys(pattern = "Ping:Node:10.128.1{}*".format(self.room_number.currentText()))
+        self.items = r.keys(pattern = "Ping:Node:10.128.1{}*".format(room_names_ip[self.room_number.currentText()]))
         for item in self.items:
             self.items_info[item] = json.loads(r.get(item).decode().replace("'m"," am").replace("'","\""))
             self.items_state[item] = True
@@ -206,7 +214,7 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
             item_ip = item.split(b'Node:')[1].decode()
             item_ip_name = item_ip + " - {}".format(self.items_info[item]['name'])
 
-            if (self.find_value.text() == "" or self.find_value.text() in item_ip_name) and "10.128.1{}".format(self.room_number.currentText()) in item_ip:
+            if (self.find_value.text() == "" or self.find_value.text() in item_ip_name) and "10.128.1{}".format(room_names_ip[self.room_number.currentText()]) in item_ip:
                 i = QtWidgets.QListWidgetItem(item_ip_name)
                 if self.items_state[item] == False and self.disconnected_checkBox.isChecked():
                     i.setBackground(QtGui.QColor('red'))
@@ -229,7 +237,7 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
             if qlistitem:
                 item_index = self.list.row(qlistitem[0])
 
-            if (not "10.128.1{}".format(self.room_number.currentText()) in item_ip) or \
+            if (not "10.128.1{}".format(room_names_ip[self.room_number.currentText()]) in item_ip) or \
                (not bbb in self.items_info.keys()) or \
                (self.find_value.text() != "" and not self.find_value.text() in item_ip_name):
                 self.list.takeItem(item_index)
@@ -244,8 +252,11 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
                 else:
                     self.list.item(item_index).setBackground(QtGui.QColor('white'))
 
-
         self.list.sortItems()
+
+        self.ConnectedNumberLabel.setText("Total nodes: {}".format(len(self.items_info.keys())))
+        self.ListedNumberLabel.setText("Listed: {}".format(self.list.count()))
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
