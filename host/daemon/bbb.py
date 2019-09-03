@@ -94,6 +94,7 @@ class BBB:
                 hostnameFile.write(new_hostname)
                 hostnameFile.close()
             os.system("hostname {}".format(new_hostname))
+            self.node.name = new_hostname
 
     def update_ip_address(self, dhcp_manual, new_ip_address="0.0.0.0", new_mask="0.0.0.0", new_gateway="0.0.0.0"):
         """
