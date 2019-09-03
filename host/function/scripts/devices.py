@@ -83,7 +83,7 @@ def power_supply_pru():
             if len(res) == 7 and res[1] == "\x11":
                 devices.append(ps_addr)
                 ps_model = ps_model_names[ord(res[5])%32]    # PS model: res[5] (bits 4..0)
-                time.sleep(0.1)
+            time.sleep(0.1)
         PRUserial485_close()
         persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY, 'PS model {}. Connected: {}'.format(ps_model, devices))
 
