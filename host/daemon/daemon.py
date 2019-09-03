@@ -5,6 +5,7 @@ import socket
 import threading
 import time
 import msgpack
+import os
 
 from host.daemon.bbb import BBB
 from common.entity.definition import PING_INTERVAL
@@ -70,6 +71,7 @@ class Daemon():
                 ping_socket.close()
                 time.sleep(1)
                 ping_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                os.system("systemctl restart bbb-daemon")
 
         ping_socket.close()
 
@@ -119,8 +121,10 @@ class Daemon():
                     new_mask = NetUtils.recv_object(connection)
                     new_gateway = NetUtils.recv_object(connection)
                     self.bbb.update_ip_address(type, new_ip, new_mask, new_gateway)
+                    os.system("systemctl restart bbb-daemon")
                 elif type == 'dhcp':
                     self.bbb.update_ip_address(type)
+                    os.system("systemctl restart bbb-daemon")
 
             command_socket.close()
 
