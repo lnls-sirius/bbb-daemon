@@ -96,12 +96,12 @@ class BBB:
             os.system("hostname {}".format(new_hostname))
             self.node.name = new_hostname
 
-    def update_ip_address(self, dhcp_manual, new_ip_address="0.0.0.0", new_mask="0.0.0.0", new_gateway="0.0.0.0"):
+    def update_ip_address(self, dhcp_manual, new_ip_address="", new_mask="", new_gateway=""):
         """
         Updates the host with a new ip address
         """
         if self.node.ip_address != new_ip_address:
-            if new_ip_address != "0.0.0.0":
+            if new_ip_address != "":
                 self.logger.info("Updating current ip address from {} to {}, mask {}, default gateway {}.".format(
                     self.node.ip_address, new_ip_address, new_mask, new_gateway))
             else:
@@ -153,7 +153,7 @@ class BBB:
         return ipaddress.IPv4Address(address_line[0:address_line.index('/')]), \
                ipaddress.IPv4Network(address_line, strict=False)
 
-    def change_ip_address(self, dhcp_manual, new_ip_address="0.0.0.0", new_mask="0.0.0.0", new_gateway="0.0.0.0"):
+    def change_ip_address(self, dhcp_manual, new_ip_address="", new_mask="", new_gateway=""):
         """
         Execute the connmanclt tool to change the host' IP address.
         :param dchp_manual: either if its a DHCP ("dhcp") ou STATIC IP ("manual")
@@ -165,7 +165,7 @@ class BBB:
         service = self.get_connman_service_name()
         self.logger.debug("Service for interface {} is {}.".format(self.interface_name, service))
 
-        if new_ip_address != "0.0.0.0":
+        if new_ip_address != "":
             self.logger.info('Changing current IP address from {} to {}'.format(self.get_ip_address()[0], new_ip_address))
             if new_gateway is None:
                 new_gateway = Sector.get_default_gateway_of_address(new_ip_address)
@@ -177,6 +177,7 @@ class BBB:
                                                             new_gateway)],
             shell=True)
 
+        time.sleep(2)
         self.logger.debug('IP address after update is {}'.format(self.get_ip_address()[0]))
 
 
