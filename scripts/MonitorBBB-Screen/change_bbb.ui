@@ -78,8 +78,8 @@
    </property>
    <property name="font">
     <font>
-     <family>Trebuchet MS</family>
-     <pointsize>20</pointsize>
+     <family>Ubuntu</family>
+     <pointsize>14</pointsize>
      <weight>75</weight>
      <bold>true</bold>
     </font>
@@ -140,7 +140,7 @@
     <rect>
      <x>99</x>
      <y>260</y>
-     <width>48</width>
+     <width>61</width>
      <height>26</height>
     </rect>
    </property>

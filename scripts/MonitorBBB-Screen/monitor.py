@@ -11,21 +11,36 @@ from common.network.utils import NetUtils
 from common.entity.entities import Command
 
 r = redis.StrictRedis(host = "10.0.38.59", port = 6379, db = 0)
+#r = redis.StrictRedis(host = "10.128.255.4", port = 6379, db = 0)
 qtCreatorFile = "redis.ui"
 qtCreator_changefile = "change_bbb.ui"
-
+qtCreator_infofile = "info_bbb.ui"
 
 room_names_ip = {"All":"", "TL":"21", "Connect":"22", "Fontes":"23", "RF":"24"}
 for i in range(20):
     room_names_ip["IA-{:02d}".format(i+1)] = "{:02d}".format(i+1)
 
-print(room_names_ip)
-
-
 
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtCreatorFile)
 Ui_MainWindow_change, QtBaseClass_change = uic.loadUiType(qtCreator_changefile)
+Ui_MainWindow_info, QtBaseClass_info = uic.loadUiType(qtCreator_infofile)
 
+
+class InfoBBB(QtWidgets.QMainWindow, Ui_MainWindow_info):
+    def __init__(self, bbb_name="", bbb_info=""):
+        QtWidgets.QMainWindow.__init__(self)
+        Ui_MainWindow_info.__init__(self)
+        self.setupUi(self)
+
+        self.title.setText(bbb_name)
+        self.textInfo.setText("{}".format(bbb_info))
+
+        self.closeButton.clicked.connect(self.closeWindow)
+
+
+
+    def closeWindow(self):
+        self.close()
 
 
 class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
@@ -61,34 +76,34 @@ class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
             print("Yes")
             if not self.keepHostname.isChecked():
                 if self.newHostname.text() != "" and self.newHostname.text() != self.currentHostname_value:
-#                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#                    s.connect((self.currentIP_value, 9877))
-#                    NetUtils.send_command(s, Command.SET_HOSTNAME)
-#                    NetUtils.send_object(s, self.newHostname.text())
-#                    s.close()
-#                    time.sleep(1)
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.connect((self.currentIP_value, 9877))
+                    NetUtils.send_command(s, Command.SET_HOSTNAME)
+                    NetUtils.send_object(s, self.newHostname.text())
+                    s.close()
+                    time.sleep(1)
                     print("HN updated")
 
             if not self.keepIP.isChecked():
                 if "{}".format(self.suffixIP.value()) != self.suffixIP_value:
-#                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#                    s.connect((self.currentIP_value, 9877))
-#                    NetUtils.send_command(s, Command.SET_IP)
-#                    NetUtils.send_object(s, self.modeIP.currentText().lower())
-#                    if self.modeIP.currentText() == "MANUAL":
-#                        NetUtils.send_object(s, self.prefixIP_value + "".format(self.suffixIP.value()))
-#                        NetUtils.send_object(s, "255.255.255.0")
-#                        NetUtils.send_object(s, prefixIP + "1")
-#                    s.close()
-#                    time.sleep(1)
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.connect((self.currentIP_value, 9877))
+                    NetUtils.send_command(s, Command.SET_IP)
+                    NetUtils.send_object(s, self.modeIP.currentText().lower())
+                    if self.modeIP.currentText() == "MANUAL":
+                        NetUtils.send_object(s, self.prefixIP_value + "{}".format(self.suffixIP.value()))
+                        NetUtils.send_object(s, "255.255.255.0")
+                        NetUtils.send_object(s, self.prefixIP_value + "1")
+                    s.close()
+                    time.sleep(1)
                     print("IP updated")
 
             elif (not self.keepHostname.isChecked()) and self.newHostname.text() != self.currentHostname_value:
-#                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#                s.connect((self.currentIP_value, 9877))
-#                NetUtils.send_command(s, Command.REBOOT)
-#                s.close()
-#                time.sleep(1)
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((self.currentIP_value, 9877))
+                NetUtils.send_command(s, Command.REBOOT)
+                s.close()
+                time.sleep(1)
                 print("Reboot")
 
 
@@ -142,6 +157,7 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
         self.deleteButton.clicked.connect(self.DeleteButton)
         self.rebootButton.clicked.connect(self.RebootButton)
         self.changeButton.clicked.connect(self.ChangeButton)
+        self.infoButton.clicked.connect(self.InfoButton)
 
         self.list.setSortingEnabled(True)
         self.list.itemSelectionChanged.connect(self.DisplayButtons)
@@ -170,14 +186,20 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
             host_ip = item.text().split(" ")[0]
             if(self.items_state["Ping:Node:{}".format(host_ip).encode()] == True):
                 print(host_ip)
-#                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#                s.connect((host_ip, 9877))
-#                NetUtils.send_command(s, Command.REBOOT)
-#                s.close()
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((host_ip, 9877))
+                NetUtils.send_command(s, Command.REBOOT)
+                s.close()
                 time.sleep(0.1)
 
     def ChangeButton(self):
         self.window = ChangeBBB(bbb_info = self.list.selectedItems()[0].text())
+        self.window.show()
+
+    def InfoButton(self):
+        bbb = self.list.selectedItems()[0].text()
+        ip = bbb.split(" ")[0]
+        self.window = InfoBBB(bbb_name = bbb, bbb_info = self.items_info[("Ping:Node:"+ip).encode()])
         self.window.show()
 
 
@@ -190,12 +212,15 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
             self.deleteButton.setEnabled(True)
             if len(itemsSelected) == 1:
                 self.changeButton.setEnabled(True)
+                self.infoButton.setEnabled(True)
             else:
                 self.changeButton.setEnabled(False)
+                self.infoButton.setEnabled(False)
         else:
             self.rebootButton.setEnabled(False)
             self.deleteButton.setEnabled(False)
             self.changeButton.setEnabled(False)
+            self.infoButton.setEnabled(False)
 
 
 
@@ -207,8 +232,10 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
         # Get connected nodes
         self.items = r.keys(pattern = "Ping:Node:10.128.1{}*".format(room_names_ip[self.room_number.currentText()]))
         for item in self.items:
-            self.items_info[item] = json.loads(r.get(item).decode().replace("'m"," am").replace("'","\""))
-            self.items_state[item] = True
+            info = r.get(item)
+            if info is not None:
+                self.items_info[item] = json.loads(info.decode().replace("'m"," am").replace("'","\""))
+                self.items_state[item] = True
 
         for item in self.items_info.keys():
             item_ip = item.split(b'Node:')[1].decode()
