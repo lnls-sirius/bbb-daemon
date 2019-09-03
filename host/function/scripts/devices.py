@@ -44,7 +44,7 @@ def reset():
     """
     Reset device.json content.
     """
-    persist_info(0, 0, 'RESET', 'Still trying to find out where i\'m connected...')
+    persist_info(0, 0, 'RESET', 'Searching for connected equipments.')
 
 def counting_pru():
     """
