@@ -73,7 +73,6 @@ class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
                                             "Are you sure?",
                                             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         if confirmation == QtWidgets.QMessageBox.Yes:
-            print("Yes")
             if not self.keepHostname.isChecked():
                 if self.newHostname.text() != "" and self.newHostname.text() != self.currentHostname_value:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -85,7 +84,7 @@ class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
                     print("HN updated")
 
             if not self.keepIP.isChecked():
-                if "{}".format(self.suffixIP.value()) != self.suffixIP_value:
+                if "{}".format(self.suffixIP.value()) != self.suffixIP_value or self.modeIP.currentText() == "DHCP":
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.connect((self.currentIP_value, 9877))
                     NetUtils.send_command(s, Command.SET_IP)
@@ -98,13 +97,13 @@ class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
                     time.sleep(1)
                     print("IP updated")
 
-            elif (not self.keepHostname.isChecked()) and self.newHostname.text() != self.currentHostname_value:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((self.currentIP_value, 9877))
-                NetUtils.send_command(s, Command.REBOOT)
-                s.close()
-                time.sleep(1)
-                print("Reboot")
+#            elif (not self.keepHostname.isChecked()) and self.newHostname.text() != self.currentHostname_value:
+#                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#                s.connect((self.currentIP_value, 9877))
+#                NetUtils.send_command(s, Command.REBOOT)
+#                s.close()
+#                time.sleep(1)
+#                print("Reboot")
 
 
             self.close()
@@ -261,14 +260,20 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
             item_ip = bbb.split(b'Node:')[1].decode()
             item_ip_name = item_ip + " - {}".format(self.items_info[bbb]['name'])
             qlistitem = self.list.findItems(bbb.split(b'Node:')[1].decode(), QtCore.Qt.MatchStartsWith)
-            if qlistitem:
+            if len(qlistitem) > 1:
+                qlistitem.reverse()
+                for i in qlistitem:
+                    self.list.takeItem(self.list.row(i))
+            elif qlistitem:
                 item_index = self.list.row(qlistitem[0])
 
+            # Retira elemento se IP nao esta na faixa selecionada
             if (not "10.128.1{}".format(room_names_ip[self.room_number.currentText()]) in item_ip) or \
                (not bbb in self.items_info.keys()) or \
                (self.find_value.text() != "" and not self.find_value.text() in item_ip_name):
                 self.list.takeItem(item_index)
-
+ 
+            # Retira elemento de acordo com checkbox - coenctado/nao conectado
             if (self.items_state[bbb] == True and not self.connected_checkBox.isChecked()) or \
                (self.items_state[bbb] == False and not self.disconnected_checkBox.isChecked()):
                 self.list.takeItem(item_index)
