@@ -16,7 +16,7 @@ class Command:
     """
 
     PING, REBOOT, EXIT, END, TYPE, APPEND_TYPE, REMOVE_TYPE, NODE, APPEND_NODE, REMOVE_NODE, SWITCH, \
-    GET_TYPES, GET_UNREG_NODES_SECTOR, GET_REG_NODES_SECTOR, GET_REG_NODE_BY_IP, OK, FAILURE, SET_IP, SET_HOSTNAME= range(19)
+    GET_TYPES, GET_UNREG_NODES_SECTOR, GET_REG_NODES_SECTOR, GET_REG_NODE_BY_IP, OK, FAILURE, SET_IP, SET_HOSTNAME, SET_NAMESERVERS= range(20)
 
     @staticmethod
     def command_name(command):
@@ -38,7 +38,7 @@ class Command:
         """
         return command not in [Command.GET_TYPES, Command.GET_UNREG_NODES_SECTOR,
                                Command.GET_REG_NODES_SECTOR, Command.GET_REG_NODE_BY_IP,
-                               Command.OK, Command.FAILURE, Command.SET_IP,Command.SET_HOSTNAME]
+                               Command.OK, Command.FAILURE, Command.SET_IP,Command.SET_HOSTNAME, Command.SET_NAMESERVERS]
 
 
 class SectorNotFoundError(Exception):
