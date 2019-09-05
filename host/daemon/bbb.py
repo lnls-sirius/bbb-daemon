@@ -161,7 +161,7 @@ class BBB:
         :param net_address: new sub-network address. An ipaddress.IPv4Network object.
         :param default_gateway_address: the new default gateway
         :raise TypeError: new_ip_address or net_address are None or are neither ipaddress nor string objects.
-        """ 
+        """
         service = self.get_connman_service_name()
         self.logger.debug("Service for interface {} is {}.".format(self.interface_name, service))
 
@@ -180,6 +180,10 @@ class BBB:
         time.sleep(2)
         self.logger.debug('IP address after update is {}'.format(self.get_ip_address()[0]))
 
+    def update_nameservers(self, nameserver_1 = "", nameserver_2 = ""):
+        service = self.get_connman_service_name()
+        self.logger.info('Changing DSN server to {} and {}'.format(nameserver_1,nameserver_2))
+        subprocess.check_output(['connmanctl config {} --nameservers {} {}'.format(service, nameserver_1,nameserver_2)], shell = True)
 
     def get_connman_service_name(self):
         """
