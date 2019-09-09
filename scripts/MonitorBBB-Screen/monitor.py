@@ -21,7 +21,6 @@ room_names_ip = {"All":"", "TL":"21", "Connect":"22", "Fontes":"23", "RF":"24"}
 for i in range(20):
     room_names_ip["IA-{:02d}".format(i+1)] = "{:02d}".format(i+1)
 
-
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtCreatorFile)
 Ui_MainWindow_change, QtBaseClass_change = uic.loadUiType(qtCreator_changefile)
 Ui_MainWindow_info, QtBaseClass_info = uic.loadUiType(qtCreator_infofile)
