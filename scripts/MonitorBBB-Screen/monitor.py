@@ -16,6 +16,7 @@ qtCreatorFile = "redis.ui"
 qtCreator_changefile = "change_bbb.ui"
 qtCreator_infofile = "info_bbb.ui"
 
+
 room_names_ip = {"All":"", "TL":"21", "Connect":"22", "Fontes":"23", "RF":"24"}
 for i in range(20):
     room_names_ip["IA-{:02d}".format(i+1)] = "{:02d}".format(i+1)
