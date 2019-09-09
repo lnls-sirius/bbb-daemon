@@ -10,8 +10,8 @@ sys.path.append(os.path.abspath("../.."))
 from common.network.utils import NetUtils
 from common.entity.entities import Command
 
-r = redis.StrictRedis(host = "10.0.38.59", port = 6379, db = 0)
-#r = redis.StrictRedis(host = "10.128.255.4", port = 6379, db = 0)
+#r = redis.StrictRedis(host = "10.0.38.59", port = 6379, db = 0)
+r = redis.StrictRedis(host = "10.128.255.4", port = 6379, db = 0)
 qtCreatorFile = "redis.ui"
 qtCreator_changefile = "change_bbb.ui"
 qtCreator_infofile = "info_bbb.ui"
@@ -85,6 +85,15 @@ class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
 
             if not self.keepIP.isChecked():
                 if "{}".format(self.suffixIP.value()) != self.suffixIP_value or self.modeIP.currentText() == "DHCP":
+                   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.connect((self.currentIP_value, 9877))
+                    NetUtils.send_command(s, Command.SET_NAMESERVERS)
+                    NetUtils.send_object(s, "10.0.0.71")
+                    NetUtils.send_object(s, "10.0.0.71")
+                    s.close()
+
+                    time.sleep(1)
+
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.connect((self.currentIP_value, 9877))
                     NetUtils.send_command(s, Command.SET_IP)
@@ -96,14 +105,6 @@ class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
                     s.close()
                     time.sleep(1)
                     print("IP updated")
-
-#            elif (not self.keepHostname.isChecked()) and self.newHostname.text() != self.currentHostname_value:
-#                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#                s.connect((self.currentIP_value, 9877))
-#                NetUtils.send_command(s, Command.REBOOT)
-#                s.close()
-#                time.sleep(1)
-#                print("Reboot")
 
 
             self.close()
