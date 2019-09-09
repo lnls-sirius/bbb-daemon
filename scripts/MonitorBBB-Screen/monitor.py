@@ -89,7 +89,7 @@ class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
                     s.connect((self.currentIP_value, 9877))
                     NetUtils.send_command(s, Command.SET_NAMESERVERS)
                     NetUtils.send_object(s, "10.0.0.71")
-                    NetUtils.send_object(s, "10.0.0.71")
+                    NetUtils.send_object(s, "10.0.0.72")
                     s.close()
 
                     time.sleep(1)
