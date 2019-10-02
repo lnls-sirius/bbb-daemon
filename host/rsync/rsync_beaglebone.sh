@@ -95,7 +95,7 @@ if [ ! -z ${PROJECT} ]; then
                 # -----------------------------------------------------------------
                 # Project files - Also build libraries
                 else
-                    rsync -a --delete-after $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT > /tmp/rsync.log;
+                    rsync -a --exclude '*.info' --delete-after $RSYNC_SERVER::$PROJECT $RSYNC_LOCAL/$PROJECT > /tmp/rsync.log;
                 fi
                 if [ $? -eq 0 ]; then
                     # If project is listed below, build libraries as well

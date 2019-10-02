@@ -181,9 +181,9 @@ function pru_power_supply {
             ./sync-fac-files.sh
         popd
     popd
-    
+
     echo "Running eth-bridge-pru-serial485 on ports 5000 and 6000"
-    systemctl start eth-bridge-pru-serial485.service 
+    systemctl start eth-bridge-pru-serial485.service
 
     echo "Running FAC PS IOC"
     pushd ${DAEMON_BASE}/host/function/scripts/ps-ioc-config-files
@@ -215,8 +215,8 @@ function mks {
         ./rsync_beaglebone.sh pru-serial485
     popd
     overlay_PRUserial485
-
-    ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -p 5002 -b 115200 -t 0.15 --debug --serial-buffer-timeout 0.100
+    socat TCP-LISTEN:5002,reuseaddr,fork,nodelay FILE:/dev/ttyUSB0,b115200,rawer
+    # ${DAEMON_BASE}/host/function/scripts/tcpSerial.py -p 5002 -b 115200 -t 0.15 --debug --serial-buffer-timeout 0.100
 }
 
 function uhv {
