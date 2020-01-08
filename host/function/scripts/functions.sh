@@ -237,7 +237,7 @@ function mbtemp {
     overlay_PRUserial485
 
     echo  "Starting socat with:"
-    socat TCP-LISTEN:5003,reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE},rawer
+    socat TCP-LISTEN:5003,reuseaddr,fork,nodelay,range=${SERVER_IP_ADDR} FILE:${SOCAT_DEVICE},b${BAUDRATE}
 }
 
 function socat_devices {
