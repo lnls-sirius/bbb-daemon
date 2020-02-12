@@ -16,10 +16,10 @@ qtCreatorFile = "redis.ui"
 qtCreator_changefile = "change_bbb.ui"
 qtCreator_infofile = "info_bbb.ui"
 
+
 room_names_ip = {"All":"", "TL":"21", "Connect":"22", "Fontes":"23", "RF":"24"}
 for i in range(20):
     room_names_ip["IA-{:02d}".format(i+1)] = "{:02d}".format(i+1)
-
 
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtCreatorFile)
 Ui_MainWindow_change, QtBaseClass_change = uic.loadUiType(qtCreator_changefile)
@@ -85,6 +85,15 @@ class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
                 if "{}".format(self.suffixIP.value()) != self.suffixIP_value or self.modeIP.currentText() == "DHCP":
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.connect((self.currentIP_value, 9877))
+                    NetUtils.send_command(s, Command.SET_NAMESERVERS)
+                    NetUtils.send_object(s, "10.0.0.71")
+                    NetUtils.send_object(s, "10.0.0.71")
+                    s.close()
+
+                    time.sleep(1)
+
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.connect((self.currentIP_value, 9877))
                     NetUtils.send_command(s, Command.SET_IP)
                     NetUtils.send_object(s, self.modeIP.currentText().lower())
                     if self.modeIP.currentText() == "MANUAL":
@@ -94,14 +103,6 @@ class ChangeBBB(QtWidgets.QMainWindow, Ui_MainWindow_change):
                     s.close()
                     time.sleep(1)
                     print("IP updated")
-
-#            elif (not self.keepHostname.isChecked()) and self.newHostname.text() != self.currentHostname_value:
-#                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#                s.connect((self.currentIP_value, 9877))
-#                NetUtils.send_command(s, Command.REBOOT)
-#                s.close()
-#                time.sleep(1)
-#                print("Reboot")
 
 
             self.close()
