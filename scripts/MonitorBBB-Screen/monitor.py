@@ -37,8 +37,6 @@ class InfoBBB(QtWidgets.QMainWindow, Ui_MainWindow_info):
 
         self.closeButton.clicked.connect(self.closeWindow)
 
-
-
     def closeWindow(self):
         self.close()
 
@@ -181,16 +179,19 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
             self.list.takeItem(item_index)
 
     def RebootButton(self):
-        itemsSelected = self.list.selectedItems()
-        for item in itemsSelected:
-            host_ip = item.text().split(" ")[0]
-            if(self.items_state["Ping:Node:{}".format(host_ip).encode()] == True):
-                print(host_ip)
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((host_ip, 9877))
-                NetUtils.send_command(s, Command.REBOOT)
-                s.close()
-                time.sleep(0.1)
+        confirmation = QtWidgets.QMessageBox.question(self, 'Confirmation',
+                                            "Are you sure about rebooting those nodes?",
+                                            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        if confirmation == QtWidgets.QMessageBox.Yes:
+            itemsSelected = self.list.selectedItems()
+            for item in itemsSelected:
+                host_ip = item.text().split(" ")[0]
+                if(self.items_state["Ping:Node:{}".format(host_ip).encode()] == True):
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.connect((host_ip, 9877))
+                    NetUtils.send_command(s, Command.REBOOT)
+                    s.close()
+                    time.sleep(0.1)
 
     def ChangeButton(self):
         self.window = ChangeBBB(bbb_info = self.list.selectedItems()[0].text())
@@ -281,9 +282,14 @@ class MonitoringBBB(QtWidgets.QMainWindow, Ui_MainWindow):
 
             else:
                 if self.items_state[bbb] == False:
-                    self.list.item(item_index).setBackground(QtGui.QColor('red'))
+                    backcolor = 'red'
                 else:
-                    self.list.item(item_index).setBackground(QtGui.QColor('white'))
+                    backcolor = 'white'
+
+                try:
+                    self.list.item(item_index).setBackground(QtGui.QColor(backcolor))
+                except:
+                    pass
 
         self.list.sortItems()
 
