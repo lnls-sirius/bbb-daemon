@@ -10,8 +10,8 @@ sys.path.append(os.path.abspath("../.."))
 from common.network.utils import NetUtils
 from common.entity.entities import Command
 
-r = redis.StrictRedis(host = "10.0.38.59", port = 6379, db = 0)
-#r = redis.StrictRedis(host = "10.128.255.4", port = 6379, db = 0)
+#r = redis.StrictRedis(host = "10.0.38.59", port = 6379, db = 0)
+r = redis.StrictRedis(host = "10.128.255.4", port = 6379, db = 0)
 qtCreatorFile = "redis.ui"
 qtCreator_changefile = "change_bbb.ui"
 qtCreator_infofile = "info_bbb.ui"
