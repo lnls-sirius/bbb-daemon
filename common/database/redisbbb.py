@@ -19,9 +19,9 @@ class RedisDatabase:
     def is_available(self, retries = 3, delay = 10):
         for _i in range(retries):
             try:
-                sys.stdout.write("({} out of {}). Verify if server is avalable...\n".format(_i+1, retries))
+                sys.stdout.write("({} out of {}). Verify if server is available...\n".format(_i+1, retries))
                 sys.stdout.flush()
-                self.db.client()
+                self.db.ping()
                 return True
             except:
                 sleep(delay)
@@ -50,7 +50,7 @@ class RedisDatabase:
 
 
     def getJSON(self):
-        return self.db.get(REDIS_JSON_KEY)
+        return self.db.get(REDIS_JSON_KEY).decode().replace("\'","\"")
 
 
     def setJSON(self, info):
@@ -58,7 +58,7 @@ class RedisDatabase:
 
 
     def getNodeController(self):
-        return self.db.get(REDIS_NODE_CONTROLLER_KEY)
+        return self.db.get(REDIS_NODE_CONTROLLER_KEY).decode()
 
 
     def setNodeController(self, node_controller):
@@ -69,7 +69,7 @@ class RedisDatabase:
 
 
     def getMasterIP(self):
-        return self.db.get(REDIS_MASTER_IP_KEY)
+        return self.db.get(REDIS_MASTER_IP_KEY).decode()
 
 
     def setMasterIP(self, ip):
@@ -77,7 +77,7 @@ class RedisDatabase:
 
 
     def getSlaveIP(self):
-        return self.db.get(REDIS_SLAVE_IP_KEY)
+        return self.db.get(REDIS_SLAVE_IP_KEY).decode()
 
 
     def setSlaveIP(self, ip):

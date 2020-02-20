@@ -32,7 +32,7 @@ if __name__ == '__main__':
     master_ip = '10.0.6.51'
 
     # Connect to local Redis DB (SLAVE)
-    slave_db = RedisDatabase(slave_ip, 6379)
+    slave_db = RedisDatabase("localhost", 6379)
     slave_db.setMasterIP(master_ip)
     slave_db.setSlaveIP(slave_ip)
 
@@ -45,30 +45,13 @@ if __name__ == '__main__':
         continue
 
 
+    # MASTER CONTROLLING
+    if (master_db.getNodeController().upper() == "MASTER"):
+        slave_db.setNodeController("MASTER")
 
+        logger.info('Master detected and controlling serial network! Get infos...')
+        print(master_db.getJSON())
+        info = json.loads(master_db.getJSON())
 
-
-
-
-
-
-
-
-
-
-        # SLAVE AVAILABLE, BUT NOT CONTROLLING
-        print(slave_db.getNodeController().decode())
-        if (slave_db.getNodeController().decode().upper() != "SLAVE"):
-            master_db.setNodeController("MASTER")
-            slave_db.setNodeController("MASTER")
-            logger.info('Slave connected but not configured. Proceed with equipment identification...')
-
-        # SLAVE CONTROLLING! GET INFO FROM IT
-        else:
-            master_db.setNodeController("SLAVE")
-            info = json.loads(slave_db.getJSON())
-            logger.info('Got info from BBB Slave, persisting to file...')
-            persist_info(info['device'], info['baudrate'], info['details'], info['time'])
-
-    else:
-        logger.info('No BBB Slave detected. Proceed with equipment identification...')
+        logger.info('Got info from BBB Master, persisting to file...')
+        persist_info(info['device'], info['baudrate'], info['details'], info['time'])
