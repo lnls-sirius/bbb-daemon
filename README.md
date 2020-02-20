@@ -1,3 +1,5 @@
+BRANCH UNDER DEVELOPMENT
+
 # BeagleBone Black Monitoring Services
 
 Given the fact that the Controls Group will have more than 600 BeagleBone hosts acting as IOC controllers in Sirius, a way of monitoring the ones that will eventually show some fault is vey important. We propose therefore a client-server archicteture in which each host pings a server every 1 second to signalize it is alive. The server holds all the information about all hosts that are currently pinging it and provides a TCP socket interface to manage and monitor them. Additionally, a Qt5 GUI is made available to manage the hosts.
