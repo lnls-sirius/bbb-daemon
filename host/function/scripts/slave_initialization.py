@@ -33,6 +33,7 @@ if __name__ == '__main__':
 
     # Connect to local Redis DB (SLAVE)
     slave_db = RedisDatabase("localhost", 6379)
+    slave_db.setThisBBB("SLAVE")
     slave_db.setMasterIP(master_ip)
     slave_db.setSlaveIP(slave_ip)
 
@@ -50,8 +51,8 @@ if __name__ == '__main__':
         slave_db.setNodeController("MASTER")
 
         logger.info('Master detected and controlling serial network! Get infos...')
-        print(master_db.getJSON())
         info = json.loads(master_db.getJSON())
 
         logger.info('Got info from BBB Master, persisting to file...')
+        slave_db.setConfigFrom("MASTER")
         persist_info(info['device'], info['baudrate'], info['details'], info['time'])
