@@ -6,6 +6,7 @@ REDIS_JSON_KEY = 'JSON_FILE'
 REDIS_NODE_CONTROLLER_KEY = 'NODE_CONTROLLER'
 REDIS_MASTER_IP_KEY = "MASTER_IP"
 REDIS_SLAVE_IP_KEY = "SLAVE_IP"
+REDIS_BBB_MODE_KEY = "BBB_MODE"
 
 NODE_CONTROLLERS = ["MASTER", "SLAVE"]
 
@@ -82,3 +83,14 @@ class RedisDatabase:
 
     def setSlaveIP(self, ip):
         return self.db.set(REDIS_SLAVE_IP_KEY, ip)
+
+
+    def getThisBBB(self):
+        return self.db.get(REDIS_BBB_MODE_KEY).decode()
+
+
+    def setThisBBB(self, mode):
+        if mode.upper() in NODE_CONTROLLERS:
+            return self.db.set(REDIS_BBB_MODE_KEY, mode)
+        else:
+            return "Invalid controller"
