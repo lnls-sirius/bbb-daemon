@@ -7,6 +7,7 @@ REDIS_NODE_CONTROLLER_KEY = 'NODE_CONTROLLER'
 REDIS_MASTER_IP_KEY = "MASTER_IP"
 REDIS_SLAVE_IP_KEY = "SLAVE_IP"
 REDIS_BBB_MODE_KEY = "BBB_MODE"
+REDIS_BBB_CONFIG_FROM_KEY = "BBB_CONFIG_FROM"
 
 NODE_CONTROLLERS = ["MASTER", "SLAVE"]
 
@@ -92,5 +93,16 @@ class RedisDatabase:
     def setThisBBB(self, mode):
         if mode.upper() in NODE_CONTROLLERS:
             return self.db.set(REDIS_BBB_MODE_KEY, mode)
+        else:
+            return "Invalid controller"
+
+
+    def getConfigFrom(self):
+        return self.db.get(REDIS_BBB_CONFIG_FROM_KEY).decode()
+
+
+    def setConfigFrom(self, node):
+        if node.upper() in NODE_CONTROLLERS:
+            return self.db.set(REDIS_BBB_CONFIG_FROM_KEY, node)
         else:
             return "Invalid controller"

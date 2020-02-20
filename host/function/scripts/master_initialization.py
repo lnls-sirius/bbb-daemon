@@ -30,6 +30,7 @@ if __name__ == '__main__':
 
     # Connect to local Redis DB (MASTER)
     master_db = RedisDatabase("localhost", 6379)
+    master_db.setThisBBB("MASTER")
     master_db.setMasterIP(master_ip)
     master_db.setSlaveIP(slave_ip)
 
@@ -40,9 +41,9 @@ if __name__ == '__main__':
     # If slave is up, verify its information. If not, proceed with equipment detection.
     if(slave_db.is_available(delay = 5)):
         # SLAVE AVAILABLE, BUT NOT CONTROLLING
-        if (slave_db.getNodeController().decode().upper() != "SLAVE"):
+        if (slave_db.getNodeController().upper() != "SLAVE"):
             master_db.setNodeController("MASTER")
-            slave_db.setNodeController("MASTER")
+            master_db.setConfigFrom("MASTER")
             logger.info('Slave connected but not configured. Proceed with equipment identification...')
 
         # SLAVE CONTROLLING! GET INFO FROM IT
@@ -51,6 +52,8 @@ if __name__ == '__main__':
             info = json.loads(slave_db.getJSON())
             logger.info('Got info from BBB Slave, persisting to file...')
             persist_info(info['device'], info['baudrate'], info['details'], info['time'])
+            master_db.setConfigFrom("SLAVE")
 
     else:
+        master_db.setConfigFrom("MASTER")
         logger.info('No BBB Slave detected. Proceed with equipment identification...')
