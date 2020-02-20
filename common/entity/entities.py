@@ -67,7 +67,7 @@ class Sector:
         SECTORS_DICT[str(ipaddress.ip_network(u'10.128.{}.0/24'.format(i + 200))) ] = 'DIG-BPM-RACK{}'.format(str(i).zfill(2))
     # for key in sorted(SECTORS_DICT.keys()):
     #     SECTORS_LIST.append({key: SECTORS_DICT[key]})
-    
+
     @staticmethod
     def subnets():
         return Sector.SUBNETS
@@ -204,7 +204,7 @@ class BaseRedisEntity:
 
 class Type():
     """
-    This class provides a wrapper for host types. 
+    This class provides a wrapper for host types.
     """
 
     KEY_PREFIX = 'Type:'
@@ -218,9 +218,9 @@ class Type():
     def from_code(type_code):
         if type_code not in range(Type.NUM_TYPES):
             raise ValueError("type_code {} invalid.".format(type_code))
-        
+
         return Type(code=type_code)
-        
+
     def __init__(self,  **kwargs):
         """
         Initializes a type instance.
@@ -256,17 +256,17 @@ class Type():
     def name(self):
 
         if self.code == Type.POWER_SUPPLY:
-            return 'Power Supply'
+            return 'PowerSupply'
         elif self.code == Type.COUNTING_PRU:
             return 'CountingPRU'
         elif self.code == Type.SERIAL_THERMO:
-            return 'Thermo Probe'
+            return 'ThermoProbe'
         elif self.code == Type.MBTEMP:
             return 'MBTemp'
         elif self.code == Type.AGILENT4UHV:
-            return 'Agilent 4UHV'
+            return 'Agilent4UHV'
         elif self.code == Type.MKS937B:
-            return 'MKS 937b'
+            return 'MKS937b'
         elif self.code == Type.SPIXCONV:
             return 'SPIxCONV'
         else:
@@ -275,7 +275,7 @@ class Type():
     @name.setter
     def name(self, value):
         pass
-        
+
     @description.setter
     def description(self, value):
         pass

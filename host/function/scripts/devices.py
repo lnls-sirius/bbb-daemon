@@ -1,14 +1,23 @@
-#!/usr/bin/python
+#!/usr/bin/python-sirius
 import logging
 import time
 import os
 import subprocess
 import sys
+import struct
 import Adafruit_BBIO.GPIO as GPIO
 from PRUserial485 import PRUserial485_open,PRUserial485_write, PRUserial485_read, PRUserial485_close, PRUserial485_address
-from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
+from common.function.consts import *
+from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN, STOPBITS_ONE, EIGHTBITS, PARITY_NONE
+from common.function.persist import persist_info
 
 logger = logging.getLogger('Whoami')
+
+
+if os.path.exists(PORT):
+    ser = Serial(PORT)
+
+
 
 if os.path.exists('/root/SPIxCONV/software/scripts'):
     sys.path.append('/root/SPIxCONV/software/scripts')
@@ -21,8 +30,7 @@ else:
     logger.error('/root/SPIxCONV/software/scripts does not exist, SPIxCONV will always be false !')
     SPIxCONV = False
 
-from persist import persist_info
-from consts import *
+
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../../'))
 from common.entity.entities import Type
@@ -44,37 +52,37 @@ def reset():
     """
     Reset device.json content.
     """
-    persist_info(0, 0, 'RESET', 'Still trying to find out where i\'m connected...')
+    persist_info(Type(code=Type.UNDEFINED).name, 0, 'RESET', 'Still trying to find out where im connected...')
 
 def counting_pru():
     """
     CountingPRU
     """
-    logger.debug('Counting PRU')
+    logger.info('Counting PRU')
     if PRUserial485_address() != 21 and not os.path.isfile(PORT):
-        persist_info(Type.COUNTING_PRU, 0, COUNTING_PRU)
+        persist_info(Type(code=Type.COUNTING_PRU).name, 0, COUNTING_PRU)
 
 
 def no_tty():
     """
     NO /dev/ttyUSB0
     """
-    logger.debug('No /dev/ttyUSB0')
+    logger.info('No /dev/ttyUSB0')
     if not os.path.exists(PORT) and PRUserial485_address() == 21:
-        persist_info(Type.UNDEFINED, 115200, NOTTY)
+        persist_info(Type(code=Type.UNDEFINED).name, 115200, NOTTY)
 
 
 def power_supply_pru():
     """
     PRU Power Supply
     """
-    logger.debug('PRU Power Supply')
+    logger.info('PRU Power Supply')
     ps_model_names = {0:"Empty", 1:"FBP", 2:"FBP_DCLINK", 3:"FAC_ACDC", 4:"FAC_DCDC", 5:"FAC_2S_ACDC",
                     6:"FAC_2S_DCDC", 7:"FAC_2P4S_ACDC", 8:"FAC_2P4S_DCDC", 9:"FAP", 10:"FAP_4P", 11:"FAC_DCDC_EMA", 12:"FAP_2P2S_Master", 13:"FAP_2P2S_Slave", 31:"UNDEFINED"}
     if GPIO.input(PIN_FTDI_PRU) == PRU and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         os.system("/root/pru-serial485/src/overlay.sh")
         baud = 6
-        PRUserial485_open(baud,'M')
+        PRUserial485_open(baud,b'M')
         devices = []
         ps_model = []
         for ps_addr in range(1, 32):
@@ -85,7 +93,7 @@ def power_supply_pru():
                 ps_model = ps_model_names[ord(res[5])%32]    # PS model: res[5] (bits 4..0)
                 time.sleep(0.1)
         PRUserial485_close()
-        persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY, 'PS model {}. Connected: {}'.format(ps_model, devices))
+        persist_info(Type(code=Type.POWER_SUPPLY).name, 6000000, PRU_POWER_SUPPLY, 'PS model {}. Connected: {}'.format(ps_model, devices))
 
 
 
@@ -101,23 +109,22 @@ def thermo_probe():
     """
     Thermo probes
     """
-    logger.debug('Thermo probes')
+    logger.info('Thermo probes')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 19200
-        ser = Serial(port=PORT,
-                     baudrate=baud,
-                     bytesize=SEVENBITS,
-                     parity=PARITY_EVEN,
-                     stopbits=STOPBITS_TWO,
-                     timeout=TIMEOUT)
+        ser.baudrate = baud
+        ser.bytesize = SEVENBITS
+        ser.parity = PARITY_EVEN
+        ser.stopbits = STOPBITS_TWO
+        ser.timeout = TIMEOUT
         msg = thermoIncluirChecksum("\x07" + "01RM1")
         ser.reset_input_buffer()
         ser.reset_output_buffer()
-        ser.write(msg.encode('utf-8'))
+        ser.write(msg.encode('latin'))
         res = ser.read(50)
 
         if len(res) != 0:
-            persist_info(Type.SERIAL_THERMO, baud, SERIAL_THERMO)
+            persist_info(Type(code=Type.SERIAL_THERMO).name, baud, SERIAL_THERMO)
 
 
 def BSMPChecksum(string):
@@ -135,41 +142,51 @@ def mbtemp():
     """
     MBTemp
     """
-    logger.debug('MBTemp')
+    logger.info('MBTemp')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 115200
-        ser = Serial(PORT, baud, timeout=TIMEOUT)
+        ser.baudrate = baud
+        ser.bytesize = EIGHTBITS
+        ser.parity = PARITY_NONE
+        ser.stopbits = STOPBITS_ONE
+        ser.timeout = TIMEOUT
+        ser.reset_input_buffer()
+        ser.reset_output_buffer()
         devices = []
         for mbt_addr in range(1, 32):
-            ser.write(BSMPChecksum(chr(mbt_addr)+"\x10\x00\x01\x00"))
-            res = ser.read(10)
+            ser.write(BSMPChecksum(chr(mbt_addr)+"\x10\x00\x01\x00").encode('latin'))
+            res = ser.read(10).decode('latin')
             if len(res) == 7 and res[1] == "\x11":
                 devices.append(mbt_addr)
-        ser.close()
         if len(devices):
-            persist_info(Type.MBTEMP, baud, MBTEMP, 'MBTemps connected {}'.format(devices))
+            persist_info(Type(code=Type.MBTEMP).name, baud, MBTEMP, 'MBTemps connected {}'.format(devices))
 
 
 def mks9376b():
     """
     MKS 937B
     """
-    logger.debug('MKS 937B')
+    logger.info('MKS 937B')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 115200
-        ser = Serial(port=PORT, baudrate=baud, timeout=0.05)
+        ser.baudrate = baud
+        ser.bytesize = EIGHTBITS
+        ser.parity = PARITY_NONE
+        ser.stopbits = STOPBITS_ONE
+        ser.timeout = 0.05
+        ser.reset_input_buffer()
+        ser.reset_output_buffer()
         devices = []
         for mks_addr in range(1, 255):
             msgm = '\@{0:03d}'.format(mks_addr) + "PR1?;FF"
             ser.reset_input_buffer()
             ser.reset_output_buffer()
-            ser.write(msgm)
-            res = ser.read(20)
+            ser.write(msgm.encode('latin'))
+            res = ser.read(20).decode('latin')
             if len(res) != 0:
                 devices.append(mks_addr)
-        ser.close()
         if len(devices):
-            persist_info(Type.MKS937B, baud, MKS937B, 'MKS937Bs connected {}'.format(devices))
+            persist_info(Type(code=Type.MKS937B).name, baud, MKS937B, 'MKS937Bs connected {}'.format(devices))
 
 
 def Agilent4UHV_CRC(string):
@@ -189,35 +206,40 @@ def agilent4uhv():
     """
     AGILENT 4UHV
     """
-    logger.debug('AGILENT 4UHV')
+    logger.info('AGILENT 4UHV')
     if GPIO.input(PIN_FTDI_PRU) == FTDI and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         baud = 38400
-        ser = Serial(port=PORT, baudrate=baud, timeout=.6)
+        ser.baudrate = baud
+        ser.bytesize = EIGHTBITS
+        ser.parity = PARITY_NONE
+        ser.stopbits = STOPBITS_ONE
+        ser.timeout = 0.6
+        ser.reset_input_buffer()
+        ser.reset_output_buffer()
         devices = []
         for addr in range(0, 32):
             ser.reset_input_buffer()
             ser.reset_output_buffer()
             pl = ""
             pl += "\x02"
-            pl += chr(addr  + 128)
+            pl += chr(addr + 128)
             pl += "\x38"
             pl += "\x31"
             pl += "\x30"
             pl += "\x30"
             pl += "\x03"
-            ser.write(Agilent4UHV_CRC(pl))
-            res = ser.read(15)
+            ser.write(Agilent4UHV_CRC(pl).encode('latin'))
+            res = ser.read(15).decode('latin')
             if len(res) != 0:
                 devices.append(addr)
-        ser.close()
         if len(devices):
-            persist_info(Type.AGILENT4UHV, baud, AGILENT4UHV, 'AGILENT4UHV connected {}'.format(devices))
+            persist_info(Type(code=Type.AGILENT4UHV).name, baud, AGILENT4UHV, 'AGILENT4UHV connected {}'.format(devices))
 
 def spixconv():
     """
     SPIxCONV
     """
-    logger.debug('SPIxCONV')
+    logger.info('SPIxCONV')
 
     if not SPIxCONV:
         return
@@ -235,4 +257,4 @@ def spixconv():
         if flash.ID_read(addr) == 4:
             spi_addr = 8 if flash.address_read(addr) == 0 else flash.address_read(addr)
             logger.info('{}'.format('Addr code',addr,'Selection Board ID', selection.board_ID(addr), 'Flash address', flash.address_read(addr),'SPI Addr',spi_addr))
-            persist_info(Type.SPIXCONV, spi_addr, SPIXCONV, 'SPIXCONV connected {}'.format(spi_addr))
+            persist_info(Type(code=Type.SPIXCONV).name, spi_addr, SPIXCONV, 'SPIXCONV connected {}'.format(spi_addr))

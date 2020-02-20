@@ -2,10 +2,11 @@
 import json
 import logging
 from datetime import datetime
-from consts import RES_FILE, BAUDRATE_FILE, DEVICE_JSON
+from common.function.consts import RES_FILE, BAUDRATE_FILE, DEVICE_JSON
+from common.database.redisbbb import RedisDatabase
 logger = logging.getLogger('Whoami')
 
-def persist_info(device, baud, exit_code, details='No details.'):
+def persist_info(device, baud, details='No details.', time=str(datetime.now())):
     """
     This method persist the information about which device is connected to this sbc.
     The info is stored using the following format:
@@ -16,17 +17,21 @@ def persist_info(device, baud, exit_code, details='No details.'):
     'time' the string representation os a python time object at the time this information has been defined.
     'baudrate' is the baudrate used for communicate to the connected device.
     """
-    if exit_code != None:
-        write_info(RES_FILE, exit_code)
+    if device != None:
+        write_info(RES_FILE, device)
     if type(baud) != int:
         raise TypeError('baud type is incorrect. ', baud)
 
     write_info(BAUDRATE_FILE, str(baud))
 
-    device_info = {'device': device, 'baudrate': baud, 'details': str(exit_code) + " -  " + details, 'time': str(datetime.now())}
+    device_info = {'device': device, 'baudrate': baud, 'details': details + " -  " + details, 'time': time, 'persist created on' : str(datetime.now())}
 
     logger.info('Device Identified !')
     write_info(DEVICE_JSON, json.dumps(device_info))
+
+    if not ("RESET" in details):
+        logger.info('Enable external connections for Redis DB!')
+        RedisDatabase('localhost').enable_external_connections()
     exit(0)
 
 

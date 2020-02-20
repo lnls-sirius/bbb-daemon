@@ -1,6 +1,5 @@
 #!/bin/bash
 #@todo: Those environment variables are for debugging purposes. They are meant to be set in a more elegant and flexible way.
-
 # Socat Welcome Port
 export SOCAT_PORT=4161
 # Wich ip/mask that are allowed to connect to socat.
@@ -14,11 +13,11 @@ export DEVICE_JSON="/opt/device.json"
 export RES_FILE="/var/tmp/res"
 export BAUDRATE_FILE="/var/tmp/baudrate"
 export CONN_DEVICE="/dev/ttyUSB0"
-export PRU_POWER_SUPPLY='PRU_POWER_SUPPLY'
-export COUNTING_PRU='COUNTING_PRU'
-export SERIAL_THERMO='SERIAL_THERMO'
-export MBTEMP='MBTEMP'
-export AGILENT4UHV='AGILENT4UHV'
-export MKS937B='MKS937B'
-export SPIXCONV='SPIXCONV'
+export PRU_POWER_SUPPLY='PowerSupply'
+export COUNTING_PRU='CountingPRU'
+export SERIAL_THERMO='ThermoProbe'
+export MBTEMP='MBTemp'
+export AGILENT4UHV='Agilent4UHV'
+export MKS937B='MKS937b'
+export SPIXCONV='SPIxCONV'
 export NOTTY='NOTTY'

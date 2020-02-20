@@ -1,6 +1,5 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-set -x
 source ${DAEMON_BASE}/host/function/scripts/functions.sh
 source ${DAEMON_BASE}/host/function/envs.sh
 
@@ -28,14 +27,54 @@ pushd ${DAEMON_BASE}/host/function/scripts
     # Run HardReset script, which is available at all boards
     startup_HardReset
 
-    # The whoami.py script will save in a temporary file which device is connected
-    # Run identification script, repeats until a device is found
-    echo "Running identification script, repeats until a device is found."
-    ./whoami.py
+    # Get Board address
+    BOARD_ADDRESS=$(python-sirius -c 'from PRUserial485 import PRUserial485_address;print("{}".format(PRUserial485_address()))')
+
+
+    # Address 0: COUNTING_PRU
+    if [ $BOARD_ADDRESS -eq 0 ]
+    then
+        echo "BOARD 0"
+        # COUNTING_PRU BOARD. NOT TREATED AT THIS MOMENT
+        echo "Running identification script, repeats until a device is found."
+        ./whoami.py
+    fi
+
+    # Address 21: MASTER BOARD
+    if [ $BOARD_ADDRESS -eq 21 ]
+    then
+        echo "BOARD 21"
+        ./master_initialization.py
+
+        if [ ! -f ${RES_FILE} ]
+        then
+            echo "Running identification script, repeats until a device is found."
+            ./whoami.py
+        fi
+
+    fi
+
+    # Address 25: SLAVE BOARD
+    if [ $BOARD_ADDRESS -eq 17 ]
+    then
+        echo "BOARD 17"
+        ./slave_initialization.py
+    fi
+
+
+
+
+
+
+
+
+    while [ ! -f ${RES_FILE} ]; do sleep 1; done
+    while [ ! -f ${BAUDRATE_FILE} ]; do sleep 1; done
 
     # Prepare board to its application
     CONN_DEVICE=$(awk NR==1 ${RES_FILE})
     BAUDRATE=$(awk NR==1 ${BAUDRATE_FILE})
+
 
     if [[ ${CONN_DEVICE} = "${SPIXCONV}" ]]; then
         # Using variable BAUDRATE to store the board address
@@ -79,4 +118,3 @@ pushd ${DAEMON_BASE}/host/function/scripts
         exit 1
     fi
 popd
-

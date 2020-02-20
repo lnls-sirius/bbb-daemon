@@ -167,7 +167,7 @@ function spixconv {
 }
 
 function pru_power_supply {
-    echo Rs-485 and PRU switches are on. Assuming PRU Power Supply.
+    echo RS485 and PRU switches are on. Assuming PRU Power Supply.
     echo Synchronizing pru-serial485 and ponte-py files.
     pushd ${DAEMON_BASE}/host/rsync
         # Base files: PRU library and ethernet/serial bridge
@@ -181,9 +181,9 @@ function pru_power_supply {
             ./sync-fac-files.sh
         popd
     popd
-    
+
     echo "Running eth-bridge-pru-serial485 on ports 5000 and 6000"
-    systemctl start eth-bridge-pru-serial485.service 
+    #systemctl start eth-bridge-pru-serial485.service
 
     echo "Running FAC PS IOC"
     pushd ${DAEMON_BASE}/host/function/scripts/ps-ioc-config-files
@@ -199,7 +199,7 @@ function pru_power_supply {
 
 function serial_thermo {
     echo  Serial Thermo probe detected.
-    echo Synchronizing pru-serial485 and serial-thermo files
+    echo Synchronizing pru-serial485 for SERIALxxCON board pins and serial-thermo files
     pushd ${DAEMON_BASE}/host/rsync
         ./rsync_beaglebone.sh pru-serial485
         ./rsync_beaglebone.sh serial-thermo
@@ -210,7 +210,7 @@ function serial_thermo {
 }
 
 function mks {
-    echo Synchronizing pru-serial485 files
+    echo Synchronizing pru-serial485 files for SERIALxxCON board pins
     pushd ${DAEMON_BASE}/host/rsync
         ./rsync_beaglebone.sh pru-serial485
     popd
@@ -220,7 +220,7 @@ function mks {
 }
 
 function uhv {
-    echo Synchronizing pru-serial485 files
+    echo Synchronizing pru-serial485 files for SERIALxxCON board pins
     pushd ${DAEMON_BASE}/host/rsync
         ./rsync_beaglebone.sh pru-serial485
     popd
@@ -230,7 +230,7 @@ function uhv {
 }
 
 function mbtemp {
-    echo Synchronizing pru-serial485 files
+    echo Synchronizing pru-serial485 files for SERIALxxCON board pins
     pushd ${DAEMON_BASE}/host/rsync
         ./rsync_beaglebone.sh pru-serial485
     popd
@@ -241,7 +241,7 @@ function mbtemp {
 }
 
 function socat_devices {
-    echo Synchronizing pru-serial485 files
+    echo Synchronizing pru-serial485 files for SERIALxxCON board pins
     pushd ${DAEMON_BASE}/host/rsync
         ./rsync_beaglebone.sh pru-serial485
     popd

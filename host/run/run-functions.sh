@@ -10,9 +10,13 @@ export RSYNC_LOCAL="/root"
 export RSYNC_PORT="873"
 export FAC_PATH="/home/fac_files/lnls-sirius"
 
+
+
 # Generate the initial device.json
 pushd ${DAEMON_BASE}/host/function/scripts/
-    source ./../envs.sh
+    source ../envs.sh
+    echo "Disabling external connections for Redis DB"
+    python-sirius -c 'from common.database.redisbbb import RedisDatabase;RedisDatabase("localhost").disable_external_connections()'
     ./Key_dhcp.py   #Verificar se dhcp deve ser configurado
     ./whoami.py --reset
     cat /opt/device.json
@@ -20,7 +24,7 @@ popd
 
 
 # Install wait-for-it
-apt-get install wait-for-it -y
+#apt-get install wait-for-it -y
 
 # Updating etc folder and bbb-daemon if rsync server available.
 wait-for-it ${RSYNC_SERVER}:873 --timeout=10
@@ -30,8 +34,7 @@ if [ $? -eq 0 ]; then
         ./rsync_beaglebone.sh etc-folder
         if [ $? -eq 0 ]; then
             echo "/etc folder is out of sync. Reboot to fix!"
-            # echo Rebooting BBB...
-            # shutdown -r now
+
         fi
 
         # Updating bbb-daemon files

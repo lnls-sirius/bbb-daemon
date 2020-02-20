@@ -1,4 +1,6 @@
 null
+*.bin
+*.swp
 launch.json
 .idea
 server/test.py
