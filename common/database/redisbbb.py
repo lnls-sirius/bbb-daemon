@@ -99,7 +99,7 @@ class RedisDatabase:
 
     def getConfigFrom(self):
         return self.db.get(REDIS_BBB_CONFIG_FROM_KEY).decode()
-
+        
 
     def setConfigFrom(self, node):
         if node.upper() in NODE_CONTROLLERS:
