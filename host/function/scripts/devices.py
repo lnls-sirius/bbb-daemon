@@ -52,7 +52,7 @@ def reset():
     """
     Reset device.json content.
     """
-    persist_info(Type(code=Type.UNDEFINED).name, 0, 'RESET', 'Still trying to find out where im connected...')
+    persist_info(Type(code=Type.UNDEFINED).name, 0, 'RESET - Still trying to find out where im connected...')
 
 def counting_pru():
     """
@@ -93,7 +93,7 @@ def power_supply_pru():
                 ps_model = ps_model_names[ord(res[5])%32]    # PS model: res[5] (bits 4..0)
                 time.sleep(0.1)
         PRUserial485_close()
-        persist_info(Type(code=Type.POWER_SUPPLY).name, 6000000, PRU_POWER_SUPPLY, 'PS model {}. Connected: {}'.format(ps_model, devices))
+        persist_info(Type(code=Type.POWER_SUPPLY).name, 6000000, 'PS model {}. Connected: {}'.format(ps_model, devices))
 
 
 
@@ -159,7 +159,7 @@ def mbtemp():
             if len(res) == 7 and res[1] == "\x11":
                 devices.append(mbt_addr)
         if len(devices):
-            persist_info(Type(code=Type.MBTEMP).name, baud, MBTEMP, 'MBTemps connected {}'.format(devices))
+            persist_info(Type(code=Type.MBTEMP).name, baud, 'MBTemps connected {}'.format(devices))
 
 
 def mks9376b():
@@ -186,7 +186,7 @@ def mks9376b():
             if len(res) != 0:
                 devices.append(mks_addr)
         if len(devices):
-            persist_info(Type(code=Type.MKS937B).name, baud, MKS937B, 'MKS937Bs connected {}'.format(devices))
+            persist_info(Type(code=Type.MKS937B).name, baud, 'MKS937Bs connected {}'.format(devices))
 
 
 def Agilent4UHV_CRC(string):
@@ -233,7 +233,7 @@ def agilent4uhv():
             if len(res) != 0:
                 devices.append(addr)
         if len(devices):
-            persist_info(Type(code=Type.AGILENT4UHV).name, baud, AGILENT4UHV, 'AGILENT4UHV connected {}'.format(devices))
+            persist_info(Type(code=Type.AGILENT4UHV).name, baud, 'AGILENT4UHV connected {}'.format(devices))
 
 def spixconv():
     """
@@ -257,4 +257,4 @@ def spixconv():
         if flash.ID_read(addr) == 4:
             spi_addr = 8 if flash.address_read(addr) == 0 else flash.address_read(addr)
             logger.info('{}'.format('Addr code',addr,'Selection Board ID', selection.board_ID(addr), 'Flash address', flash.address_read(addr),'SPI Addr',spi_addr))
-            persist_info(Type(code=Type.SPIXCONV).name, spi_addr, SPIXCONV, 'SPIXCONV connected {}'.format(spi_addr))
+            persist_info(Type(code=Type.SPIXCONV).name, spi_addr, 'SPIXCONV connected {}'.format(spi_addr))

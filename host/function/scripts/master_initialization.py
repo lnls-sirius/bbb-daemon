@@ -51,8 +51,9 @@ if __name__ == '__main__':
             master_db.setNodeController("SLAVE")
             info = json.loads(slave_db.getJSON())
             logger.info('Got info from BBB Slave, persisting to file...')
-            persist_info(info['device'], info['baudrate'], info['details'], info['time'])
             master_db.setConfigFrom("SLAVE")
+            persist_info(info['device'], info['baudrate'], info['details'], info['time'])
+
 
     else:
         master_db.setConfigFrom("MASTER")
