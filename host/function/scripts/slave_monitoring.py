@@ -30,7 +30,7 @@ if __name__ == '__main__':
     while True:
 
         logger.info('Master monitoring has started!')
-        while master_db.is_available(retries=1, log = False):
+        while master_db.is_available(retries=1, delay = 0, log = False):
             sleep(0.05)
 
         logger.info('Master is down, tell server Slave will get control!')
