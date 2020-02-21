@@ -30,8 +30,9 @@ if __name__ == '__main__':
 
 
     if (slave_db.getNodeController() == "SLAVE"):
-        logger.info('Master applications have been lauched! Tell Slave that Master is ready for controlling')
+        logger.info('Master applications have been launched! Tell Slave that Master is ready for controlling')
         master_db.setNodeController("MASTER")
+        master_db.publishNodeController("MASTER")
 
 
     while True:
