@@ -16,6 +16,8 @@ pushd ${DAEMON_BASE}/host/function/scripts
         if [ -f ${BAUDRATE_FILE} ]; then
             rm -rf ${BAUDRATE_FILE}
         fi
+
+        python-sirius -c 'from common.database.redisbbb import RedisDatabase;RedisDatabase("localhost").disable_external_connections()'
     }
 
     trap cleanup EXIT
