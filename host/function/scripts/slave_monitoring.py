@@ -24,7 +24,7 @@ if __name__ == '__main__':
     slave_db = RedisDatabase("localhost", 6379)
 
     # Connect to remote Redis DB (MASTER)
-    master_db = RedisDatabase(slave_db.getMasterIP(), 6379)
+    master_db = RedisDatabase(slave_db.getMasterIP(), 6379, socket_timeout=1)
 
 
     while True:
@@ -32,6 +32,7 @@ if __name__ == '__main__':
         logger.info('Master monitoring has started!')
         while master_db.is_available(retries=1, delay = 0, log = False):
             sleep(0.05)
+
 
         logger.info('Master is down, tell server Slave will get control!')
         slave_db.setNodeController("SLAVE")

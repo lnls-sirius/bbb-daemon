@@ -12,10 +12,10 @@ REDIS_BBB_CONFIG_FROM_KEY = "BBB_CONFIG_FROM"
 NODE_CONTROLLERS = ["MASTER", "SLAVE"]
 
 class RedisDatabase:
-    def __init__(self, host, port=6379):
+    def __init__(self, host, port=6379, socket_timeout=None):
         self.host = host
         self.port = port
-        self.db = redis.StrictRedis(host=host, port=port)
+        self.db = redis.StrictRedis(host=host, port=port, socket_timeout=socket_timeout)
 
 
     def is_available(self, retries = 3, delay = 10, log = True):
