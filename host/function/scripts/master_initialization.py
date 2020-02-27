@@ -43,12 +43,14 @@ if __name__ == '__main__':
         # SLAVE AVAILABLE, BUT NOT CONTROLLING
         if (slave_db.getNodeController().upper() != "SLAVE"):
             master_db.setNodeController("MASTER")
+            master_db.publishNodeController("MASTER")
             master_db.setConfigFrom("MASTER")
             logger.info('Slave connected but not configured. Proceed with equipment identification...')
 
         # SLAVE CONTROLLING! GET INFO FROM IT
         else:
             master_db.setNodeController("SLAVE")
+            master_db.publishNodeController("SLAVE")
             info = json.loads(slave_db.getJSON())
             logger.info('Got info from BBB Slave, persisting to file...')
             master_db.setConfigFrom("SLAVE")
