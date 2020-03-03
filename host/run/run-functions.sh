@@ -18,8 +18,7 @@ pushd ${DAEMON_BASE}/host/function/scripts/
     echo "Disabling external connections for Redis DB"
     python-sirius -c 'from common.database.redisbbb import RedisDatabase;RedisDatabase("localhost").disable_external_connections()'
     ./Key_dhcp.py   #Verificar se dhcp deve ser configurado
-    ./whoami.py --reset
-    cat /opt/device.json
+    #./whoami.py --reset
 popd
 
 
