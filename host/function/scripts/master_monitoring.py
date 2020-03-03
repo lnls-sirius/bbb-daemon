@@ -29,9 +29,13 @@ if __name__ == '__main__':
     sleep(5)
 
 
-    if (slave_db.getNodeController() == "SLAVE"):
-        logger.info('Master applications have been launched! Tell Slave that Master is ready for controlling')
-        master_db.setNodeController("MASTER")
+    if(slave_db.is_available(retries=1, delay=0, log=False)):
+        if (slave_db.getNodeController() == "SLAVE"):
+            logger.info('Master applications have been launched! Tell Slave that Master is ready for controlling')
+            master_db.setNodeController("MASTER")
+            master_db.publishNodeController("MASTER")
+    else:
+        logger.info('Slave is not available. Master is under control.')
         master_db.publishNodeController("MASTER")
 
 
