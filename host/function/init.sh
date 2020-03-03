@@ -23,6 +23,9 @@ pushd ${DAEMON_BASE}/host/function/scripts
     trap cleanup EXIT
     cleanup
 
+    # Apply overlay for SERIALxxCON
+    overlay_PRUserial485
+
     # Synchronize common files and folders (startup scripts, bbb-daemon, rsync script, etc)
     synchronize_common
 
@@ -46,7 +49,6 @@ pushd ${DAEMON_BASE}/host/function/scripts
     if [ $BOARD_ADDRESS -eq 21 ]
     then
         echo "BOARD 21"
-        overlay_PRUserial485
         ./master_initialization.py
 
         if [ ! -f ${RES_FILE} ]
@@ -54,14 +56,12 @@ pushd ${DAEMON_BASE}/host/function/scripts
             echo "Running identification script, repeats until a device is found."
             ./whoami.py
         fi
-
     fi
 
     # Address 25: SLAVE BOARD
     if [ $BOARD_ADDRESS -eq 17 ]
     then
         echo "BOARD 17"
-        overlay_PRUserial485
         ./slave_initialization.py
     fi
 
@@ -125,7 +125,6 @@ pushd ${DAEMON_BASE}/host/function/scripts
     # Address 21: MASTER BOARD
     if [ $BOARD_ADDRESS -eq 21 ]
     then
-        echo "BOARD 21"
         ./master_monitoring.py
 
     fi
@@ -133,7 +132,6 @@ pushd ${DAEMON_BASE}/host/function/scripts
     # Address 25: SLAVE BOARD
     if [ $BOARD_ADDRESS -eq 17 ]
     then
-        echo "BOARD 17"
         ./slave_monitoring.py
     fi
 
