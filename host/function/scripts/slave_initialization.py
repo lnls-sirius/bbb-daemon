@@ -45,9 +45,6 @@ if __name__ == '__main__':
         continue
 
 
-
-
-
     # MASTER CONTROLLING
     if (master_db.getNodeController().upper() == "MASTER"):
         slave_db.setNodeController("MASTER")

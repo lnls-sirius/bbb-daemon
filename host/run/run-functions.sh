@@ -15,10 +15,25 @@ export FAC_PATH="/home/fac_files/lnls-sirius"
 # Generate the initial device.json
 pushd ${DAEMON_BASE}/host/function/scripts/
     source ../envs.sh
-    echo "Disabling external connections for Redis DB"
-    python-sirius -c 'from common.database.redisbbb import RedisDatabase;RedisDatabase("localhost").disable_external_connections()'
+    # Get Board address
+    BOARD_ADDRESS=$(python-sirius -c 'from PRUserial485 import PRUserial485_address;print("{}".format(PRUserial485_address()))')
+    # Address 21: MASTER BOARD
+    if [ $BOARD_ADDRESS -eq 21 ]
+    then
+        echo "Disabling external connections for Redis DB"
+        python-sirius -c 'from common.database.redisbbb import RedisDatabase;RedisDatabase("localhost").disable_external_connections()'
+        ./whoami.py --reset
+    fi
+
     ./Key_dhcp.py   #Verificar se dhcp deve ser configurado
-    #./whoami.py --reset
+
+    # Address 17: SLAVE BOARD
+#    if [ $BOARD_ADDRESS -eq 17 ]
+#    then
+#        echo "Enabling external connections for Redis DB"
+#        python-sirius -c 'from common.database.redisbbb import RedisDatabase;RedisDatabase("localhost").enable_external_connections()'
+#
+#    fi
 popd
 
 

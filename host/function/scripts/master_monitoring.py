@@ -26,7 +26,6 @@ if __name__ == '__main__':
 
     # Connect to remote Redis DB (MASTER)
     slave_db = RedisDatabase(master_db.getSlaveIP(), 6379)
-    sleep(5)
 
 
     if(slave_db.is_available(retries=1, delay=0, log=False)):
