@@ -55,5 +55,4 @@ fi
 pushd ${DAEMON_BASE}/host/function
     echo Starting BBB Function application
     ./init.sh
-
 popd
