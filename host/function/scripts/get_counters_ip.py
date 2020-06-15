@@ -11,7 +11,7 @@ import socket
 import logging
 import Adafruit_BBIO.GPIO as GPIO
 
-counters_ip = ['101','104','157']
+counters_ip = ['152','153','154']
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)-15s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')

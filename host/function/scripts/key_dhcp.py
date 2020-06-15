@@ -46,6 +46,7 @@ if __name__ == '__main__':
             sleep(0.05)
             GPIO.output(en_FF, GPIO.HIGH)
 
+        sleep(1) #Sleep up to FF set its output, frequency of input oscilator need to be higher than 1 Hz
         state = ''
         for pin in ["P8_39", "P8_40", "P8_41", "P8_42", "P9_28", "P9_30"]:
             GPIO.setup(pin, GPIO.IN)
