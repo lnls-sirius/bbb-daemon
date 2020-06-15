@@ -4,7 +4,6 @@
 from os import system
 from time import sleep
 from commands import getoutput
-from consts import RES_FILE, BAUDRATE_FILE
 
 import logging
 import Adafruit_BBIO.GPIO as GPIO
@@ -13,7 +12,7 @@ from PRUserial485 import PRUserial485_address
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)-15s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
-logger = logging.getLogger('Key_dhcp')
+logger = logging.getLogger('key_dhcp')
 
 def dhcp():		#Set IP to DHCP
      service = ""
@@ -46,7 +45,7 @@ if __name__ == '__main__':
             sleep(0.05)
             GPIO.output(en_FF, GPIO.HIGH)
 
-        sleep(1) #Sleep up to FF set its output, frequency of input oscilator need to be higher than 1 Hz
+        sleep(1) #Sleep until FF set its output, frequency of input oscillator must be higher than 1 Hz
         state = ''
         for pin in ["P8_39", "P8_40", "P8_41", "P8_42", "P9_28", "P9_30"]:
             GPIO.setup(pin, GPIO.IN)
