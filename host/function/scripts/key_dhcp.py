@@ -37,21 +37,14 @@ if __name__ == '__main__':
     GPIO.setup("P8_28", GPIO.OUT)    #Led configuration
     GPIO.output("P8_28", GPIO.LOW)
 
-    for teste in ["P8_43", "P8_44", "P8_45", "P8_46", "P9_29", "P9_31"]:
-        sleep(0.05)
-        GPIO.setup(teste, GPIO.OUT)
-        sleep(0.05)
-        GPIO.output(teste, GPIO.HIGH)
-        sleep(0.05)
-
     if device_addr == 0:
         logger.info("Contadora detectada")
 
-        for teste in ["P8_43", "P8_44", "P8_45", "P8_46", "P9_29", "P9_31"]: #Enable Flip-Flops
+        for en_FF in ["P8_43", "P8_44", "P8_45", "P8_46", "P9_29", "P9_31"]: #Enable Flip-Flops
             sleep(0.05)
-            GPIO.setup(teste, GPIO.OUT)
+            GPIO.setup(en_FF, GPIO.OUT)
             sleep(0.05)
-            GPIO.output(teste, GPIO.HIGH)
+            GPIO.output(en_FF, GPIO.HIGH)
 
         state = ''
         for pin in ["P8_39", "P8_40", "P8_41", "P8_42", "P9_28", "P9_30"]:
@@ -71,4 +64,3 @@ if __name__ == '__main__':
             logger.info("Configurando DHCP")								                                    #   |12|
             dhcp()
             led()
-
