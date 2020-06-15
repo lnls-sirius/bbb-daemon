@@ -13,8 +13,9 @@ export FAC_PATH="/home/fac_files/lnls-sirius"
 # Generate the initial device.json
 pushd ${DAEMON_BASE}/host/function/scripts/
     source ./../envs.sh
-    ./Key_dhcp.py   #Verificar se dhcp deve ser configurado
     ./whoami.py --reset
+    ./get_counters_ip.py
+    ./key_dhcp.py   #Verificar se dhcp deve ser configurado
     cat /opt/device.json
 popd
 
@@ -54,4 +55,5 @@ fi
 pushd ${DAEMON_BASE}/host/function
     echo Starting BBB Function application
     ./init.sh
+
 popd
