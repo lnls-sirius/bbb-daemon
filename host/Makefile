@@ -20,9 +20,10 @@ daemon:
 	pip3 install Adafruit_BBIO
 
 	systemctl daemon-reload
-
-	systemctl enable ${DAEMON_SERVICE_NAME}
-	systemctl restart ${DAEMON_SERVICE_NAME}
+	
+        # Do not enable this service anymore.
+	#systemctl enable ${DAEMON_SERVICE_NAME}
+	#systemctl restart ${DAEMON_SERVICE_NAME}
 
 function:
 	# Services
@@ -48,8 +49,9 @@ install:
 
 	systemctl daemon-reload
 
-	systemctl enable ${DAEMON_SERVICE_NAME}
-	systemctl restart ${DAEMON_SERVICE_NAME}
+        # Do not enable this service anymore.
+	#systemctl enable ${DAEMON_SERVICE_NAME}
+	#systemctl restart ${DAEMON_SERVICE_NAME}
 
 	systemctl enable ${FUNCTION_SERVICE_NAME}
 	systemctl restart ${FUNCTION_SERVICE_NAME}
