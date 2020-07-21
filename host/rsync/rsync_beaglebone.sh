@@ -99,9 +99,14 @@ if [ ! -z ${PROJECT} ]; then
                 fi
                 if [ $? -eq 0 ]; then
                     # If project is listed below, build libraries as well
-                    if [ "$PROJECT" = "pru-serial485" ] || [ "$PROJECT" = "counting-pru" ]; then
+                    if [ "$PROJECT" = "counting-pru" ]; then
                         pushd $RSYNC_LOCAL/$PROJECT/src
                             ./library_build.sh
+                        popd
+                    fi
+                    if [ "$PROJECT" = "pru-serial485" ]; then
+                        pushd $RSYNC_LOCAL/$PROJECT/src
+                            make install
                         popd
                     fi
                     if [ "$PROJECT" = "eth-bridge-pru-serial485" ]; then
