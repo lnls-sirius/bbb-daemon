@@ -13,7 +13,7 @@ export FAC_PATH="/home/fac_files/lnls-sirius"
 # Generate the initial device.json
 pushd ${DAEMON_BASE}/host/function/scripts/
     source ./../envs.sh
-    ./whoami.py --reset
+#    ./whoami.py --reset
     ./get_counters_ip.py
     ./key_dhcp.py   #Verificar se dhcp deve ser configurado
     cat /opt/device.json
@@ -21,7 +21,7 @@ popd
 
 
 # Install wait-for-it
-apt-get install wait-for-it -y
+#apt-get install wait-for-it -y
 
 # Updating etc folder and bbb-daemon if rsync server available.
 wait-for-it ${RSYNC_SERVER}:873 --timeout=10

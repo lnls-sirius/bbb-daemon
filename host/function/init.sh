@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-set -x
+#set -x
 source ${DAEMON_BASE}/host/function/scripts/functions.sh
 source ${DAEMON_BASE}/host/function/envs.sh
 
@@ -8,7 +8,7 @@ pushd ${DAEMON_BASE}/host/function/scripts
 
     function cleanup {
         # Reset the detected device
-        resetDeviceJson
+#        resetDeviceJson
 
         if [ -f ${RES_FILE} ]; then
                 rm -rf ${RES_FILE}
@@ -31,7 +31,8 @@ pushd ${DAEMON_BASE}/host/function/scripts
     # The whoami.py script will save in a temporary file which device is connected
     # Run identification script, repeats until a device is found
     echo "Running identification script, repeats until a device is found."
-    ./whoami.py
+    # ./whoami.py
+    ./iDevice.py
 
     # Prepare board to its application
     CONN_DEVICE=$(awk NR==1 ${RES_FILE})

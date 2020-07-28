@@ -16,7 +16,7 @@ class BBB:
     """
     CONFIG_JSON_PATH = '/opt/device.json'
 
-    def __init__(self, path, interface='eth0'):
+    def __init__(self, path='/var/tmp/bbb.bin', interface='eth0'):
         """
         Creates a new object instance.
         :param path: the configuration file's location
