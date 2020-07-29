@@ -6,67 +6,10 @@
 # October, 2018
 # Patricia H Nallin
 # -----------------------------------------------------------------------------
-set -x
 PROJECT=$1
-
-
-echo
 
 # Proceed if a project was requested
 if [ ! -z ${PROJECT} ]; then
-    # ---------------------------------------------------------------------
-    # FAC files
-    if [ "${PROJECT}" = "dev-packages" ] || [ "${PROJECT}" = "ps-ioc-config-files" ] || [ "$PROJECT" = "mathphys" ] || [ "$PROJECT" = "machine-applications" ]; then
-        SYNC_AVAILABLE=`rsync -n --contimeout=10 $RSYNC_FAC_SERVER::`;
-        if [ "${SYNC_AVAILABLE%% *}" = "online" ]; then
-            UPDATES=`rsync -ainO $RSYNC_FAC_SERVER::$PROJECT $FAC_PATH/$PROJECT`;
-
-            # ---------------------------------------------------------------------
-            # No updates available
-            if [ -z "$UPDATES" ]; then
-                echo "No updates found.";
-                exit 1
-            # ---------------------------------------------------------------------
-            #  Synchronizing files. There are updates for the project.
-            else
-                if [ ! -d "$DIRECTORY" ]; then
-                    mkdir -p $FAC_PATH
-                fi
-                rsync -a --delete-after $RSYNC_FAC_SERVER::$PROJECT $FAC_PATH/$PROJECT > /tmp/rsync.log;
-                # ---------------------------------------------------------------------
-                # Success on sync. Build libraries
-                if [ $? -eq 0 ]; then
-                    pushd $FAC_PATH/$PROJECT;
-                        if [ "${PROJECT}" = "dev-packages" ]; then
-                            pushd siriuspy
-                                python-sirius setup.py install
-                                rm -rf dist build */*.egg-info *.egg-info
-                            popd
-                        elif [ "${PROJECT}" = "mathphys" ]; then
-                            python-sirius setup.py install
-                            rm -rf dist build */*.egg-info *.egg-info
-                        elif [ "${PROJECT}" = "machine-applications" ]; then
-                            pushd as-ps
-                                python-sirius setup.py install
-                                rm -rf dist build */*.egg-info *.egg-info
-                                # instal AS-PS IOC as service
-                                cp -rf ./systemd/sirius-bbb-ioc-ps.service /etc/systemd/system/
-                                mkdir -p /root/sirius-iocs
-                                systemctl daemon-reload
-                            popd
-                        fi
-                    popd
-                fi
-            fi
-        fi
-    # ---------------------------------------------------------------------
-
-
-
-    # ---------------------------------------------------------------------
-    # CON files
-    else
-        echo "CON files"
         # -------------------------------------------------------------------------
         # Check whether Rsync Server is available - First item in rsync.conf must be "online"
         SYNC_AVAILABLE=`rsync -n --contimeout=10 $RSYNC_SERVER::`;
@@ -118,7 +61,6 @@ if [ ! -z ${PROJECT} ]; then
                 fi
             fi
         fi
-    fi
 else
     echo "No project selected for updating.";
     exit 1

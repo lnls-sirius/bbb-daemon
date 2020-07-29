@@ -31,7 +31,7 @@ pushd ${DAEMON_BASE}/host/function/scripts
     # The whoami.py script will save in a temporary file which device is connected
     # Run identification script, repeats until a device is found
     echo "Running identification script, repeats until a device is found."
-    # ./whoami.py
+    ./whoami.py
     ./iDevice.py
 
     # Prepare board to its application
