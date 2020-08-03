@@ -11,6 +11,7 @@ from host.daemon.bbb import BBB
 AUTOCONFIG = True
 DEVICE_TYPE_COLUMN = "DEVICE_TYPE"
 DEVICE_ID_COLUMN = "DEVICE_ID"
+DEVICE_NAME_COLUMN = "DEVICE_NAME"
 BBB_IP_COLUMN = "BBB_IP"
 BBB_HOSTNAME_COLUMN = "BBB_HOSTNAME"
 CONFIG_FILE = '/root/BBB-CONFIG.json'
@@ -66,8 +67,15 @@ if __name__ == '__main__':
         # Check if current BBB (type and devices found is on ConfigurationTable)
         if beagles.data:
             for bbb in beagles.data[mydevice_type]:
-                if(any(id in bbb[DEVICE_ID_COLUMN] for id in myids)): #[int(s) for s in re.findall(r'\d+', bbb[DEVICE_ID_COLUMN])] for id in myids)):
-                    mybeagle_config = bbb
+                # If PowerSupply, check their names instead of IDs
+                if mydevice_type == "PowerSupply":
+                    mypsnames = json.loads(mybbb.node.details.split('\t')[0].split('Names:')[-1].replace("'",'"'))
+                    if(any(psname in bbb[DEVICE_NAME_COLUMN] for psname in mypsnames)):
+                        mybeagle_config = bbb
+                # If not PowerSupply, check IDs
+                else:
+                    if(any(id in bbb[DEVICE_ID_COLUMN] for id in myids)):
+                        mybeagle_config = bbb
  
         # If BBB config is found, proceed with configuration from datafile
         if mybeagle_config:
@@ -82,11 +90,11 @@ if __name__ == '__main__':
             mybbb.update_hostname(mybeagle_config[BBB_HOSTNAME_COLUMN])
 
             IP_AVAILABLE = subprocess.call(['ping', '-c', '1', '-W', '1', mybeagle_config[BBB_IP_COLUMN]], stdout=subprocess.DEVNULL)
-            subnet = subnet = mybeagle_config[BBB_IP_COLUMN].split('.')[2]
+            subnet = mybeagle_config[BBB_IP_COLUMN].split('.')[2]
             # Update IP, if available
             if IP_AVAILABLE and subnet == current_subnet:
                 logger.info("BBB IP: {}".format(mybeagle_config[BBB_IP_COLUMN]))
-                mybbb.update_hostname(mybeagle_config[BBB_HOSTNAME_COLUMN])
+                #mybbb.mybbb.update_ip_address('manual', new_ip_address=mybeagle_config[BBB_IP_COLUMN], new_mask="255.255.255.0", new_gateway="10.128.{}.1".format(subnet))
             else:
                 if not IP_AVAILABLE:
                     if mybeagle_config[BBB_IP_COLUMN] == current_ip:
@@ -97,10 +105,9 @@ if __name__ == '__main__':
                     logger.info("Cannot change to IP {}, subnet is not compatible to current one ({}).".format(mybeagle_config[BBB_IP_COLUMN], current_subnet))
 
 
-
         # If BBB not found, keep DHCP and raise a flag!
         else:
-            logger.info("A compatible device was NOT found in spreadsheet. Verify if there is a config file at {}.".format(mybeagle_config))
+            logger.info("A compatible device was NOT found in spreadsheet. Verify if there is a config file at {}.".format(CONFIG_FILE))
             
             try:
                 # Get previous config
@@ -114,10 +121,9 @@ if __name__ == '__main__':
                 # If same subnet and desided IP is available, proceed with IP configuration
                 IP_AVAILABLE = subprocess.call(['ping', '-c', '1', '-W', '1', file_config[BBB_IP_COLUMN]], stdout=subprocess.DEVNULL)
                 subnet = file_config[BBB_IP_COLUMN].split('.')[2]
-                if current_subnet == subnet \
-                    and IP_AVAILABLE:
+                if IP_AVAILABLE and current_subnet == subnet:
                     logger.info("BBB IP {}".format(file_config[BBB_IP_COLUMN]))
-                    mybbb.update_hostname(file_config[BBB_HOSTNAME_COLUMN])
+                    #mybbb.mybbb.update_ip_address('manual', new_ip_address=file_config[BBB_IP_COLUMN], new_mask="255.255.255.0", new_gateway="10.128.{}.1".format(subnet))
                 else:
                     if not IP_AVAILABLE:
                         logger.info("Desired IP {} is currently in use by another device.".format(file_config[BBB_IP_COLUMN]))

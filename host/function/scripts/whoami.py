@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python-sirius
 # -*- coding: utf-8 -*-
 import logging
 import time

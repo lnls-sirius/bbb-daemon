@@ -1,9 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python-sirius
 import logging
 import time
 import os
 import subprocess
 import sys
+import struct
 import Adafruit_BBIO.GPIO as GPIO
 from PRUserial485 import PRUserial485_open,PRUserial485_write, PRUserial485_read, PRUserial485_close, PRUserial485_address
 from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
@@ -74,19 +75,21 @@ def power_supply_pru():
     if GPIO.input(PIN_FTDI_PRU) == PRU and GPIO.input(PIN_RS232_RS485) == RS485 and PRUserial485_address() == 21:
         os.system("/root/pru-serial485/src/overlay.sh")
         baud = 6
-        PRUserial485_open(baud,'M')
+        PRUserial485_open(baud,b'M')
         devices = []
         ps_model = []
+        ps_names = []
         for ps_addr in range(1, 32):
-            PRUserial485_write([i for i in BSMPChecksum(chr(ps_addr)+"\x10\x00\x01\x00")], 100)
+            PRUserial485_write(BSMPChecksum(chr(ps_addr)+"\x10\x00\x01\x00").encode('latin-1'), 100)
             res = PRUserial485_read()
-            if len(res) == 7 and res[1] == "\x11":
+            if len(res) == 7 and res[1] == 17:
                 devices.append(ps_addr)
-                ps_model = ps_model_names[ord(res[5])%32]    # PS model: res[5] (bits 4..0)
+                ps_model = ps_model_names[res[5]%32]    # PS model: res[5] (bits 4..0)
+                ps_names.append(getPSnames(ps_addr))
             time.sleep(0.1)
-
         PRUserial485_close()
-        persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY, 'PS model {}. Connected: {}'.format(ps_model, devices))
+        if(len(devices)):
+            persist_info(Type.POWER_SUPPLY, 6000000, PRU_POWER_SUPPLY, 'PS model {}. Connected: {}. Names: {}'.format(ps_model, devices, ps_names))
 
 
 
@@ -120,7 +123,6 @@ def thermo_probe():
         if len(res) != 0:
             persist_info(Type.SERIAL_THERMO, baud, SERIAL_THERMO)
 
-
 def BSMPChecksum(string):
     counter = 0
     i = 0
@@ -131,6 +133,15 @@ def BSMPChecksum(string):
     counter = (256 - counter) & 0xFF
     return(string + chr(counter))
 
+def getPSnames(ps_ID):
+    getPSnames_command = (chr(ps_ID)) + '\x50\x00\x05\x1e\x00\x00'
+    psname = ''
+    for ch in range(64):
+        PRUserial485_write(BSMPChecksum(getPSnames_command + chr(ch) + '\x00').encode('latin-1'), 100)
+        resp = PRUserial485_read()
+        if(len(resp) == 9):
+            psname += chr(int(struct.unpack('<f', resp[4:8])[0]))
+    return psname
 
 def mbtemp():
     """

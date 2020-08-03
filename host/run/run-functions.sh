@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export DAEMON_BASE=/root/bbb-daemon-dev
+export DAEMON_BASE=/root/bbb-daemon
 export PYTHONPATH=${DAEMON_BASE}
 export RSYNC_SERVER="10.128.255.5"
 sed -i -e 's/RSYNC_SERVER.*$/RSYNC_SERVER="10.128.255.5"/' /root/.bashrc
