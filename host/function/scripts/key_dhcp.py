@@ -60,7 +60,7 @@ if __name__ == '__main__':
         for pin in ["P8_11", "P8_12"]:
             GPIO.setup(pin, GPIO.IN)		#Pin out configurations
                                                                                                                 #   |on|
-        if (GPIO.input("P8_11") == 1 and GPIO.input("P8_12") == 0): #Check if the keys are set to the DHCP position |dP|
-            logger.info("Configurando DHCP")								                                    #   |12|
-            dhcp()
-            led()
+        #if (GPIO.input("P8_11") == 1 and GPIO.input("P8_12") == 0): #Check if the keys are set to the DHCP position |dP|
+        logger.info("Configurando DHCP")								                                    #   |12|
+        dhcp()
+        led()

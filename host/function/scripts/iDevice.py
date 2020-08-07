@@ -16,7 +16,7 @@ BBB_IP_COLUMN = "BBB_IP"
 BBB_HOSTNAME_COLUMN = "BBB_HOSTNAME"
 CONFIG_FILE = '/root/BBB-CONFIG.json'
 
-Device_Type = { 0:"Undefined",
+Device_Type = { 0: "Undefined",
                 1: "PowerSupply",
                 2: "CountingPRU",
                 3: "Thermo",
@@ -56,25 +56,26 @@ if __name__ == '__main__':
 
         # Get device.json from whoami.py and get identified equipment
         mybbb = BBB()
-        mydevice_type = Device_Type[mybbb.node.type.code]
-        myids = [int(s) for s in re.findall(r'\d+', mybbb.node.details.split('\t')[0])]
-        current_ip = str(mybbb.get_ip_address()[0])
-        current_subnet = current_ip.split('.')[2]
+        mybbb.type = Device_Type[mybbb.node.type.code]
+        mybbb.ids = [int(s) for s in re.findall(r'\d+', mybbb.node.details.split('\t')[0])]
+        mybbb.currentIP = str(mybbb.get_ip_address()[0])
+        mybbb.currentSubnet = mybbb.currentIP.split('.')[2]
 
         # Get devices from this subnet from the ConfigurationTable
-        beagles = GetData(datafile="IA-xx.xlsx", subnet=current_subnet)
-
+        beagles = GetData(datafile="IA-xx.xlsx", subnet=mybbb.currentSubnet)
+ 
         # Check if current BBB (type and devices found is on ConfigurationTable)
         if beagles.data:
-            for bbb in beagles.data[mydevice_type]:
+            for bbb in beagles.data[mybbb.type]:
                 # If PowerSupply, check their names instead of IDs
-                if mydevice_type == "PowerSupply":
-                    mypsnames = json.loads(mybbb.node.details.split('\t')[0].split('Names:')[-1].replace("'",'"'))
-                    if(any(psname in bbb[DEVICE_NAME_COLUMN] for psname in mypsnames)):
+                if mybbb.type == "PowerSupply":
+                    mybbb.PSnames = json.loads(mybbb.node.details.split('\t')[0].split('Names:')[-1].replace("'",'"'))
+                    print(bbb[DEVICE_NAME_COLUMN])
+                    if(any(psname in bbb[DEVICE_NAME_COLUMN] for psname in mybbb.PSnames)):
                         mybeagle_config = bbb
                 # If not PowerSupply, check IDs
                 else:
-                    if(any(id in bbb[DEVICE_ID_COLUMN] for id in myids)):
+                    if(any(id in bbb[DEVICE_ID_COLUMN] for id in mybbb.ids)):
                         mybeagle_config = bbb
  
         # If BBB config is found, proceed with configuration from datafile
@@ -92,17 +93,17 @@ if __name__ == '__main__':
             IP_AVAILABLE = subprocess.call(['ping', '-c', '1', '-W', '1', mybeagle_config[BBB_IP_COLUMN]], stdout=subprocess.DEVNULL)
             subnet = mybeagle_config[BBB_IP_COLUMN].split('.')[2]
             # Update IP, if available
-            if IP_AVAILABLE and subnet == current_subnet:
+            if IP_AVAILABLE and subnet == mybbb.currentSubnet:
                 logger.info("BBB IP: {}".format(mybeagle_config[BBB_IP_COLUMN]))
-                #mybbb.mybbb.update_ip_address('manual', new_ip_address=mybeagle_config[BBB_IP_COLUMN], new_mask="255.255.255.0", new_gateway="10.128.{}.1".format(subnet))
+                mybbb.update_ip_address('manual', new_ip_address=mybeagle_config[BBB_IP_COLUMN], new_mask="255.255.255.0", new_gateway="10.128.{}.1".format(subnet))
             else:
                 if not IP_AVAILABLE:
-                    if mybeagle_config[BBB_IP_COLUMN] == current_ip:
+                    if mybeagle_config[BBB_IP_COLUMN] == mybbb.currentIP:
                         logger.info("BBB IP is already configured to {}.".format(mybeagle_config[BBB_IP_COLUMN]))
                     else:
                         logger.info("Desired IP {} is currently in use by another device.".format(mybeagle_config[BBB_IP_COLUMN]))
                 else:
-                    logger.info("Cannot change to IP {}, subnet is not compatible to current one ({}).".format(mybeagle_config[BBB_IP_COLUMN], current_subnet))
+                    logger.info("Cannot change to IP {}, subnet is not compatible to current one ({}).".format(mybeagle_config[BBB_IP_COLUMN], mybbb.currentSubnet))
 
 
         # If BBB not found, keep DHCP and raise a flag!
@@ -121,14 +122,14 @@ if __name__ == '__main__':
                 # If same subnet and desided IP is available, proceed with IP configuration
                 IP_AVAILABLE = subprocess.call(['ping', '-c', '1', '-W', '1', file_config[BBB_IP_COLUMN]], stdout=subprocess.DEVNULL)
                 subnet = file_config[BBB_IP_COLUMN].split('.')[2]
-                if IP_AVAILABLE and current_subnet == subnet:
+                if IP_AVAILABLE and mybbb.currentSubnet == subnet:
                     logger.info("BBB IP {}".format(file_config[BBB_IP_COLUMN]))
-                    #mybbb.mybbb.update_ip_address('manual', new_ip_address=file_config[BBB_IP_COLUMN], new_mask="255.255.255.0", new_gateway="10.128.{}.1".format(subnet))
+                    mybbb.update_ip_address('manual', new_ip_address=file_config[BBB_IP_COLUMN], new_mask="255.255.255.0", new_gateway="10.128.{}.1".format(subnet))
                 else:
                     if not IP_AVAILABLE:
                         logger.info("Desired IP {} is currently in use by another device.".format(file_config[BBB_IP_COLUMN]))
                     else:
-                        logger.info("Cannot change to IP {}, subnet is not compatible to current one ({}).".format(file_config[BBB_IP_COLUMN], current_subnet))
+                        logger.info("Cannot change to IP {}, subnet is not compatible to current one ({}).".format(file_config[BBB_IP_COLUMN], mybbb.currentSubnet))
                 
             except:
                 logger.info("BBB configuration not found ! Keeping DHCP")
