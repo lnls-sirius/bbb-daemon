@@ -56,7 +56,7 @@ class GetData():
             self.data = {}
 
 if __name__ == '__main__':
-    print(AUTOCONFIG)
+
     if(AUTOCONFIG):
         mybeagle_config = ''
 
