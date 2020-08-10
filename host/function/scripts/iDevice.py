@@ -1,6 +1,7 @@
 #!/usr/bin/python-sirius
 # # -*- coding: utf-8 -*-
 import logging
+import serial
 import subprocess
 import json
 import re
@@ -8,7 +9,6 @@ from xlrd import open_workbook
 from host.daemon.bbb import BBB
 
 
-AUTOCONFIG = True
 DEVICE_TYPE_COLUMN = "DEVICE_TYPE"
 DEVICE_ID_COLUMN = "DEVICE_ID"
 DEVICE_NAME_COLUMN = "DEVICE_NAME"
@@ -29,6 +29,11 @@ logging.basicConfig(level=logging.INFO,
                     format='[%(levelname)s] %(asctime)-15s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
 logger = logging.getLogger('iDevice')
+
+
+# AUTOCONFIG: 
+# Serial.CTS = True (directly linked to RTS - jumper)
+AUTOCONFIG = serial.Serial("/dev/ttyUSB0").cts
 
 class GetData():
     def __init__(self, datafile="IA-xx.xlsx", subnet = ""):
@@ -51,6 +56,7 @@ class GetData():
             self.data = {}
 
 if __name__ == '__main__':
+    print(AUTOCONFIG)
     if(AUTOCONFIG):
         mybeagle_config = ''
 
