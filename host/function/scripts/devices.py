@@ -11,6 +11,8 @@ from serial import Serial, STOPBITS_TWO, SEVENBITS, PARITY_EVEN
 
 logger = logging.getLogger('Whoami')
 
+SPIxCONV = False
+'''
 if os.path.exists('/root/SPIxCONV/software/scripts'):
     sys.path.append('/root/SPIxCONV/software/scripts')
     import init
@@ -21,6 +23,8 @@ if os.path.exists('/root/SPIxCONV/software/scripts'):
 else:
     logger.error('/root/SPIxCONV/software/scripts does not exist, SPIxCONV will always be false !')
     SPIxCONV = False
+'''
+
 
 from persist import persist_info
 from consts import *
@@ -153,8 +157,8 @@ def mbtemp():
         ser = Serial(PORT, baud, timeout=TIMEOUT)
         devices = []
         for mbt_addr in range(1, 32):
-            ser.write(BSMPChecksum(chr(mbt_addr)+"\x10\x00\x01\x00"))
-            res = ser.read(10)
+            ser.write(BSMPChecksum(chr(mbt_addr)+"\x10\x00\x01\x00").encode('latin-1'))
+            res = ser.read(10).decode('latin-1')
             if len(res) == 7 and res[1] == "\x11":
                 devices.append(mbt_addr)
         ser.close()
@@ -175,8 +179,8 @@ def mks9376b():
             msgm = '\@{0:03d}'.format(mks_addr) + "PR1?;FF"
             ser.reset_input_buffer()
             ser.reset_output_buffer()
-            ser.write(msgm)
-            res = ser.read(20)
+            ser.write(msgm.encode('latin-1'))
+            res = ser.read(20).decode('latin-1')
             if len(res) != 0:
                 devices.append(mks_addr)
         ser.close()
@@ -217,8 +221,8 @@ def agilent4uhv():
             pl += "\x30"
             pl += "\x30"
             pl += "\x03"
-            ser.write(Agilent4UHV_CRC(pl))
-            res = ser.read(15)
+            ser.write(Agilent4UHV_CRC(pl).encode('latin-1'))
+            res = ser.read(15).decode('latin-1')
             if len(res) != 0:
                 devices.append(addr)
         ser.close()
