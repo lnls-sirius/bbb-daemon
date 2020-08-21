@@ -89,7 +89,9 @@ def power_supply_pru():
             if len(res) == 7 and res[1] == 17:
                 devices.append(ps_addr)
                 ps_model = ps_model_names[res[5]%32]    # PS model: res[5] (bits 4..0)
-                ps_names.append(getPSnames(ps_addr))
+                ps_name = getPSnames(ps_addr).replace(" ","")
+                if not ps_name in ps_names:
+                    ps_names.append(ps_name)
             time.sleep(0.1)
         PRUserial485_close()
         if(len(devices)):

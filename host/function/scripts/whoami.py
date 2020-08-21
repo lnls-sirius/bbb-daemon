@@ -50,7 +50,6 @@ if __name__ == '__main__':
 
             #@todo: This should be more robust !
             counting_pru()
-
             power_supply_pru()
             thermo_probe()
             mbtemp()

@@ -33,7 +33,7 @@ logger = logging.getLogger('iDevice')
 
 # AUTOCONFIG: 
 # Serial.CTS = True (directly linked to RTS - jumper)
-AUTOCONFIG = serial.Serial("/dev/ttyUSB0").cts
+AUTOCONFIG = True #serial.Serial("/dev/ttyUSB0").cts
 
 class GetData():
     def __init__(self, datafile="IA-xx.xlsx", subnet = ""):
@@ -68,15 +68,20 @@ if __name__ == '__main__':
         mybbb.currentSubnet = mybbb.currentIP.split('.')[2]
 
         # Get devices from this subnet from the ConfigurationTable
-        beagles = GetData(datafile="IA-xx.xlsx", subnet=mybbb.currentSubnet)
+        beagles = GetData(datafile="IA-xx.xlsx", subnet='102')#mybbb.currentSubnet)
  
         # Check if current BBB (type and devices found is on ConfigurationTable)
         if beagles.data:
             for bbb in beagles.data[mybbb.type]:
                 # If PowerSupply, check their names instead of IDs
                 if mybbb.type == "PowerSupply":
-                    mybbb.PSnames = json.loads(mybbb.node.details.split('\t')[0].split('Names:')[-1].replace("'",'"'))
-                    print(bbb[DEVICE_NAME_COLUMN])
+                    mybbb.PSnames = []
+                    nodes = json.loads(mybbb.node.details.split('\t')[0].split('Names:')[-1].replace("'",'"'))
+                    for node in nodes:
+                        mybbb.PSnames.extend(node.split('e'))
+                    print(len(mybbb.PSnames))
+                    print(mybbb.PSnames)
+                   
                     if(any(psname in bbb[DEVICE_NAME_COLUMN] for psname in mybbb.PSnames)):
                         mybeagle_config = bbb
                 # If not PowerSupply, check IDs
