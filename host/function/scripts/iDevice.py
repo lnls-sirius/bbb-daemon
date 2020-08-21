@@ -15,6 +15,7 @@ DEVICE_NAME_COLUMN = "DEVICE_NAME"
 BBB_IP_COLUMN = "BBB_IP"
 BBB_HOSTNAME_COLUMN = "BBB_HOSTNAME"
 CONFIG_FILE = '/root/BBB-CONFIG.json'
+AUTOCONFIG_FILE = "AUTOCONFIG.xlsx"
 
 Device_Type = { 0: "Undefined",
                 1: "PowerSupply",
@@ -33,10 +34,10 @@ logger = logging.getLogger('iDevice')
 
 # AUTOCONFIG: 
 # Serial.CTS = True (directly linked to RTS - jumper)
-AUTOCONFIG = True #serial.Serial("/dev/ttyUSB0").cts
+AUTOCONFIG = serial.Serial("/dev/ttyUSB0").cts
 
 class GetData():
-    def __init__(self, datafile="IA-xx.xlsx", subnet = ""):
+    def __init__(self, datafile=AUTOCONFIG_FILE, subnet = ""):
         try:
             _sheet = open_workbook(datafile).sheet_by_name(subnet)
             keys = [_sheet.cell(0, col_index).value for col_index in range(_sheet.ncols)]
@@ -68,7 +69,7 @@ if __name__ == '__main__':
         mybbb.currentSubnet = mybbb.currentIP.split('.')[2]
 
         # Get devices from this subnet from the ConfigurationTable
-        beagles = GetData(datafile="IA-xx.xlsx", subnet='102')#mybbb.currentSubnet)
+        beagles = GetData(datafile=AUTOCONFIG_FILE, subnet=mybbb.currentSubnet)
  
         # Check if current BBB (type and devices found is on ConfigurationTable)
         if beagles.data:
