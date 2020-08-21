@@ -78,9 +78,7 @@ if __name__ == '__main__':
                     mybbb.PSnames = []
                     nodes = json.loads(mybbb.node.details.split('\t')[0].split('Names:')[-1].replace("'",'"'))
                     for node in nodes:
-                        mybbb.PSnames.extend(node.split('e'))
-                    print(len(mybbb.PSnames))
-                    print(mybbb.PSnames)
+                        mybbb.PSnames.extend(node.split('/'))
                    
                     if(any(psname in bbb[DEVICE_NAME_COLUMN] for psname in mybbb.PSnames)):
                         mybeagle_config = bbb

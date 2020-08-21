@@ -11,7 +11,6 @@ export RSYNC_PORT="873"
 pushd ${DAEMON_BASE}/host/function/scripts/
     source ./../envs.sh
     sleep 10
-#    ./whoami.py --reset
     ./get_counters_ip.py
     ./key_dhcp.py   #Verificar se dhcp deve ser configurado
     cat /opt/device.json

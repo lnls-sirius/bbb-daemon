@@ -83,7 +83,7 @@ def power_supply_pru():
         devices = []
         ps_model = []
         ps_names = []
-        for ps_addr in range(1, 32):
+        for ps_addr in range(1, 25):
             PRUserial485_write(BSMPChecksum(chr(ps_addr)+"\x10\x00\x01\x00").encode('latin-1'), 100)
             res = PRUserial485_read()
             if len(res) == 7 and res[1] == 17:
@@ -140,7 +140,7 @@ def BSMPChecksum(string):
     return(string + chr(counter))
 
 def getPSnames(ps_ID):
-    getPSnames_command = (chr(ps_ID)) + '\x50\x00\x05\x1e\x00\x00'
+    getPSnames_command = (chr(ps_ID)) + '\x50\x00\x05\x20\x00\x00'
     psname = ''
     for ch in range(64):
         PRUserial485_write(BSMPChecksum(getPSnames_command + chr(ch) + '\x00').encode('latin-1'), 100)
