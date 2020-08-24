@@ -9,6 +9,7 @@ pushd ${DAEMON_BASE}/host/function/scripts
     function cleanup {
         # Reset the detected device
 #        resetDeviceJson
+        systemctl stop eth-bridge-pru-serial485
 
         if [ -f ${RES_FILE} ]; then
                 rm -rf ${RES_FILE}
