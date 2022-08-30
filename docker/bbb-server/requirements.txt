@@ -1,4 +1,4 @@
-mod_wsgi==4.6.5
+mod_wsgi==4.9.3
 Flask==1.0.2
 Flask-RESTful==0.3.6
 Flask-Cors==3.0.7
